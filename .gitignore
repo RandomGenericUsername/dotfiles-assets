@@ -1,0 +1,25 @@
+# deps / tooling
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+
+# build output (this repo builds nothing; listed so a stray build cannot be committed)
+dist/
+build/
+target/
+
+# worktrees (ticket harness — `.worktrees/<id>/` lives inside the repo, gitignored)
+.worktrees/
+
+# openspec local
+openspec/worksets/
+
+# env
+.env
+.env.local
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
