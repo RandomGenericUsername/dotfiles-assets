@@ -1,0 +1,58 @@
+# catalog.yaml — what is inside each class of this repository.
+#
+# This file is REPO-LOCAL TRUTH. It answers "what is in the corpus?" and never
+# "where does it deploy?": no consumer destination, no deployment path, no other
+# repository's directory name may appear here (spine AD-2/AD-6). The consumer's
+# manifest owns the destination map; this file owns the inventory.
+#
+# `schema_major` is present only for SCHEMA-BEARING classes (breadcrumb: the
+# contract file that consumers parse). A class with no contract file carries
+# `schema_major: null` — an absent version is a deliberate statement, not a gap.
+#
+# `contents: empty in v0.1.0` is honest: the class directories exist so the
+# paths consumers will address are stable, and the corpus that fills them lands
+# in later slices. Nothing here describes content this repository does not have.
+#
+# Parsed by scripts/validate-catalog.py with a deliberately small YAML subset
+# (nested mappings, scalar lists, `null`, `[]`). Unsupported YAML is an error,
+# never a guess — see that script's docstring.
+
+catalog: 1
+repo: dotfiles-assets
+tag: v0.1.0
+
+classes:
+  icons:
+    dir: icons
+    subdirs:
+      - templates
+      - mappings
+    schema: icons/schema.json
+    schema_major: 1
+    contents: empty in v0.1.0
+  templates:
+    dir: templates
+    subdirs: []
+    schema: templates/example.vars.schema.json
+    schema_major: 1
+    contents: empty in v0.1.0
+  configs:
+    dir: configs
+    subdirs: []
+    schema: null
+    schema_major: null
+    contents: empty in v0.1.0
+  content:
+    dir: content
+    subdirs: []
+    schema: null
+    schema_major: null
+    contents: empty in v0.1.0
+  desktop:
+    dir: desktop
+    subdirs:
+      - applications
+      - scripts
+    schema: null
+    schema_major: null
+    contents: empty in v0.1.0

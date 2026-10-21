@@ -1,0 +1,72 @@
+name: gates
+
+# The repository's executable gates. A data repo's quality is not "the YAML looks
+# right": it is that the catalog agrees with the tree, the contracts parse, no
+# generated artifact was committed, and the corpus validates on a machine with no
+# provisioned state. `make gates` is the authoritative set (the Makefile's `GATES`),
+# and it is NOT self-evident that the jobs below equal it: a hand-maintained list
+# drifts the first time one side is edited. The `ci-gates-parity` job runs
+# `make ci-gates-parity`, which compares this file's job keys against `GATES` and
+# fails non-zero naming anything unmatched in EITHER direction. A job that is
+# deliberately not a gate is a reviewed entry in `scripts/ci-gates-parity.py`
+# (`CI_ONLY_EXEMPT`), not a silent extra.
+#
+# Layout: one job per gate, so a failure names the gate that broke instead of hiding
+# behind a combined command's exit code.
+#
+# NO EXCLUSIONS. Every gate is stock-runner capable: the validators are stdlib-only
+# Python and `git`, and `shellcheck` ships on `ubuntu-latest`. Nothing here needs a
+# desktop stack, a provisioned corpus, a container engine or network beyond the
+# checkout -- which is why `gates-ci` equals `GATES`.
+#
+# TRIGGER. The default branch is `master`; `push` is filtered to it so a tag push does
+# not duplicate the run for the tagged commit, and `pull_request` is unfiltered so a PR
+# from any branch is checked. `workflow_dispatch` allows a manual re-run.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Catalog <-> class dirs, schema JSON, AD-11 absence
+        run: make validate
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # `shellcheck` is preinstalled on the runner image; the gate fails loudly if a
+      # script appears under desktop/scripts and shellcheck is missing, rather than
+      # skipping.
+      - name: shellcheck desktop/scripts/** + compileall scripts/
+        run: make lint
+
+  hermetic:
+    name: hermetic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Same checks with empty HOME/XDG_* from a foreign cwd
+        run: make hermetic
+
+  # The mechanism described in the header: compares this file's job keys against the
+  # Makefile's `GATES` and fails naming anything unmatched in either direction. It is
+  # itself a CI-only job (declared in the script), because it needs the workflow file.
+  ci-gates-parity:
+    name: ci-gates-parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Workflow jobs match `make gates`
+        run: make ci-gates-parity

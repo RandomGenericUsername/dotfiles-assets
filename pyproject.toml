@@ -1,0 +1,43 @@
+# Dev-only tooling for this repository's validators. THIS IS NOT A PACKAGE.
+#
+# Spine AD-2: the assets repository is DATA. There is no importable package, no
+# `[project.scripts]` (no console script), no `src/` layout and no engine. This file
+# exists only so the validation tooling has a pinned home once it needs one:
+#
+#   * `package = false` -> uv never builds or installs anything from this tree;
+#   * no `[build-system]` -> nothing can be built from it by accident;
+#   * no lock file is committed, because `make gates` must pass on a fresh clone with
+#     no virtualenv and no network. The S0 validators are STDlib-ONLY for that reason.
+#
+# The declared dev dependencies are for the class validators and their tests that
+# arrive WITH their corpora (icons/mappings JSON Schema checks in the icons slice,
+# Jinja variable extraction for `make validate-templates` in the templates slice).
+# Declaring them now makes the toolchain decision visible instead of implicit; nothing
+# in v0.1.0 imports them.
+#
+# `version` is deliberately 0.0.0 and is NOT the corpus version. The corpus version is
+# the annotated git tag (vX.Y.Z) plus each schema's `schema_major`; this file has no
+# release cadence and no artifact.
+
+[project]
+name = "dotfiles-assets-tooling"
+version = "0.0.0"
+description = "Dev-only validation tooling for dotfiles-assets. Not a package, not installable, no console scripts."
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "jinja2>=3.1",
+  "jsonschema>=4.21",
+  "pyyaml>=6.0",
+  "pytest>=8.0",
+  "ruff>=0.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

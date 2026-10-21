@@ -1,0 +1,67 @@
+{
+  "$comment": "The icons contract. This file is data, not a JSON Schema meta-schema: it states the shape the consumer relies on and the placeholder vocabulary rules, so a mapping entry and a template can be checked against a written contract instead of against a renderer's behaviour. `schema_major` is the consumer-compatibility version (spine AD-12) and moves independently of the repo tag; raising it requires a MAJOR tag.",
+  "schema_major": 1,
+  "contract": "icons",
+  "status": "skeleton",
+  "paths": {
+    "templates_root": "icons/templates",
+    "mappings_root": "icons/mappings",
+    "defaults": "icons/mappings/defaults.yaml",
+    "note": "Both paths are repo-local and relative to this repository's root. This file names no deployment path and no consumer destination (spine AD-2/AD-6)."
+  },
+  "shape": {
+    "description": "One mapping file per icon group, plus `defaults.yaml` carrying the group-independent COLOR_* vocabulary. A group is a DIRECTORY under `templates_root`; its mapping file declares `color_mappings` (the group's token values) and `variants` (the renditions a consumer may ask for).",
+    "group_entry": {
+      "id": "string — the group directory name under `templates_root`",
+      "template_dir": "string — subdirectory of `templates_root` holding this group's SVGs; defaults to \".\" when absent",
+      "color_mappings": "object — COLOR_NAME -> value (a literal color, or a scheme role the consumer resolves before rendering)",
+      "variants": "array — at least one; see variant_entry"
+    },
+    "variant_entry": {
+      "name": "string — unique within the group; the selector a consumer asks for",
+      "template": "string — path to the SVG RELATIVE TO THE TEMPLATES ROOT, e.g. `mygroup/base.svg`. The consumer joins it under `templates_root`, not under the mapping file's directory and not under `template_dir`",
+      "output": "string — the rendered file name the consumer writes; a bare file name (no path separators, no `..`)"
+    },
+    "example": {
+      "id": "example-group",
+      "template_dir": "example-group",
+      "color_mappings": {
+        "COLOR_BG": "base00",
+        "COLOR_FG": "base05"
+      },
+      "variants": [
+        {
+          "name": "default",
+          "template": "example-group/base.svg",
+          "output": "example-group.svg"
+        }
+      ]
+    }
+  },
+  "placeholder_vocabulary": {
+    "description": "Placeholders are the only variable part of a template. The vocabulary is a contract: renaming a token breaks every consumer that supplies it, so a rename is a MAJOR change even though no file moved.",
+    "syntax": "{{COLOR_NAME}} — exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
+    "name_pattern": "^COLOR_[A-Z0-9_]+$",
+    "rules": [
+      "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings`, or in `icons/mappings/defaults.yaml` (the group-independent vocabulary).",
+      "Declaring a token no SVG uses is allowed (forward compatibility); `make validate-icons` reports it, it does not fail the tag.",
+      "No defaults, filters, conditionals or nesting inside a token: `{{COLOR_BG|#000}}`, `{{ COLOR_BG }}` and `{{{{...}}}}` are invalid.",
+      "A token is substituted by the CONSUMER at render time. No rendered SVG, no generated icon index and no palette state is ever committed here (spine AD-11), so a preview of this corpus lives in the consumer, not in this repository.",
+      "`output` values and mapping keys may not contain `{{`: a placeholder in a destination is not renderable by any consumer."
+    ]
+  },
+  "validation": {
+    "today": "The envelope is checked by `make validate`: valid JSON, integer `schema_major`, and the `shape` / `placeholder_vocabulary` sections present. The checks in `planned` need the corpus, so they land with it.",
+    "planned": {
+      "make validate-icons": [
+        "every `template:` in every mapping resolves to a real file under `icons/templates`",
+        "every `{{COLOR_*}}` token used by any SVG is declared in `defaults.yaml` or the group's `color_mappings`",
+        "every SVG parses as XML",
+        "every `variant.name` is unique within its group",
+        "every `output` is a bare file name"
+      ],
+      "arrives_with": "the icons + content slice (v0.2.0): the 12 groups / 117 SVGs and the 8 mapping files that make these checks non-vacuous"
+    },
+    "new_work": "No schema file existed anywhere in the dotfiles corpus before this repository. The shape above is written from what the consumer's loader already expects; it is a stated contract, not a measurement of shipped data. `status: skeleton` records exactly that."
+  }
+}
