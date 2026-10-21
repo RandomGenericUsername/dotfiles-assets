@@ -2,13 +2,13 @@
 id: REQ-001
 title: "Birth the assets repository: mu harness, five empty classes, schemas, catalog, v0.1.0"
 kind: requirement
-status: in-progress
+status: done
 size: M
 lane: bmad-advisory
 links:
   openspec: repo-birth
   bmad: none
-worktree: .worktrees/s0/
+worktree: .worktrees/s0/ (release record: .worktrees/s0r/)
 branch: ticket/s0-assets-repo-birth
 children: []
 ---
@@ -42,8 +42,10 @@ validators are standard-library Python under `scripts/`, invoked by the `Makefil
       `icons/mappings/icons.json`; after `rm`, `make validate` → exit 0.
 - [x] `make gates` → exit 0 on a fresh clone; `make hermetic` → exit 0 with empty `HOME`/`XDG_*` and
       a foreign cwd; `make ci-gates-parity` → exit 0.
-- [ ] Annotated `v0.1.0` pushed and anonymously fetchable; the first CI run on `master` is green.
-- [ ] GitHub Release `v0.1.0` published with notes and no assets (a data repo has nothing to build).
+- [x] Annotated `v0.1.0` pushed and anonymously fetchable (`git ls-remote --tags … 'v0.1.0*'` → tag
+      object `b142d02` + peeled `b28c564`; `--refs` → one line); the first CI run on `master` is green
+      ([run 39684361040](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/39684361040), 4/4 jobs).
+- [x] GitHub Release `v0.1.0` published with notes and no assets (a data repo has nothing to build).
 
 ## Evidence
 

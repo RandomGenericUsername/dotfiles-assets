@@ -11,4 +11,4 @@
 
 ## Requirements
 
-- [req-001-assets-repo-birth](./req-001-assets-repo-birth/ticket.md) — Birth the assets repository: mu harness, five empty classes, schemas, catalog, `v0.1.0` | `in-progress` | openspec: repo-birth
+- [req-001-assets-repo-birth](./req-001-assets-repo-birth/ticket.md) — Birth the assets repository: mu harness, five empty classes, schemas, catalog, `v0.1.0` | `done` | openspec: repo-birth (archived 2026-10-21) | tag `v0.1.0`, CI run 39684361040 green

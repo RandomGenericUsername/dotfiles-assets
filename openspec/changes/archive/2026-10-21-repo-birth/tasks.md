@@ -31,6 +31,6 @@
 ## 6. Release
 
 - [x] 6.1 Merge the ticket branch to `master` (planning and code in separate commits), push, and confirm the first CI run is green. Verify: `gh run list --limit 1` → `completed success`.
-- [x] 6.2 Annotated tag `v0.1.0`, pushed. Verify: `git cat-file -t v0.1.0` → `tag`; `git ls-remote --tags <repo> 'v0.1.0'` → two lines (tag object + peeled `^{}` commit), `--refs` → one.
-- [x] 6.3 Fresh anonymous clone + `make gates`. Verify: `git clone <repo> /tmp/assets-fresh && cd /tmp/assets-fresh && make gates` → exit 0.
-- [x] 6.4 GitHub Release for `v0.1.0` with notes and no build artifacts (a data repository has nothing to attach). Verify: `gh release view v0.1.0` → the tag and body present, zero assets.
+- [x] 6.2 Annotated tag `v0.1.0`, pushed. Verify: `git cat-file -t v0.1.0` → `tag`; `git ls-remote --tags <repo> 'v0.1.0*'` → two lines (tag object `b142d02` + peeled commit `b28c564`), `--refs` → one.
+- [x] 6.3 Fresh anonymous clone + `make gates`. Verify: `git clone <repo> /tmp/opencode/assets-fresh && cd /tmp/opencode/assets-fresh && make gates` → exit 0 (observed: validate PASS, 5 classes / 2 schema_major, lint vacuous shellcheck pass, hermetic PASS).
+- [x] 6.4 GitHub Release for `v0.1.0` with notes and no build artifacts (a data repository has nothing to attach). Verify: `gh release view v0.1.0 --json tagName,assets` → `v0.1.0`, `assets: []`.
