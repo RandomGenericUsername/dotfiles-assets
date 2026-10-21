@@ -19,8 +19,9 @@ repository — that map belongs to whoever deploys the corpus.
 
 **Status: `icons`, `content` and `configs` are populated.** `icons/` holds 117 SVG templates in 12
 template directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper
-archive and the authored btop-theme class (empty today); `configs/` holds 25 static config files in
-six tool directories — the compositor, editor, prompt and wlogout layout. `templates/` and `desktop/`
+archive and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
+six tool directories — the compositor, editor, prompt and wlogout layout (one file, `hyprland.lua`,
+carries a single host path the consumer renders; the rest are literal). `templates/` and `desktop/`
 are still empty and land in later tagged slices — `catalog.yaml` says so rather than describing
 content this repository does not have. Each class validator arrives **with** its corpus, so every
 check has run against real data before it can gate a tag.

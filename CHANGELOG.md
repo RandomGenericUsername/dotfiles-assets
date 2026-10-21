@@ -5,6 +5,20 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.3.1] — 2026-10-21
+
+### Fixed
+
+- **The `configs/` boundary prose was wrong for `hypr/hyprland.lua`.** The v0.3.0 README claimed
+  "nothing here is rendered"; in fact `hyprland.lua:7` carries one consumer-resolved token
+  (`{{ compositor_configs_xdg_config_home }}`, the directory its twelve modules are loaded from)
+  and the consumer renders it on deploy — the file says so in its own header. The class is now
+  described as **deployment-fixed** rather than "static": the rule is the fixed destination and the
+  absent variable contract, not the absence of braces. The documented exception, the one-token
+  acceptance grep and a scenario for a second token were added to `configs/README.md` and the
+  spec. Corpus bytes are identical to v0.3.0 — this is a documentation correction, and the tag is
+  new rather than moved.
+
 ## [0.3.0] — 2026-10-21
 
 ### Added

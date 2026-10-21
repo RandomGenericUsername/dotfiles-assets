@@ -159,15 +159,23 @@ the tag was published.
 - **THEN** `make validate-content` fails naming the file, because an empty theme renders as "no
   theme" on a provisioned host
 
-### Requirement: The configs class holds static, resolved configuration
+### Requirement: The configs class holds deployment-fixed configuration
 
-`configs/` SHALL hold only configuration a consumer copies unchanged: no Jinja source (`*.j2`,
-`*.tpl`), no rendered artifact and no mutable preference. Jinja sources belong to the `templates`
-class, because a template's values are only known at render time; rendered files and mutable
-preferences are produced by the consumer or the runtime.
+`configs/` SHALL hold configuration deployed 1:1 to fixed paths: no Jinja source **file** (`*.j2`,
+`*.tpl`), no rendered runtime artifact and no mutable preference. Jinja sources belong to the
+`templates` class, where the variables a template reads are declared in a sibling schema; rendered
+files and mutable preferences are produced by the consumer or the runtime.
+
+A config file MAY name at most one host-derived path that the consumer substitutes on deploy, and
+every such token SHALL be enumerated in `configs/README.md`. At this tag exactly one file does:
+`hypr/hyprland.lua`, whose single token names the host's XDG config home — the directory its twelve
+module files are loaded from. Its destination stays fixed and it declares no variable contract,
+which is why it is config and not a template; moving it would change an addressed path and would
+therefore be a MAJOR change.
 
 Evidence: spine S2 step 2 fixes the per-file boundary; `configs/README.md` enumerates the 25
-imported files, the six tool subdirectories and the three deliberate exclusions.
+imported files, the six tool subdirectories, the single render-time token and the three deliberate
+exclusions.
 
 Acceptance check:
 
@@ -175,6 +183,7 @@ Acceptance check:
 test -z "$(find configs -type f \( -name '*.j2' -o -name '*.tpl' \))" && echo "no Jinja source"
 test ! -e configs/btop/active-theme && echo "no mutable preference"
 test ! -e configs/zsh/.zshrc && echo "no rendered output"
+grep -rn '{{' configs --exclude=README.md   # expect exactly hypr/hyprland.lua:7
 ```
 
 #### Scenario: A template source is filed under configs
@@ -182,6 +191,14 @@ test ! -e configs/zsh/.zshrc && echo "no rendered output"
 - **WHEN** a `*.j2` or `*.tpl` file appears anywhere under `configs/`
 - **THEN** the boundary check fails, because the consumer would read the template's placeholders
   literally — the file is a render input and belongs to `templates/` with a vars schema beside it
+
+#### Scenario: A second render-time token appears
+
+- **WHEN** another `configs/` file carries a `{{ … }}` token, or `hypr/hyprland.lua` gains a second
+  one
+- **THEN** the acceptance grep reports more than the single documented line and the release stops:
+  the file is either a template with an undeclared contract (move it to `templates/`) or the
+  boundary in `configs/README.md` is stale
 
 #### Scenario: A rendered or mutable file is filed under configs
 
