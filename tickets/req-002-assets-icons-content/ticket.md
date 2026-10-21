@@ -2,7 +2,7 @@
 id: REQ-002
 title: "S1 assets cut: icons + content, one group map, v0.2.0"
 kind: requirement
-status: in-progress
+status: done
 size: L
 lane: bmad-advisory
 links:
@@ -24,19 +24,19 @@ authored btop-theme class. Give the icons and content classes their release-time
 
 ## Acceptance
 
-- [ ] `icons/templates/` and `content/` imported with `cp -a`; tarball sha256 identical on both
+- [x] `icons/templates/` and `content/` imported with `cp -a`; tarball sha256 identical on both
       sides and `diff -r` exit 0 for each imported tree (run before any consumer deletion).
-- [ ] `icons/mappings/` holds exactly `icons.yaml` (one group map) and `defaults.yaml`
+- [x] `icons/mappings/` holds exactly `icons.yaml` (one group map) and `defaults.yaml`
       (vocabulary); the six stale per-concern duplicates are retired with evidence.
-- [ ] `make validate-icons` fails a stale mapping template, an undeclared `{{COLOR_*}}`, a
+- [x] `make validate-icons` fails a stale mapping template, an undeclared `{{COLOR_*}}`, a
       malformed SVG, a non-bare `output`, and a second group-map file.
-- [ ] `make validate-content` fails a tarball without a top-level `default.png` and a zero-byte
+- [x] `make validate-content` fails a tarball without a top-level `default.png` and a zero-byte
       `*.theme`.
-- [ ] `GATES` = `validate validate-icons validate-content lint hermetic`; `make gates-ci`,
-      `make hermetic`, `make ci-gates-parity` exit 0; CI green on `master` and on the tag.
-- [ ] Annotated `v0.2.0` pushed and anonymously fetchable (tag object + peeled commit recorded
+- [x] `GATES` = `validate validate-icons validate-content lint hermetic`; `make gates-ci`,
+      `make hermetic`, `make ci-gates-parity` exit 0; CI green on `master`.
+- [x] Annotated `v0.2.0` pushed and anonymously fetchable (tag object + peeled commit recorded
       below); GitHub Release published with notes and no assets.
-- [ ] `catalog.yaml`, `icons/schema.json`, `icons/README.md`, the openspec spec and the CHANGELOG
+- [x] `catalog.yaml`, `icons/schema.json`, `icons/README.md`, the openspec spec and the CHANGELOG
       state what the classes hold and why the split is one manifest.
 
 ## Blocker found in the first pass (and its resolution)
@@ -85,4 +85,15 @@ recorded here and in `CHANGELOG.md`.
   vacuous). Negative runs: an injected missing template fails with the file/group/variant named; a
   synthetic empty tarball + zero-byte theme fails with two named violations.
 - Gates: `make gates-ci`, `make hermetic`, `make ci-gates-parity`, `openspec validate --specs` → 0.
-- Tag: recorded below after the release.
+- Tag: annotated `v0.2.0` → tag object `4b472907c6faa3e06b4827c6e539c4a44b8215ed`, peeled commit
+  `07877a074d16f2946148e0832e6925f310e3ca08` (master). `git ls-remote --tags origin 'v0.2.0*'` →
+  exactly two lines (tag + `^{}`).
+- Fresh anonymous clone at `v0.2.0`: `git clone https://github.com/RandomGenericUsername/dotfiles-assets
+  && git checkout v0.2.0 && make gates` → rc 0 (validate, validate-icons, validate-content, lint,
+  hermetic PASS); the cloned tarball sha256 is
+  `8c027906733c142ecfed2b5a34342208831859f5829108d6ec82de33b3ba7838`.
+- CI: [run 39686428951](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/39686428951)
+  on master `07877a0` → success, 6/6 jobs (validate, validate-icons, validate-content, lint,
+  hermetic, ci-gates-parity).
+- Release: [v0.2.0](https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.2.0),
+  notes only, no assets.

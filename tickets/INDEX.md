@@ -12,5 +12,5 @@
 ## Requirements
 
 - [req-001-assets-repo-birth](./req-001-assets-repo-birth/ticket.md) — Birth the assets repository: mu harness, five empty classes, schemas, catalog, `v0.1.0` | `done` | openspec: repo-birth (archived 2026-10-21) | tag `v0.1.0`, CI run 39684361040 green
-- [req-002-assets-icons-content](./req-002-assets-icons-content/ticket.md) — S1 assets cut: icons + content, one group map, `v0.2.0` | `in-progress` | tag/CI recorded in the ticket after release
+- [req-002-assets-icons-content](./req-002-assets-icons-content/ticket.md) — S1 assets cut: icons + content, one group map, `v0.2.0` | `done` | tag `v0.2.0` (4b47290), CI run 39686428951 green, release published
 
