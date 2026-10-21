@@ -2,40 +2,53 @@
   "$comment": "The icons contract. This file is data, not a JSON Schema meta-schema: it states the shape the consumer relies on and the placeholder vocabulary rules, so a mapping entry and a template can be checked against a written contract instead of against a renderer's behaviour. `schema_major` is the consumer-compatibility version (spine AD-12) and moves independently of the repo tag; raising it requires a MAJOR tag.",
   "schema_major": 1,
   "contract": "icons",
-  "status": "skeleton",
+  "status": "populated (v0.2.0)",
   "paths": {
     "templates_root": "icons/templates",
     "mappings_root": "icons/mappings",
     "defaults": "icons/mappings/defaults.yaml",
-    "note": "Both paths are repo-local and relative to this repository's root. This file names no deployment path and no consumer destination (spine AD-2/AD-6)."
+    "note": "Both roots are repo-local and relative to this repository's root. This file names no deployment path and no consumer destination (spine AD-2/AD-6)."
   },
   "shape": {
-    "description": "One mapping file per icon group, plus `defaults.yaml` carrying the group-independent COLOR_* vocabulary. A group is a DIRECTORY under `templates_root`; its mapping file declares `color_mappings` (the group's token values) and `variants` (the renditions a consumer may ask for).",
+    "description": "A mapping file is a YAML document whose TOP-LEVEL KEYS are icon groups. A group is a logical name, not necessarily a directory: `battery`, `network` and `wifi-*` all live under `status-bar/`, addressed by their variant `template` paths. The only directory knob is the group's optional `template_dir`. `defaults.yaml` is the exception: its top-level key is `defaults`, the group-independent COLOR_* vocabulary, not a group.",
+    "mapping_file": {
+      "root": "mapping of group name -> group entry",
+      "consumer": "a consumer loads ONE mapping file per render. `icons.yaml` is the manifest the current pipeline renders; the per-concern files (battery.yaml, network.yaml, power-menu.yaml, wallpaper-selector.yaml, wlogout.yaml, email-client.yaml) and defaults.yaml ship in the same class and are deployed alongside it."
+    },
     "group_entry": {
-      "id": "string — the group directory name under `templates_root`",
-      "template_dir": "string — subdirectory of `templates_root` holding this group's SVGs; defaults to \".\" when absent",
-      "color_mappings": "object — COLOR_NAME -> value (a literal color, or a scheme role the consumer resolves before rendering)",
-      "variants": "array — at least one; see variant_entry"
+      "id": "string — the group name; the key itself, unique within its mapping file",
+      "template_dir": "string — OPTIONAL directory under `templates_root` that variant templates are joined under; defaults to \".\" (the templates root itself). Must stay inside `templates_root`",
+      "color_mappings": "object — OPTIONAL COLOR_NAME -> value (a literal color, or a scheme role the consumer resolves before rendering)",
+      "variants": "array — REQUIRED, at least one; see variant_entry",
+      "consumer_metadata": "`bar_mappings`, `output_dir` and `unsafe` are passed through by the consumer (AGS state -> variant tables, per-group output directory, unsafe-render flag). This repository ships them as data and `make validate-icons` does not interpret them."
     },
     "variant_entry": {
-      "name": "string — unique within the group; the selector a consumer asks for",
-      "template": "string — path to the SVG RELATIVE TO THE TEMPLATES ROOT, e.g. `mygroup/base.svg`. The consumer joins it under `templates_root`, not under the mapping file's directory and not under `template_dir`",
-      "output": "string — the rendered file name the consumer writes; a bare file name (no path separators, no `..`)"
+      "name": "string — REQUIRED, unique within the group; the selector a consumer asks for",
+      "template": "string — REQUIRED path to the SVG RELATIVE TO THE GROUP'S TEMPLATE ROOT (`templates_root/<template_dir>`, where `template_dir` defaults to \".\"): forward slashes, no leading `/`, no `..`. The consumer joins it under that root — not under the mapping file's directory",
+      "output": "string — REQUIRED; the rendered file name the consumer writes. A bare file name: no path separators, no `..`, no placeholder",
+      "color_mappings": "object — OPTIONAL per-variant override, highest priority in the merge"
+    },
+    "merge_order": {
+      "lowest_to_highest": [
+        "icons/mappings/defaults.yaml (vocabulary defaults)",
+        "the group's color_mappings",
+        "the variant's color_mappings"
+      ]
     },
     "example": {
-      "id": "example-group",
-      "template_dir": "example-group",
-      "color_mappings": {
-        "COLOR_BG": "base00",
-        "COLOR_FG": "base05"
-      },
-      "variants": [
-        {
-          "name": "default",
-          "template": "example-group/base.svg",
-          "output": "example-group.svg"
-        }
-      ]
+      "example-group": {
+        "color_mappings": {
+          "COLOR_BG": "base00",
+          "COLOR_FG": "base05"
+        },
+        "variants": [
+          {
+            "name": "default",
+            "template": "example-group/base.svg",
+            "output": "example-group.svg"
+          }
+        ]
+      }
     }
   },
   "placeholder_vocabulary": {
@@ -43,7 +56,7 @@
     "syntax": "{{COLOR_NAME}} — exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
     "name_pattern": "^COLOR_[A-Z0-9_]+$",
     "rules": [
-      "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings`, or in `icons/mappings/defaults.yaml` (the group-independent vocabulary).",
+      "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings` (or a variant override), or in `icons/mappings/defaults.yaml` (the group-independent vocabulary).",
       "Declaring a token no SVG uses is allowed (forward compatibility); `make validate-icons` reports it, it does not fail the tag.",
       "No defaults, filters, conditionals or nesting inside a token: `{{COLOR_BG|#000}}`, `{{ COLOR_BG }}` and `{{{{...}}}}` are invalid.",
       "A token is substituted by the CONSUMER at render time. No rendered SVG, no generated icon index and no palette state is ever committed here (spine AD-11), so a preview of this corpus lives in the consumer, not in this repository.",
@@ -51,17 +64,20 @@
     ]
   },
   "validation": {
-    "today": "The envelope is checked by `make validate`: valid JSON, integer `schema_major`, and the `shape` / `placeholder_vocabulary` sections present. The checks in `planned` need the corpus, so they land with it.",
-    "planned": {
-      "make validate-icons": [
-        "every `template:` in every mapping resolves to a real file under `icons/templates`",
-        "every `{{COLOR_*}}` token used by any SVG is declared in `defaults.yaml` or the group's `color_mappings`",
-        "every SVG parses as XML",
-        "every `variant.name` is unique within its group",
-        "every `output` is a bare file name"
-      ],
-      "arrives_with": "the icons + content slice (v0.2.0): the 12 groups / 117 SVGs and the 8 mapping files that make these checks non-vacuous"
-    },
-    "new_work": "No schema file existed anywhere in the dotfiles corpus before this repository. The shape above is written from what the consumer's loader already expects; it is a stated contract, not a measurement of shipped data. `status: skeleton` records exactly that."
+    "make validate": "The envelope: valid JSON, integer `schema_major`, and the `shape` / `placeholder_vocabulary` sections present (scripts/validate-catalog.py).",
+    "make validate-icons": [
+      "every `template:` in every mapping file resolves to a real file under `icons/templates/<template_dir>/`",
+      "every `{{COLOR_*}}` token used by a template is declared in `defaults.yaml` or that group's / variant's `color_mappings`",
+      "every SVG under `icons/templates/` parses as XML",
+      "every `variant.name` is unique within its group",
+      "every `output` is a bare file name and every `template` stays inside the templates root"
+    ],
+    "reported_not_failed": [
+      "a token declared for a group but unused by its templates (forward compatibility)",
+      "a template no variant references",
+      "a group name defined by more than one mapping file — the consumer loads one file, so the copies can disagree"
+    ],
+    "make validate-content": "The content class: `content/wallpapers/wallpapers.tar.gz` holds a top-level `default.png`, every `*.theme` is non-empty, and no archive member escapes the archive root.",
+    "new_work": "No schema file existed anywhere in the dotfiles corpus before this repository. The shape above is written from what the consumer's loader already expects (icon_templates_renderer `YamlIconConfigLoader` + `PathResolutionService`), and since v0.2.0 it is enforced against the shipped corpus by `make validate-icons`, not only stated."
   }
 }

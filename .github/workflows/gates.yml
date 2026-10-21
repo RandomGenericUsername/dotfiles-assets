@@ -41,6 +41,22 @@ jobs:
       - name: Catalog <-> class dirs, schema JSON, AD-11 absence
         run: make validate
 
+  validate-icons:
+    name: validate-icons
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
+        run: make validate-icons
+
+  validate-content:
+    name: validate-content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tarball holds a top-level default.png, every *.theme is non-empty
+        run: make validate-content
+
   lint:
     name: lint
     runs-on: ubuntu-latest

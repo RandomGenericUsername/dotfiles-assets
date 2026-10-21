@@ -9,9 +9,9 @@
 # contract file that consumers parse). A class with no contract file carries
 # `schema_major: null` — an absent version is a deliberate statement, not a gap.
 #
-# `contents: empty in v0.1.0` is honest: the class directories exist so the
-# paths consumers will address are stable, and the corpus that fills them lands
-# in later slices. Nothing here describes content this repository does not have.
+# `contents` states what the class actually holds at this tag. `empty in v0.2.0`
+# is honest for the classes whose corpus arrives in a later slice: nothing here
+# describes content this repository does not have.
 #
 # Parsed by scripts/validate-catalog.py with a deliberately small YAML subset
 # (nested mappings, scalar lists, `null`, `[]`). Unsupported YAML is an error,
@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.1.0
+tag: v0.2.0
 
 classes:
   icons:
@@ -29,25 +29,27 @@ classes:
       - mappings
     schema: icons/schema.json
     schema_major: 1
-    contents: empty in v0.1.0
+    contents: 117 SVGs in 12 template directories, 8 mapping files (defaults.yaml is the group-independent vocabulary, not a group)
   templates:
     dir: templates
     subdirs: []
     schema: templates/example.vars.schema.json
     schema_major: 1
-    contents: empty in v0.1.0
+    contents: empty in v0.2.0 (the shape contract only)
   configs:
     dir: configs
     subdirs: []
     schema: null
     schema_major: null
-    contents: empty in v0.1.0
+    contents: empty in v0.2.0
   content:
     dir: content
-    subdirs: []
+    subdirs:
+      - wallpapers
+      - btop-themes
     schema: null
     schema_major: null
-    contents: empty in v0.1.0
+    contents: wallpapers.tar.gz (unmodified blob, top-level default.png) and authored btop themes (none yet)
   desktop:
     dir: desktop
     subdirs:
@@ -55,4 +57,4 @@ classes:
       - scripts
     schema: null
     schema_major: null
-    contents: empty in v0.1.0
+    contents: empty in v0.2.0

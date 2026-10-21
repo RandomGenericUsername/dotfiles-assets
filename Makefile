@@ -12,12 +12,14 @@
 # that reads a provisioned corpus off the host, cannot pass.
 #
 # Fresh clone (no virtualenv, no network beyond the clone itself):
-#   make help        this list
-#   make validate    catalog <-> class dirs, schema JSON, AD-11 absence check
-#   make lint        shellcheck over desktop/scripts/** + compileall scripts/
-#   make gates       validate + lint + hermetic  (the developer gate set)
-#   make gates-ci    the same gate set, reproducible without a workflow runner
-#   make hermetic    validate + lint with empty HOME/XDG_* and a foreign cwd
+#   make help            this list
+#   make validate        catalog <-> class dirs, schema JSON, AD-11 absence check
+#   make validate-icons  every mapping template resolves, placeholders declared, SVGs parse
+#   make validate-content  the wallpaper tarball holds a top-level default.png, themes non-empty
+#   make lint            shellcheck over desktop/scripts/** + compileall scripts/
+#   make gates           validate + validate-icons + validate-content + lint + hermetic
+#   make gates-ci        the same gate set, reproducible without a workflow runner
+#   make hermetic        the same checks with empty HOME/XDG_* and a foreign cwd
 #
 # `ci-gates-parity` compares the workflow's job keys against the `GATES` variable and
 # fails naming anything unmatched in EITHER direction, so the two lists cannot drift.
@@ -29,23 +31,25 @@ PYTHON ?= python3
 
 # The developer gate set. `gates` runs ALL of it: a gate that is not run here is a
 # gate nobody runs.
-GATES := validate lint hermetic
+GATES := validate validate-icons validate-content lint hermetic
 
 # The env every hermetic command runs with: nothing inherited but PATH. HOME and the
 # four XDG_* dirs point into a throwaway tree this recipe creates and deletes.
 EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 	XDG_CONFIG_HOME="$$config" XDG_CACHE_HOME="$$cache" XDG_STATE_HOME="$$state"
 
-.PHONY: help validate lint gates gates-ci ci-gates-parity hermetic
+.PHONY: help validate validate-icons validate-content lint gates gates-ci ci-gates-parity hermetic
 
 help:
 	@printf '%s\n' \
-	  'validate         catalog <-> class dirs, schema JSON well-formedness, AD-11 absence check' \
-	  'lint             shellcheck desktop/scripts/** (vacuous until it has scripts) + compileall scripts/' \
-	  'gates            validate + lint + hermetic (the developer gate set)' \
-	  'gates-ci         the same gate set, reproducible without a workflow runner' \
-	  'ci-gates-parity  workflow job set == GATES + declared CI-only jobs, both directions' \
-	  'hermetic         validate + lint with empty HOME/XDG_* from a foreign cwd' \
+	  'validate          catalog <-> class dirs, schema JSON well-formedness, AD-11 absence check' \
+	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
+	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
+	  'lint              shellcheck desktop/scripts/** (vacuous until it has scripts) + compileall scripts/' \
+	  'gates             validate + validate-icons + validate-content + lint + hermetic' \
+	  'gates-ci          the same gate set, reproducible without a workflow runner' \
+	  'ci-gates-parity   workflow job set == GATES + declared CI-only jobs, both directions' \
+	  'hermetic          the same checks with empty HOME/XDG_* from a foreign cwd' \
 	  '' \
 	  'Data repository: there is no build, install, sync or release verb (spine AD-2).'
 
@@ -54,6 +58,21 @@ help:
 # corpus envelope?" Stdlib-only, so a fresh clone passes with no venv and no network.
 validate:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-catalog.py"
+
+# The icons corpus. Three separate failures are caught here, and each one is a
+# release-time failure only because this gate exists: a mapping entry whose
+# template was deleted, a placeholder no group (and not defaults.yaml) declares,
+# and an SVG that is not well-formed XML. Run it against the corpus, not against a
+# consumer's deployed copy -- the tag must be shippable before it is published.
+validate-icons:
+	@$(PYTHON) "$(CURDIR)/scripts/validate-icons.py"
+
+# The content corpus. The tarball's top-level default.png is asserted at deploy
+# time by the installer, but by then the tag is published; this asserts it before
+# the tag. Authored *.theme files must be non-empty (a zero-byte theme renders as
+# "no theme" on a host).
+validate-content:
+	@$(PYTHON) "$(CURDIR)/scripts/validate-content.py"
 
 # Shell scripts must be shellcheck-clean, and the validators must at least compile.
 # `desktop/scripts/` is empty in v0.1.0, so shellcheck is a VACUOUS PASS and says so
@@ -109,6 +128,8 @@ hermetic:
 	cd "$$cwd"; \
 	echo "hermetic: cwd=$$cwd HOME=$$home XDG_DATA_HOME=$$data (empty, foreign)"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-catalog.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-icons.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-content.py"; \
 	$(EMPTY_ENV) PYTHONPYCACHEPREFIX="$$tmp/pycache" $(PYTHON) -m compileall -q "$$root/scripts"; \
 	echo "hermetic: compileall $$root/scripts -> ok (bytecode outside the tree)"; \
 	find "$$root/desktop/scripts" -type f \( -name '*.sh' -o -perm -u+x \) -print \
