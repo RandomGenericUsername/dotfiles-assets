@@ -13,5 +13,5 @@
 
 - [req-001-assets-repo-birth](./req-001-assets-repo-birth/ticket.md) — Birth the assets repository: mu harness, five empty classes, schemas, catalog, `v0.1.0` | `done` | openspec: repo-birth (archived 2026-10-21) | tag `v0.1.0`, CI run 39684361040 green
 - [req-002-assets-icons-content](./req-002-assets-icons-content/ticket.md) — S1 assets cut: icons + content, one group map, `v0.2.0` | `done` | tag `v0.2.0` (4b47290), CI run 39686428951 green, release published
-- [req-003-assets-configs](./req-003-assets-configs/ticket.md) — S2 assets cut: static config corpus, `v0.3.0` | `in-progress` | worktree `.worktrees/s2/`, branch `ticket/s2-configs-to-assets`
+- [req-003-assets-configs](./req-003-assets-configs/ticket.md) — S2 assets cut: static config corpus, `v0.3.0`/`v0.3.1` | `done` | tag `v0.3.1` (4359b4f), CI run 39693485641 green, releases published
 
