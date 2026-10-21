@@ -9,7 +9,7 @@
 # contract file that consumers parse). A class with no contract file carries
 # `schema_major: null` — an absent version is a deliberate statement, not a gap.
 #
-# `contents` states what the class actually holds at this tag. `empty in v0.2.0`
+# `contents` states what the class actually holds at this tag. `empty in <tag>`
 # is honest for the classes whose corpus arrives in a later slice: nothing here
 # describes content this repository does not have.
 #
@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.2.0
+tag: v0.3.0
 
 classes:
   icons:
@@ -35,13 +35,19 @@ classes:
     subdirs: []
     schema: templates/example.vars.schema.json
     schema_major: 1
-    contents: empty in v0.2.0 (the shape contract only)
+    contents: empty in v0.3.0 (the shape contract only)
   configs:
     dir: configs
-    subdirs: []
+    subdirs:
+      - hypr
+      - hyprpaper
+      - nvim
+      - rofi
+      - starship
+      - wlogout
     schema: null
     schema_major: null
-    contents: empty in v0.2.0
+    contents: 25 static files; Hyprland (13 Lua), hyprpaper.conf, rofi config.rasi, Neovim (8), starship.toml and the wlogout layout; no Jinja source, no rendered output, no mutable state
   content:
     dir: content
     subdirs:
@@ -57,4 +63,4 @@ classes:
       - scripts
     schema: null
     schema_major: null
-    contents: empty in v0.2.0
+    contents: empty in v0.3.0
