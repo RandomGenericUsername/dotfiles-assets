@@ -1,8 +1,9 @@
 # Dev-only tooling for this repository's validators. THIS IS NOT A PACKAGE.
 #
 # Spine AD-2: the assets repository is DATA. There is no importable package, no
-# `[project.scripts]` (no console script), no `src/` layout and no engine. This file
-# exists only so the validation tooling has a pinned home once it needs one:
+# console-script table (no `project.scripts` key), no `src/` layout and no engine.
+# This file exists only so the validation tooling has a pinned home once it needs
+# one:
 #
 #   * `package = false` -> uv never builds or installs anything from this tree;
 #   * no `[build-system]` -> nothing can be built from it by accident;
