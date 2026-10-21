@@ -106,6 +106,51 @@ Evidence: slice S0 acceptance gate 4 (`git clone … && make gates`).
   repository from the current working directory instead of its own location
 - **THEN** `make hermetic` fails, because the run has neither
 
+### Requirement: The icons validator ships with its corpus
+
+The icons corpus SHALL carry a release-time validator in `make gates` that checks mapping
+templates, declared placeholders, SVG well-formedness and bare `output` names.
+
+Evidence: spine S1 step 2 — a stale mapping entry is otherwise discovered at render time on a
+user's machine.
+
+#### Scenario: A mapping names a template that does not exist
+
+- **WHEN** any `variants[].template` in any `icons/mappings/*.yaml` does not resolve under
+  `icons/templates/<template_dir>/`
+- **THEN** `make validate-icons` fails naming the mapping file, the group, the variant and the
+  unresolved path, and the tag cannot be cut
+
+#### Scenario: An SVG uses a placeholder no layer declares
+
+- **WHEN** a template used by a group carries a `{{COLOR_*}}` token that is declared neither in
+  `icons/mappings/defaults.yaml` nor in that group's or variant's `color_mappings`
+- **THEN** `make validate-icons` fails naming the template and the token
+
+#### Scenario: An SVG is not well-formed XML
+
+- **WHEN** any `*.svg` under `icons/templates/` fails to parse
+- **THEN** `make validate-icons` fails naming the file and the parse error
+
+### Requirement: The content validator ships with its corpus
+
+The content corpus SHALL carry a release-time validator in `make gates` that checks the wallpaper
+archive's top-level `default.png` and the non-emptiness of every authored theme.
+
+Evidence: spine S1 step 3 — the installer's runtime assertion would only catch a bad archive after
+the tag was published.
+
+#### Scenario: The wallpaper archive loses its top-level default.png
+
+- **WHEN** `content/wallpapers/wallpapers.tar.gz` has no member named exactly `default.png`
+- **THEN** `make validate-content` fails, because the deploy unpacks the archive's contents
+
+#### Scenario: An authored theme is empty
+
+- **WHEN** any `*.theme` under `content/btop-themes/` has zero bytes
+- **THEN** `make validate-content` fails naming the file, because an empty theme renders as "no
+  theme" on a provisioned host
+
 ### Requirement: CI jobs and gates cannot drift
 
 The workflow SHALL run one job per `make gates` target, and `scripts/ci-gates-parity.py` SHALL

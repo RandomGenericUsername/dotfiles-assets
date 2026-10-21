@@ -7,6 +7,37 @@ release is a tag with notes, and the corpus is the source.
 
 ## [Unreleased]
 
+### Added
+
+- **`icons/` corpus, imported verbatim.** 117 SVGs in 12 template directories and 8 mapping
+  files, copied byte-for-byte from the dotfiles corpus. `icons/mappings/defaults.yaml` is the
+  group-independent `COLOR_*` vocabulary, **not** a group map; `icons/mappings/icons.yaml` is the
+  manifest the current pipeline renders, and the per-concern mapping files ship alongside it.
+  `icons/README.md` documents the group/template/output shape and the placeholder merge order.
+- **`content/` corpus, imported verbatim.** `content/wallpapers/wallpapers.tar.gz` is the original
+  archive, **not repacked** (its bytes are the contract; the runtime derives a hash from them) and
+  holds a top-level `default.png`. `content/btop-themes/` holds authored themes only — empty today —
+  and never the mutable active-theme preference (spine AD-11). `content/README.md` says why.
+- **`scripts/validate-icons.py` / `make validate-icons`** — the gate the corpus never had: every
+  mapping `template:` resolves under the templates root (honouring a group's `template_dir`), every
+  `{{COLOR_*}}` token used by a template is declared in `defaults.yaml` or that group's / variant's
+  `color_mappings`, every SVG parses as XML, variant names are unique per group, and `output` is a
+  bare file name. It reports unused tokens, unreferenced templates and groups defined by more than
+  one mapping file without failing the tag.
+- **`scripts/validate-content.py` / `make validate-content`** — the tarball contains a top-level
+  `default.png`, every `*.theme` is non-empty, and no archive member escapes the archive root.
+- **`icons/schema.json` extended** to the concrete consumer shape: `group → color_mappings →
+  variants[{name, template, output}]`, variant paths relative to the group's template root, the
+  group/consumer metadata fields, and the lowest-to-highest merge order. It also corrects the
+  skeleton's "a group is a directory" statement: a group is a top-level key, and only
+  `template_dir` selects a directory.
+- **`Makefile` / `.github/workflows/gates.yml`** — `GATES` is now `validate validate-icons
+  validate-content lint hermetic`, with one CI job per gate and `ci-gates-parity` still comparing
+  the two lists in both directions. `hermetic` runs both class validators with empty `HOME`/`XDG_*`
+  from a foreign cwd.
+- **`catalog.yaml`** — `content/` declares its `wallpapers` and `btop-themes` subdirectories, and
+  every class states what it actually holds at this cut.
+
 ## [0.1.0] — skeleton — 2026-10-21
 
 First release, deliberately empty. The point of tagging an empty corpus is to prove the release

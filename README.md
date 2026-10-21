@@ -17,11 +17,12 @@ desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: `v0.1.0` is a skeleton.** The five class directories and the two contracts exist; the
-corpus that fills them lands in later tagged slices. `catalog.yaml` says `empty in v0.1.0` rather
-than describing content this repository does not have, and the class validators arrive **with**
-their corpora — a validator that has never seen the thing it validates is a rule nobody has seen
-work.
+**Status: `icons` and `content` are populated.** `icons/` holds 117 SVG templates in 12 template
+directories and 8 mapping files; `content/` holds the unmodified wallpaper archive and the authored
+btop-theme class (empty today). `templates/`, `configs/` and `desktop/` are still empty and land in
+later tagged slices — `catalog.yaml` says so rather than describing content this repository does not
+have. Each class validator arrives **with** its corpus, so every check has run against real data
+before it can gate a tag.
 
 ## Two version numbers, deliberately independent
 
@@ -43,9 +44,11 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 
 ## Contracts
 
-- `icons/schema.json` — `schema_major: 1`; group → `variants[{name, template, output}]`, where
-  `template` is relative to the templates root; the `{{COLOR_*}}` placeholder vocabulary rules.
-  The corpus checks it describes (`make validate-icons`) arrive with the icons corpus.
+- `icons/schema.json` — `schema_major: 1`; group → `color_mappings` →
+  `variants[{name, template, output}]`, where `template` is relative to the group's template root
+  (`icons/templates/<template_dir>`, `template_dir` defaulting to `"."`); the `{{COLOR_*}}`
+  placeholder vocabulary and merge order. `make validate-icons` enforces it against the corpus:
+  every mapping template resolves, every used placeholder is declared, every SVG parses.
 - `templates/README.md` + `templates/example.vars.schema.json` — the shape every real
   `*.vars.schema.json` takes: JSON Schema for the render context plus `schema_major`, `template`
   and `optional`. One schema beside every template is the rule; `example.` marks the shape file.
@@ -55,12 +58,14 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 Every verb is anchored on the repository root, so `make -C <clone> gates` works from anywhere.
 
 ```bash
-make help            # the verbs below
-make validate        # catalog <-> class dirs, schema JSON, and the generated-artifact absence check
-make lint            # shellcheck over desktop/scripts/** (vacuous until it has scripts) + compileall scripts/
-make gates           # validate + lint + hermetic
-make hermetic        # the same, with empty HOME/XDG_* from a foreign cwd
-make ci-gates-parity # the workflow's job set == the Makefile's gate set, both directions
+make help             # the verbs below
+make validate         # catalog <-> class dirs, schema JSON, and the generated-artifact absence check
+make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
+make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
+make lint             # shellcheck over desktop/scripts/** (vacuous until it has scripts) + compileall scripts/
+make gates            # validate + validate-icons + validate-content + lint + hermetic
+make hermetic         # the same, with empty HOME/XDG_* from a foreign cwd
+make ci-gates-parity  # the workflow's job set == the Makefile's gate set, both directions
 ```
 
 `make hermetic` is not decoration: it is the reproduction command for "green because the corpus is
