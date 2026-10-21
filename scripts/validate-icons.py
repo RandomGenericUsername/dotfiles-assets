@@ -3,11 +3,11 @@
 
 WHAT THIS GATE PROVES, and why each part is separate:
 
-  1. EVERY MAPPING TEMPLATE RESOLVES. Each `variants[].template` in every
-     `icons/mappings/*.yaml` names a real file under `icons/templates/`, joined
-     EXACTLY as the consumer joins it: relative to the TEMPLATES ROOT, not to the
-     mapping file's directory and not to a group's `template_dir` (spine
-     `icons/schema.json`). A stale entry here is otherwise discovered at render
+  1. EVERY MAPPING TEMPLATE RESOLVES. Each `variants[].template` in the ONE
+     group-map file (`icons/mappings/icons.yaml`) names a real file under
+     `icons/templates/`, joined EXACTLY as the consumer joins it: relative to the
+     group's template root (`templates/<template_dir>`, default `.`), not to the
+     mapping file's directory. A stale entry here is otherwise discovered at render
      time on a user's machine, never at release time.
 
   2. EVERY PLACEHOLDER IS DECLARED. Each `{{COLOR_*}}` token used by a template
@@ -24,11 +24,15 @@ WHAT THIS GATE PROVES, and why each part is separate:
      its group, `output` is a bare file name (no path separators, no `..`, no
      placeholder), and a `template` may not escape the templates root.
 
+  5. ONE MANIFEST, ONE VOCABULARY. `icons/mappings/` holds exactly `icons.yaml`
+     (the group map) and `defaults.yaml` (the COLOR_* vocabulary). A second
+     `*.yaml` there is a contract violation: the consumer loads ONE mapping file,
+     so a per-group split is a second source of truth that drifts by construction.
+     The six legacy per-concern files (battery, email-client, network, power-menu,
+     wallpaper-selector, wlogout) were retired in v0.2.0 for exactly that reason.
+
 WHAT IT REPORTS WITHOUT FAILING: a token declared for one group and unused there
-(forward compatibility is allowed), a template no variant references, and a group
-name defined by more than one mapping file (the consumer loads one mapping file,
-so a duplicate is a corpus-hygiene note, not a contract violation -- today the
-legacy per-app files duplicate groups that `icons.yaml` owns).
+(forward compatibility is allowed) and a template no variant references.
 
 WHY NO PyYAML. A fresh clone must pass `make gates` with no virtualenv and no
 network. The mapping files use a deliberately small YAML subset: nested mappings,
@@ -53,7 +57,9 @@ from pathlib import Path
 SCHEMA = "icons/schema.json"
 MAPPINGS = "icons/mappings"
 TEMPLATES = "icons/templates"
+MANIFEST = "icons/mappings/icons.yaml"
 DEFAULTS = "icons/mappings/defaults.yaml"
+VOCABULARY_FILES = ("icons.yaml", "defaults.yaml")
 
 TOKEN = re.compile(r"\{\{\s*([^{}]*?)\s*\}\}")
 BARE_TOKEN = re.compile(r"\{\{(COLOR_[A-Z0-9_]+)\}\}")
@@ -300,160 +306,170 @@ def _check_color_mappings(where: str, value: object, errors: list[str]) -> set[s
 def check_mappings(
     root: Path, defaults: dict[str, object], errors: list[str], notes: list[str]
 ) -> dict[str, int]:
-    """Check every mapping file; return the counts this gate reports."""
+    """Check the one group map; return the counts this gate reports."""
     troot = root / TEMPLATES
     if not troot.is_dir():
         errors.append(f"{TEMPLATES}/: missing -- mappings cannot resolve against nothing")
         return {"files": 0, "groups": 0, "variants": 0}
 
-    mapping_paths = [
-        p for p in sorted((root / MAPPINGS).glob("*.yaml")) if p.name != "defaults.yaml"
-    ]
-    if not mapping_paths:
-        errors.append(f"{MAPPINGS}/*.yaml: no mapping files found -- the gate would be vacuous")
+    # ONE manifest + ONE vocabulary. A second group-map file is not a style
+    # preference: the consumer loads one file, so a split is a second source of
+    # truth that drifts (the six retired per-concern files proved it).
+    mapping_dir = root / MAPPINGS
+    present = sorted(p.name for p in mapping_dir.glob("*.y*ml") if p.is_file())
+    unexpected = [name for name in present if name not in VOCABULARY_FILES]
+    missing = [name for name in VOCABULARY_FILES if name not in present]
+    if unexpected:
+        errors.append(
+            f"{MAPPINGS}/: unexpected mapping file(s) {unexpected} -- this class ships "
+            f"exactly one group map ({MANIFEST}) plus the vocabulary ({DEFAULTS}). The "
+            f"consumer loads ONE mapping file; a per-group split is a second source of "
+            f"truth that drifts by construction"
+        )
+    if missing:
+        errors.append(f"{MAPPINGS}/: missing required file(s) {missing}")
+    manifest = root / MANIFEST
+    if not manifest.is_file():
         return {"files": 0, "groups": 0, "variants": 0}
+
+    rel = MANIFEST
+    try:
+        data = parse_yaml_subset(manifest.read_text(), rel)
+    except YamlSubsetError as exc:
+        errors.append(str(exc))
+        return {"files": 1, "groups": 0, "variants": 0}
 
     # Every token declared anywhere, for the global SVG rule (a token used by a
     # template must be satisfiable by SOME group; the per-group rule below is the
     # stricter, consumer-accurate one).
     globally_declared: set[str] = set(defaults)
-    groups: dict[str, list[str]] = {}
     referenced_paths: set[Path] = set()
-    files = groups_count = variants_count = 0
+    groups_count = variants_count = 0
 
-    for path in mapping_paths:
-        rel = path.relative_to(root).as_posix()
-        try:
-            data = parse_yaml_subset(path.read_text(), rel)
-        except YamlSubsetError as exc:
-            errors.append(str(exc))
+    for group_name, entry in data.items():
+        group_name = str(group_name)
+        if not isinstance(entry, dict):
+            errors.append(f"{rel}: group {group_name!r} must be a mapping")
             continue
-        files += 1
-        for group_name, entry in data.items():
-            group_name = str(group_name)
-            groups.setdefault(group_name, []).append(rel)
-            if not isinstance(entry, dict):
-                errors.append(f"{rel}: group {group_name!r} must be a mapping")
-                continue
-            groups_count += 1
-            group_tokens = _check_color_mappings(
-                f"{rel}:{group_name}", entry.get("color_mappings"), errors
+        groups_count += 1
+        group_tokens = _check_color_mappings(
+            f"{rel}:{group_name}", entry.get("color_mappings"), errors
+        )
+        globally_declared |= group_tokens
+        declared = set(defaults) | group_tokens
+
+        template_dir = entry.get("template_dir", ".")
+        if not isinstance(template_dir, str) or not template_dir:
+            errors.append(
+                f"{rel}:{group_name}: `template_dir` must be a non-empty string "
+                f"(default \".\")"
             )
-            globally_declared |= group_tokens
-            declared = set(defaults) | group_tokens
+            template_dir = "."
+        base = troot / template_dir
+        if Path(template_dir).is_absolute() or not _is_within(base, troot):
+            errors.append(
+                f"{rel}:{group_name}: `template_dir` {template_dir!r} escapes {TEMPLATES}/"
+            )
+            base = troot
 
-            template_dir = entry.get("template_dir", ".")
-            if not isinstance(template_dir, str) or not template_dir:
-                errors.append(
-                    f"{rel}:{group_name}: `template_dir` must be a non-empty string "
-                    f"(default \".\")"
-                )
-                template_dir = "."
-            base = troot / template_dir
-            if Path(template_dir).is_absolute() or not _is_within(base, troot):
-                errors.append(
-                    f"{rel}:{group_name}: `template_dir` {template_dir!r} escapes {TEMPLATES}/"
-                )
-                base = troot
-
-            variants = entry.get("variants")
-            if not isinstance(variants, list) or not variants:
-                errors.append(f"{rel}:{group_name}: `variants` must be a non-empty list")
+        variants = entry.get("variants")
+        if not isinstance(variants, list) or not variants:
+            errors.append(f"{rel}:{group_name}: `variants` must be a non-empty list")
+            continue
+        names: set[str] = set()
+        for index, variant in enumerate(variants):
+            where = f"{rel}:{group_name}[{index}]"
+            if not isinstance(variant, dict):
+                errors.append(f"{where}: a variant must be a mapping")
                 continue
-            names: set[str] = set()
-            for index, variant in enumerate(variants):
-                where = f"{rel}:{group_name}[{index}]"
-                if not isinstance(variant, dict):
-                    errors.append(f"{where}: a variant must be a mapping")
-                    continue
-                variants_count += 1
-                name = variant.get("name")
-                template = variant.get("template")
-                output = variant.get("output")
-                if not isinstance(name, str) or not name:
-                    errors.append(f"{where}: missing `name`")
-                    name = f"#{index}"
-                elif name in names:
-                    errors.append(f"{rel}:{group_name}: duplicate variant name {name!r}")
-                names.add(str(name))
-                variant_tokens = _check_color_mappings(
-                    f"{where} ({name})", variant.get("color_mappings"), errors
+            variants_count += 1
+            name = variant.get("name")
+            template = variant.get("template")
+            output = variant.get("output")
+            if not isinstance(name, str) or not name:
+                errors.append(f"{where}: missing `name`")
+                name = f"#{index}"
+            elif name in names:
+                errors.append(f"{rel}:{group_name}: duplicate variant name {name!r}")
+            names.add(str(name))
+            variant_tokens = _check_color_mappings(
+                f"{where} ({name})", variant.get("color_mappings"), errors
+            )
+            globally_declared |= variant_tokens
+            allowed = declared | variant_tokens
+
+            if not isinstance(output, str) or not output:
+                errors.append(f"{where} ({name}): missing `output`")
+            elif not OUTPUT_NAME.match(output) or "{{" in output:
+                errors.append(
+                    f"{where} ({name}): `output` must be a bare file name "
+                    f"(no path separators, no `..`, no placeholder), got {output!r}"
                 )
-                globally_declared |= variant_tokens
-                allowed = declared | variant_tokens
 
-                if not isinstance(output, str) or not output:
-                    errors.append(f"{where} ({name}): missing `output`")
-                elif not OUTPUT_NAME.match(output) or "{{" in output:
-                    errors.append(
-                        f"{where} ({name}): `output` must be a bare file name "
-                        f"(no path separators, no `..`, no placeholder), got {output!r}"
-                    )
+            if not isinstance(template, str) or not template:
+                errors.append(f"{where} ({name}): missing `template`")
+                continue
+            if template.startswith("/"):
+                errors.append(
+                    f"{where} ({name}): `template` must be relative to the group's "
+                    f"template root, got the absolute path {template!r}"
+                )
+                continue
+            template_path = base / template
+            if not _is_within(template_path, troot):
+                errors.append(
+                    f"{where} ({name}): `template` {template!r} escapes {TEMPLATES}/"
+                )
+                continue
+            if not _is_within(template_path, base):
+                errors.append(
+                    f"{where} ({name}): `template` {template!r} escapes the group's "
+                    f"template_dir {template_dir!r}"
+                )
+                continue
+            if not template_path.is_file():
+                under = TEMPLATES if template_dir == "." else f"{TEMPLATES}/{template_dir}"
+                errors.append(
+                    f"{where} ({name}): `template` {template!r} does not resolve under "
+                    f"{under}/"
+                )
+                continue
 
-                if not isinstance(template, str) or not template:
-                    errors.append(f"{where} ({name}): missing `template`")
-                    continue
-                if template.startswith("/"):
+            referenced_paths.add(template_path.resolve())
+            text = template_path.read_text()
+            used: set[str] = set()
+            for match in TOKEN.finditer(text):
+                body = match.group(1).strip()
+                if not BARE_TOKEN.fullmatch(match.group(0)):
                     errors.append(
-                        f"{where} ({name}): `template` must be relative to the group's "
-                        f"template root, got the absolute path {template!r}"
+                        f"{template_path.relative_to(root)}: malformed placeholder "
+                        f"{match.group(0)!r} (syntax is exactly {{{{COLOR_NAME}}}})"
                     )
                     continue
-                template_path = base / template
-                if not _is_within(template_path, troot):
-                    errors.append(
-                        f"{where} ({name}): `template` {template!r} escapes {TEMPLATES}/"
-                    )
-                    continue
-                if not _is_within(template_path, base):
-                    errors.append(
-                        f"{where} ({name}): `template` {template!r} escapes the group's "
-                        f"template_dir {template_dir!r}"
-                    )
-                    continue
-                if not template_path.is_file():
-                    under = TEMPLATES if template_dir == "." else f"{TEMPLATES}/{template_dir}"
-                    errors.append(
-                        f"{where} ({name}): `template` {template!r} does not resolve under "
-                        f"{under}/"
-                    )
-                    continue
-
-                referenced_paths.add(template_path.resolve())
-                text = template_path.read_text()
-                used: set[str] = set()
-                for match in TOKEN.finditer(text):
-                    body = match.group(1).strip()
-                    if not BARE_TOKEN.fullmatch(match.group(0)):
-                        errors.append(
-                            f"{template_path.relative_to(root)}: malformed placeholder "
-                            f"{match.group(0)!r} (syntax is exactly {{{{COLOR_NAME}}}})"
-                        )
-                        continue
-                    used.add(body)
-                for token in sorted(used - allowed):
-                    errors.append(
-                        f"{template_path.relative_to(root)}: placeholder {token} is not "
-                        f"declared for group {group_name!r} ({rel}) in {DEFAULTS} or its "
-                        f"color_mappings"
-                    )
+                used.add(body)
+            for token in sorted(used - allowed):
+                errors.append(
+                    f"{template_path.relative_to(root)}: placeholder {token} is not "
+                    f"declared for group {group_name!r} ({rel}) in {DEFAULTS} or its "
+                    f"color_mappings"
+                )
 
     # Global rule + XML well-formedness for EVERY template, referenced or not.
     all_svgs = sorted(troot.rglob("*.svg"))
     for svg in all_svgs:
-        rel = svg.relative_to(root).as_posix()
+        svg_rel = svg.relative_to(root).as_posix()
         try:
             ET.parse(svg)
         except ET.ParseError as exc:
-            errors.append(f"{rel}: not well-formed XML ({exc})")
+            errors.append(f"{svg_rel}: not well-formed XML ({exc})")
             continue
         text = svg.read_text()
         for match in TOKEN.finditer(text):
             body = match.group(1).strip()
             if BARE_TOKEN.fullmatch(match.group(0)) and body not in globally_declared:
                 errors.append(
-                    f"{rel}: placeholder {body} is declared in neither {DEFAULTS} nor any "
-                    f"group's color_mappings"
+                    f"{svg_rel}: placeholder {body} is declared in neither {DEFAULTS} nor "
+                    f"any group's color_mappings"
                 )
     unreferenced = [
         p.relative_to(root).as_posix()
@@ -467,16 +483,8 @@ def check_mappings(
             + (" ..." if len(unreferenced) > 5 else "")
         )
 
-    for group_name, files_for_group in sorted(groups.items()):
-        if len(files_for_group) > 1:
-            notes.append(
-                f"group {group_name!r} is defined in {len(files_for_group)} mapping files "
-                f"({', '.join(files_for_group)}); the consumer loads ONE mapping file, so "
-                f"the copies can disagree"
-            )
-
     return {
-        "files": files,
+        "files": 1,
         "groups": groups_count,
         "variants": variants_count,
         "svgs": len(all_svgs),
@@ -496,7 +504,7 @@ def main() -> int:
     counts = check_mappings(root, defaults, errors, notes)
 
     print(
-        f"validate-icons: root={root} mappings={counts.get('files', 0)} "
+        f"validate-icons: root={root} manifest={MANIFEST} "
         f"groups={counts.get('groups', 0)} variants={counts.get('variants', 0)} "
         f"svgs={counts.get('svgs', 0)} defaults={len(defaults)}"
     )
@@ -508,8 +516,8 @@ def main() -> int:
             print(f"  - {error}")
         return 1
     print(
-        "validate-icons: PASS -- every mapping template resolves under "
-        f"{TEMPLATES}/, every used placeholder is declared, every SVG parses"
+        "validate-icons: PASS -- one group map (" + MANIFEST + "), every template "
+        f"resolves under {TEMPLATES}/, every used placeholder is declared, every SVG parses"
     )
     return 0
 

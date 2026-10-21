@@ -10,23 +10,23 @@
     "note": "Both roots are repo-local and relative to this repository's root. This file names no deployment path and no consumer destination (spine AD-2/AD-6)."
   },
   "shape": {
-    "description": "A mapping file is a YAML document whose TOP-LEVEL KEYS are icon groups. A group is a logical name, not necessarily a directory: `battery`, `network` and `wifi-*` all live under `status-bar/`, addressed by their variant `template` paths. The only directory knob is the group's optional `template_dir`. `defaults.yaml` is the exception: its top-level key is `defaults`, the group-independent COLOR_* vocabulary, not a group.",
+    "description": "`icons/mappings/icons.yaml` is THE group map: a YAML document whose TOP-LEVEL KEYS are icon groups. A group is a logical name, not necessarily a directory: `battery`, `network` and `wifi-*` all live under `status-bar/`, addressed by their variant `template` paths. The only directory knob is the group's optional `template_dir`. `icons/mappings/defaults.yaml` is the exception: its top-level key is `defaults`, the group-independent COLOR_* vocabulary, not a group. No other mapping file may exist beside these two.",
     "mapping_file": {
       "root": "mapping of group name -> group entry",
-      "consumer": "a consumer loads ONE mapping file per render. `icons.yaml` is the manifest the current pipeline renders; the per-concern files (battery.yaml, network.yaml, power-menu.yaml, wallpaper-selector.yaml, wlogout.yaml, email-client.yaml) and defaults.yaml ship in the same class and are deployed alongside it."
+      "consumer": "exactly one group map, `icons.yaml`, plus the vocabulary `defaults.yaml`. Per-group splitting is deliberately not supported: a consumer loads ONE mapping file, so a second group map would be a second source of truth that drifts. `make validate-icons` fails if any other `*.yaml` appears under `mappings/`. The six legacy per-concern files (battery, email-client, network, power-menu, wallpaper-selector, wlogout) were retired in v0.2.0 because they duplicated groups owned by `icons.yaml` and nothing loaded them."
     },
     "group_entry": {
-      "id": "string — the group name; the key itself, unique within its mapping file",
-      "template_dir": "string — OPTIONAL directory under `templates_root` that variant templates are joined under; defaults to \".\" (the templates root itself). Must stay inside `templates_root`",
-      "color_mappings": "object — OPTIONAL COLOR_NAME -> value (a literal color, or a scheme role the consumer resolves before rendering)",
-      "variants": "array — REQUIRED, at least one; see variant_entry",
+      "id": "string \u2014 the group name; the key itself, unique within its mapping file",
+      "template_dir": "string \u2014 OPTIONAL directory under `templates_root` that variant templates are joined under; defaults to \".\" (the templates root itself). Must stay inside `templates_root`",
+      "color_mappings": "object \u2014 OPTIONAL COLOR_NAME -> value (a literal color, or a scheme role the consumer resolves before rendering)",
+      "variants": "array \u2014 REQUIRED, at least one; see variant_entry",
       "consumer_metadata": "`bar_mappings`, `output_dir` and `unsafe` are passed through by the consumer (AGS state -> variant tables, per-group output directory, unsafe-render flag). This repository ships them as data and `make validate-icons` does not interpret them."
     },
     "variant_entry": {
-      "name": "string — REQUIRED, unique within the group; the selector a consumer asks for",
-      "template": "string — REQUIRED path to the SVG RELATIVE TO THE GROUP'S TEMPLATE ROOT (`templates_root/<template_dir>`, where `template_dir` defaults to \".\"): forward slashes, no leading `/`, no `..`. The consumer joins it under that root — not under the mapping file's directory",
-      "output": "string — REQUIRED; the rendered file name the consumer writes. A bare file name: no path separators, no `..`, no placeholder",
-      "color_mappings": "object — OPTIONAL per-variant override, highest priority in the merge"
+      "name": "string \u2014 REQUIRED, unique within the group; the selector a consumer asks for",
+      "template": "string \u2014 REQUIRED path to the SVG RELATIVE TO THE GROUP'S TEMPLATE ROOT (`templates_root/<template_dir>`, where `template_dir` defaults to \".\"): forward slashes, no leading `/`, no `..`. The consumer joins it under that root \u2014 not under the mapping file's directory",
+      "output": "string \u2014 REQUIRED; the rendered file name the consumer writes. A bare file name: no path separators, no `..`, no placeholder",
+      "color_mappings": "object \u2014 OPTIONAL per-variant override, highest priority in the merge"
     },
     "merge_order": {
       "lowest_to_highest": [
@@ -53,7 +53,7 @@
   },
   "placeholder_vocabulary": {
     "description": "Placeholders are the only variable part of a template. The vocabulary is a contract: renaming a token breaks every consumer that supplies it, so a rename is a MAJOR change even though no file moved.",
-    "syntax": "{{COLOR_NAME}} — exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
+    "syntax": "{{COLOR_NAME}} \u2014 exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
     "name_pattern": "^COLOR_[A-Z0-9_]+$",
     "rules": [
       "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings` (or a variant override), or in `icons/mappings/defaults.yaml` (the group-independent vocabulary).",
@@ -66,7 +66,8 @@
   "validation": {
     "make validate": "The envelope: valid JSON, integer `schema_major`, and the `shape` / `placeholder_vocabulary` sections present (scripts/validate-catalog.py).",
     "make validate-icons": [
-      "every `template:` in every mapping file resolves to a real file under `icons/templates/<template_dir>/`",
+      "`mappings/` holds exactly one group map (`icons.yaml`) plus the vocabulary (`defaults.yaml`); any other `*.yaml` fails, because the consumer loads one file and a split is a second source of truth",
+      "every `template:` in `icons.yaml` resolves to a real file under `icons/templates/<template_dir>/`",
       "every `{{COLOR_*}}` token used by a template is declared in `defaults.yaml` or that group's / variant's `color_mappings`",
       "every SVG under `icons/templates/` parses as XML",
       "every `variant.name` is unique within its group",
@@ -74,8 +75,7 @@
     ],
     "reported_not_failed": [
       "a token declared for a group but unused by its templates (forward compatibility)",
-      "a template no variant references",
-      "a group name defined by more than one mapping file — the consumer loads one file, so the copies can disagree"
+      "a template no variant references"
     ],
     "make validate-content": "The content class: `content/wallpapers/wallpapers.tar.gz` holds a top-level `default.png`, every `*.theme` is non-empty, and no archive member escapes the archive root.",
     "new_work": "No schema file existed anywhere in the dotfiles corpus before this repository. The shape above is written from what the consumer's loader already expects (icon_templates_renderer `YamlIconConfigLoader` + `PathResolutionService`), and since v0.2.0 it is enforced against the shipped corpus by `make validate-icons`, not only stated."
