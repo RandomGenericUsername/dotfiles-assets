@@ -5,7 +5,34 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
-## [Unreleased]
+## [0.3.0] — 2026-10-21
+
+### Added
+
+- **`configs/` corpus, imported verbatim.** 25 static config files in six tool directories: 13
+  Hyprland Lua files, `hyprpaper/hyprpaper.conf`, `rofi/launcher/config.rasi`, 8 Neovim files,
+  `starship/starship.toml` and `wlogout/layout`. Copied byte-for-byte — `diff -r` returned 0 for all
+  six directories before the consumer deleted its copy — so every consumer destination keeps the
+  bytes it had. `configs/README.md` documents the per-file boundary and the exclusions.
+- **wlogout is one file, not a directory.** `layout` is static config and ships here; `style.css` is
+  rendered from a five-variable Jinja source whose values (palette path, runtime state root, current
+  wallpaper, font family, font size) only exist on a provisioned host. The source is the `templates`
+  class (v0.4.0) and the rendered file is the consumer's. A directory copy would have carried both
+  halves together — the boundary failure this split removes.
+
+### Changed
+
+- `catalog.yaml` — `configs` declares its six subdirectories and its real contents, and `tag` moves
+  to `v0.3.0`. The class enumerates no schema file (`schema_major: null`, deliberate).
+- `openspec/specs/assets-catalog/spec.md` — a requirement for the static-config boundary, with the
+  three acceptance commands that prove it.
+- `README.md` — the status line names `configs` as populated, and the contracts section states that
+  this class's contract is a boundary rather than a schema document.
+- **`[0.2.0]` heading corrected.** The v0.2.0 corpus entry was still filed under `[Unreleased]` in
+  the tagged tree; it now carries the version it actually shipped as. Documentation only — the
+  tag's bytes are untouched.
+
+## [0.2.0] — 2026-10-21
 
 ### Added
 

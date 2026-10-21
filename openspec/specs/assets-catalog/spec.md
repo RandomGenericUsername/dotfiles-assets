@@ -159,6 +159,43 @@ the tag was published.
 - **THEN** `make validate-content` fails naming the file, because an empty theme renders as "no
   theme" on a provisioned host
 
+### Requirement: The configs class holds static, resolved configuration
+
+`configs/` SHALL hold only configuration a consumer copies unchanged: no Jinja source (`*.j2`,
+`*.tpl`), no rendered artifact and no mutable preference. Jinja sources belong to the `templates`
+class, because a template's values are only known at render time; rendered files and mutable
+preferences are produced by the consumer or the runtime.
+
+Evidence: spine S2 step 2 fixes the per-file boundary; `configs/README.md` enumerates the 25
+imported files, the six tool subdirectories and the three deliberate exclusions.
+
+Acceptance check:
+
+```bash
+test -z "$(find configs -type f \( -name '*.j2' -o -name '*.tpl' \))" && echo "no Jinja source"
+test ! -e configs/btop/active-theme && echo "no mutable preference"
+test ! -e configs/zsh/.zshrc && echo "no rendered output"
+```
+
+#### Scenario: A template source is filed under configs
+
+- **WHEN** a `*.j2` or `*.tpl` file appears anywhere under `configs/`
+- **THEN** the boundary check fails, because the consumer would read the template's placeholders
+  literally — the file is a render input and belongs to `templates/` with a vars schema beside it
+
+#### Scenario: A rendered or mutable file is filed under configs
+
+- **WHEN** a rendered `.zshrc`, `style.css`, `kitty.conf` or `btop.conf`, or a mutable
+  `active-theme`, appears under `configs/`
+- **THEN** `make validate` fails on the forbidden file name, and the boundary check fails on the
+  mutable-preference and rendered-output assertions
+
+#### Scenario: wlogout is split per file
+
+- **WHEN** the consumer copies the wlogout configuration
+- **THEN** it copies `layout` from this class as one file and renders `style.css` itself from the
+  template source, because only `layout` is static and a directory copy would carry both halves
+
 ### Requirement: CI jobs and gates cannot drift
 
 The workflow SHALL run one job per `make gates` target, and `scripts/ci-gates-parity.py` SHALL

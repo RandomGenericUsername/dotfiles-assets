@@ -8,7 +8,7 @@ created this repository.
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
 templates/   Jinja sources + one *.vars.schema.json per template
-configs/     static config corpus (compositor, editor, shell, prompt)
+configs/     static config corpus (compositor, editor, prompt, wlogout layout)
 content/     binary/large content (wallpapers, authored themes)
 desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional)
 ```
@@ -17,12 +17,13 @@ desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: `icons` and `content` are populated.** `icons/` holds 117 SVG templates in 12 template
-directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper archive
-and the authored btop-theme class (empty today). `templates/`, `configs/` and `desktop/` are still
-empty and land in later tagged slices — `catalog.yaml` says so rather than describing content this
-repository does not have. Each class validator arrives **with** its corpus, so every check has run
-against real data before it can gate a tag.
+**Status: `icons`, `content` and `configs` are populated.** `icons/` holds 117 SVG templates in 12
+template directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper
+archive and the authored btop-theme class (empty today); `configs/` holds 25 static config files in
+six tool directories — the compositor, editor, prompt and wlogout layout. `templates/` and `desktop/`
+are still empty and land in later tagged slices — `catalog.yaml` says so rather than describing
+content this repository does not have. Each class validator arrives **with** its corpus, so every
+check has run against real data before it can gate a tag.
 
 ## Two version numbers, deliberately independent
 
@@ -53,6 +54,9 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `templates/README.md` + `templates/example.vars.schema.json` — the shape every real
   `*.vars.schema.json` takes: JSON Schema for the render context plus `schema_major`, `template`
   and `optional`. One schema beside every template is the rule; `example.` marks the shape file.
+- `configs/` bears **no** schema file: its contract is a boundary, not a document. `configs/README.md`
+  states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
+  files and mutable preferences belong to the consumer.
 
 ## Gates
 
