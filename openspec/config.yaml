@@ -1,0 +1,27 @@
+schema: spec-driven
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+context: |
+  The dotfiles corpus as DATA (spine AD-2/AD-3): five class directories — icons, templates, configs, content, desktop — behind one annotated semver tag, with no importable package, no console script and no engine (the renderer, palette generator and provisioner are separate pinned repos). Two version numbers, deliberately independent: the tag answers "which corpus", `schema_major` in icons/schema.json and templates/**/*.vars.schema.json answers "can a consumer parse it". This repository names no consumer destination and no deployment path (catalog.yaml is repo-local inventory only). Generated and mutable artifacts are never assets: icons.json, settings.toml, rendered kitty.conf/btop.conf/.zshrc, palette state and btop/active-theme are produced by the consumer or the runtime, and `make validate` fails on any of them. Repo contract in AGENTS.md (CLAUDE.md symlinks there) applies to all artifacts.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - "Every claim carries Evidence (file path + lines, commit SHA, URL + quote, or command + observed output) and a one-command Verify step; mark Evidence MISSING rather than stating unproven claims as fact."
+    - "Always state what is out of scope, and say which class and which tag the change belongs to."
+  specs:
+    - "Each requirement states its acceptance check (command to run + expected result)."
+    - "Cite the source of each requirement (spine decision id, prior-art path, or prototype output)."
+  design:
+    - "Include a verification plan - what prototype or test validates each key decision, with exact commands."
+    - "No component without an evidence-backed reason to exist."
+  tasks:
+    - "Each task ends with an observable check (command + expected output); break tasks into chunks of max 2 hours."
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
