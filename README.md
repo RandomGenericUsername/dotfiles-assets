@@ -1,0 +1,108 @@
+# dotfiles-assets
+
+The dotfiles corpus, as **data**: five class directories behind **one** annotated semver tag.
+No package, no console script, no engine — the icon renderer, the palette generator and the
+provisioner are separate pinned repos, and a renderer growing here would re-open the split that
+created this repository.
+
+```text
+icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
+templates/   Jinja sources + one *.vars.schema.json per template
+configs/     static config corpus (compositor, editor, shell, prompt)
+content/     binary/large content (wallpapers, authored themes)
+desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional)
+```
+
+`catalog.yaml` is what is inside each class, with a `schema_major` per schema-bearing class. It
+says what the corpus *is*; it deliberately names no destination and no path outside this
+repository — that map belongs to whoever deploys the corpus.
+
+**Status: `v0.1.0` is a skeleton.** The five class directories and the two contracts exist; the
+corpus that fills them lands in later tagged slices. `catalog.yaml` says `empty in v0.1.0` rather
+than describing content this repository does not have, and the class validators arrive **with**
+their corpora — a validator that has never seen the thing it validates is a rule nobody has seen
+work.
+
+## Two version numbers, deliberately independent
+
+| Number | Where | Answers |
+| --- | --- | --- |
+| tag `vMAJOR.MINOR.PATCH` | the git tag | *which corpus* is deployed |
+| `schema_major` | `icons/schema.json`, `templates/**/*.vars.schema.json` | *can a consumer parse it* |
+
+- **MAJOR** — a contract or path break: class directory renamed, a file the consumer addresses by
+  path moved or removed, a mapping vocabulary rename, a template's required variable removed or
+  retyped, or a `schema_major` bump.
+- **MINOR** — additive only: a new icon group/variant, a new template (with its own first
+  `schema_major`), a new `.desktop` entry, a new wallpaper.
+- **PATCH** — content fix that keeps every path: an SVG recolor, a re-encoded wallpaper, a text
+  fix in a mapping.
+
+A published tag is **never moved or deleted**; a fix ships as a new tag. A consumer pins
+`repo@tag`, so a moved tag would silently change a machine that was already verified.
+
+## Contracts
+
+- `icons/schema.json` — `schema_major: 1`; group → `variants[{name, template, output}]`, where
+  `template` is relative to the templates root; the `{{COLOR_*}}` placeholder vocabulary rules.
+  The corpus checks it describes (`make validate-icons`) arrive with the icons corpus.
+- `templates/README.md` + `templates/example.vars.schema.json` — the shape every real
+  `*.vars.schema.json` takes: JSON Schema for the render context plus `schema_major`, `template`
+  and `optional`. One schema beside every template is the rule; `example.` marks the shape file.
+
+## Gates
+
+Every verb is anchored on the repository root, so `make -C <clone> gates` works from anywhere.
+
+```bash
+make help            # the verbs below
+make validate        # catalog <-> class dirs, schema JSON, and the generated-artifact absence check
+make lint            # shellcheck over desktop/scripts/** (vacuous until it has scripts) + compileall scripts/
+make gates           # validate + lint + hermetic
+make hermetic        # the same, with empty HOME/XDG_* from a foreign cwd
+make ci-gates-parity # the workflow's job set == the Makefile's gate set, both directions
+```
+
+`make hermetic` is not decoration: it is the reproduction command for "green because the corpus is
+green, not because this host happens to have something provisioned".
+
+**.github/workflows/gates.yml** runs one job per gate. `scripts/ci-gates-parity.py` compares that
+job set against the `Makefile`'s `GATES` and fails naming anything unmatched **in either
+direction**, so a gate cannot run only on a laptop and a CI-only job cannot hide from developers.
+
+### Generated and mutable artifacts are never assets
+
+`icons.json`, `settings.toml`, a rendered `kitty.conf` / `btop.conf` / `.zshrc`, palette/`current/`
+state and a mutable `active-theme` are produced by the consumer or by the runtime. Committing one
+would make this repository a second source of truth that drifts by construction. This is
+mechanical, not a convention: `make validate` fails and names the offending path. Prove it:
+
+```bash
+touch icons/mappings/icons.json && make validate   # non-zero, names icons/mappings/icons.json
+rm icons/mappings/icons.json && make validate      # exit 0
+```
+
+## How `dotfiles-v3` pins this repository
+
+`dotfiles-v3` is the composition repo. It carries a manifest entry naming this repository and an
+exact tag, mirrors that pin in its role variables and in its verify assertions (locked by a parity
+test), fetches the tag **once** into its own install tree, and deploys the class directories it
+needs from that checkout. Two consequences worth stating:
+
+- **This repository names no destination.** The consumer's manifest owns the destination map; a
+  spine path committed here would be a second, unowned copy of it.
+- **A pin bump is its own commit in the consumer**, and only after this repository's gates are
+  green on that tag. The consumer's rollback is a pin bump back, which is why the tag is immutable.
+
+## Releasing
+
+1. `make gates` green on the commit to be tagged.
+2. `CHANGELOG.md` gets the version (`catalog.yaml` too, if the class inventory changed).
+3. Annotated tag: `git tag -a vX.Y.Z -m "..."`.
+4. Push the commit and the tag; CI must be green on the tagged commit.
+5. Announce the tag; consumers bump their pin in their own commit.
+
+## Licence
+
+MIT — see `LICENSE`. This repository ships no build artifacts: a release is a tag with notes, and
+the corpus *is* the source.
