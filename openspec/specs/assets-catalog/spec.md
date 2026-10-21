@@ -132,6 +132,14 @@ user's machine.
 - **WHEN** any `*.svg` under `icons/templates/` fails to parse
 - **THEN** `make validate-icons` fails naming the file and the parse error
 
+#### Scenario: A second group-map file appears
+
+- **WHEN** any `*.yaml` other than `icons.yaml` and `defaults.yaml` appears under
+  `icons/mappings/`
+- **THEN** `make validate-icons` fails naming the file, because a consumer loads ONE
+  mapping file and a split would be a second source of truth that drifts (the six
+  retired per-concern files are the precedent)
+
 ### Requirement: The content validator ships with its corpus
 
 The content corpus SHALL carry a release-time validator in `make gates` that checks the wallpaper

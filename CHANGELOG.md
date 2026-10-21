@@ -9,11 +9,19 @@ release is a tag with notes, and the corpus is the source.
 
 ### Added
 
-- **`icons/` corpus, imported verbatim.** 117 SVGs in 12 template directories and 8 mapping
-  files, copied byte-for-byte from the dotfiles corpus. `icons/mappings/defaults.yaml` is the
-  group-independent `COLOR_*` vocabulary, **not** a group map; `icons/mappings/icons.yaml` is the
-  manifest the current pipeline renders, and the per-concern mapping files ship alongside it.
+- **`icons/` corpus, imported verbatim.** 117 SVGs in 12 template directories, copied
+  byte-for-byte from the dotfiles corpus. `icons/mappings/defaults.yaml` is the group-independent
+  `COLOR_*` vocabulary, **not** a group map; `icons/mappings/icons.yaml` is the one group map.
   `icons/README.md` documents the group/template/output shape and the placeholder merge order.
+- **Six stale duplicate mapping files retired (deviation from the verbatim import).**
+  `battery.yaml`, `email-client.yaml`, `network.yaml`, `power-menu.yaml`,
+  `wallpaper-selector.yaml` and `wlogout.yaml` were removed instead of imported. Evidence: the ITR
+  loader takes a single YAML path and the runtime and `sync-icons-manifest` read `icons.yaml` only,
+  so nothing loaded them; they duplicated groups owned by `icons.yaml` and had drifted
+  (`network.yaml` referenced 12 templates deleted in the network rework, and `battery.yaml` /
+  `power-menu.yaml` carried different variant sets or `color_mappings`). `icons.yaml` and
+  `defaults.yaml` remain byte-identical to the source. `make validate-icons` now fails if any other
+  `*.yaml` appears under `icons/mappings/`, so the split cannot recur.
 - **`content/` corpus, imported verbatim.** `content/wallpapers/wallpapers.tar.gz` is the original
   archive, **not repacked** (its bytes are the contract; the runtime derives a hash from them) and
   holds a top-level `default.png`. `content/btop-themes/` holds authored themes only — empty today —
@@ -21,9 +29,9 @@ release is a tag with notes, and the corpus is the source.
 - **`scripts/validate-icons.py` / `make validate-icons`** — the gate the corpus never had: every
   mapping `template:` resolves under the templates root (honouring a group's `template_dir`), every
   `{{COLOR_*}}` token used by a template is declared in `defaults.yaml` or that group's / variant's
-  `color_mappings`, every SVG parses as XML, variant names are unique per group, and `output` is a
-  bare file name. It reports unused tokens, unreferenced templates and groups defined by more than
-  one mapping file without failing the tag.
+  `color_mappings`, every SVG parses as XML, variant names are unique per group, `output` is a bare
+  file name, and `mappings/` holds exactly one group map plus the vocabulary. It reports unused
+  tokens and unreferenced templates without failing the tag.
 - **`scripts/validate-content.py` / `make validate-content`** — the tarball contains a top-level
   `default.png`, every `*.theme` is non-empty, and no archive member escapes the archive root.
 - **`icons/schema.json` extended** to the concrete consumer shape: `group → color_mappings →

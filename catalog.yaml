@@ -29,7 +29,7 @@ classes:
       - mappings
     schema: icons/schema.json
     schema_major: 1
-    contents: 117 SVGs in 12 template directories, 8 mapping files (defaults.yaml is the group-independent vocabulary, not a group)
+    contents: 117 SVGs in 12 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml)
   templates:
     dir: templates
     subdirs: []

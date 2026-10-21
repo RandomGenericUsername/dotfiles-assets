@@ -18,11 +18,11 @@ says what the corpus *is*; it deliberately names no destination and no path outs
 repository — that map belongs to whoever deploys the corpus.
 
 **Status: `icons` and `content` are populated.** `icons/` holds 117 SVG templates in 12 template
-directories and 8 mapping files; `content/` holds the unmodified wallpaper archive and the authored
-btop-theme class (empty today). `templates/`, `configs/` and `desktop/` are still empty and land in
-later tagged slices — `catalog.yaml` says so rather than describing content this repository does not
-have. Each class validator arrives **with** its corpus, so every check has run against real data
-before it can gate a tag.
+directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper archive
+and the authored btop-theme class (empty today). `templates/`, `configs/` and `desktop/` are still
+empty and land in later tagged slices — `catalog.yaml` says so rather than describing content this
+repository does not have. Each class validator arrives **with** its corpus, so every check has run
+against real data before it can gate a tag.
 
 ## Two version numbers, deliberately independent
 
@@ -48,7 +48,8 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   `variants[{name, template, output}]`, where `template` is relative to the group's template root
   (`icons/templates/<template_dir>`, `template_dir` defaulting to `"."`); the `{{COLOR_*}}`
   placeholder vocabulary and merge order. `make validate-icons` enforces it against the corpus:
-  every mapping template resolves, every used placeholder is declared, every SVG parses.
+  every mapping template resolves, every used placeholder is declared, every SVG parses, and no
+  second group-map file exists beside `icons.yaml`.
 - `templates/README.md` + `templates/example.vars.schema.json` — the shape every real
   `*.vars.schema.json` takes: JSON Schema for the render context plus `schema_major`, `template`
   and `optional`. One schema beside every template is the rule; `example.` marks the shape file.
