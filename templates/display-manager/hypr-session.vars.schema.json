@@ -1,0 +1,18 @@
+{
+  "$comment": "The render context for templates/display-manager/hypr-session.j2. ZERO variables: a fixed /bin/sh launcher for the Hyprland session. The empty contract is asserted against the body by `make validate-templates`, so a future interpolation cannot slip in undeclared.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/hypr-session.vars.schema.json",
+  "title": "display-manager/hypr-session.j2 — render context",
+  "description": "No render context: the session launcher contains no Jinja expressions. It is a `.j2` because the consumer installs it through the template module.",
+  "schema_major": 1,
+  "template": "hypr-session.j2",
+  "type": "object",
+  "properties": {},
+  "required": [],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "why_a_schema_for_a_variable_free_template": "The pairing rule is mechanical (`<name>.j2` ⇄ `<name>.vars.schema.json`), and the empty contract still fails a future `{{ }}` — see `lint-templates`' property/read equality rule.",
+    "assets_scope": "The file's mode and destination (/usr/local/bin, 0755) belong to the installer: assets carries content, never ownership (spine AD-9)."
+  }
+}

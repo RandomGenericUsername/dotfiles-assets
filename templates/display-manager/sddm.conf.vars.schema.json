@@ -1,0 +1,24 @@
+{
+  "$comment": "The render context for templates/display-manager/sddm.conf.j2. One name: the SDDM display server. The DM TYPE, packages, the Pixie pin and service enablement stay in the installer (spine AD-9) — only the file body is an asset.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/sddm.conf.vars.schema.json",
+  "title": "display-manager/sddm.conf.j2 — render context",
+  "description": "The single value the SDDM config reads: DisplayServer (wayland or x11).",
+  "schema_major": 1,
+  "template": "sddm.conf.j2",
+  "type": "object",
+  "properties": {
+    "display_manager_sddm_display_server": {
+      "type": "string",
+      "enum": ["wayland", "x11"],
+      "description": "SDDM's DisplayServer value. Enumerated because these are the two values the directive accepts; the consumer's default is `wayland` (the no-X11-GPU-grab choice the template documents)."
+    }
+  },
+  "required": ["display_manager_sddm_display_server"],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "No `default(` fallback: the display server is a login-path decision, and a silently defaulted value is exactly the kind of broken-greeter state this file cannot detect.",
+    "assets_scope": "No mode, ownership, service name or package list here (spine AD-9): the installer renders this at 0644 with become and owns enablement."
+  }
+}

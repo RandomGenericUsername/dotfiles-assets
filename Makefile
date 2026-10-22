@@ -16,8 +16,9 @@
 #   make validate        catalog <-> class dirs, schema JSON, AD-11 absence check
 #   make validate-icons  every mapping template resolves, placeholders declared, SVGs parse
 #   make validate-content  the wallpaper tarball holds a top-level default.png, themes non-empty
+#   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
-#   make gates           validate + validate-icons + validate-content + lint + hermetic
+#   make gates           validate + validate-icons + validate-content + validate-templates + lint + hermetic
 #   make gates-ci        the same gate set, reproducible without a workflow runner
 #   make hermetic        the same checks with empty HOME/XDG_* and a foreign cwd
 #
@@ -31,22 +32,23 @@ PYTHON ?= python3
 
 # The developer gate set. `gates` runs ALL of it: a gate that is not run here is a
 # gate nobody runs.
-GATES := validate validate-icons validate-content lint hermetic
+GATES := validate validate-icons validate-content validate-templates lint hermetic
 
 # The env every hermetic command runs with: nothing inherited but PATH. HOME and the
 # four XDG_* dirs point into a throwaway tree this recipe creates and deletes.
 EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 	XDG_CONFIG_HOME="$$config" XDG_CACHE_HOME="$$cache" XDG_STATE_HOME="$$state"
 
-.PHONY: help validate validate-icons validate-content lint gates gates-ci ci-gates-parity hermetic
+.PHONY: help validate validate-icons validate-content validate-templates lint gates gates-ci ci-gates-parity hermetic
 
 help:
 	@printf '%s\n' \
 	  'validate          catalog <-> class dirs, schema JSON well-formedness, AD-11 absence check' \
 	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
+	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'lint              shellcheck desktop/scripts/** (vacuous until it has scripts) + compileall scripts/' \
-	  'gates             validate + validate-icons + validate-content + lint + hermetic' \
+	  'gates             validate + validate-icons + validate-content + validate-templates + lint + hermetic' \
 	  'gates-ci          the same gate set, reproducible without a workflow runner' \
 	  'ci-gates-parity   workflow job set == GATES + declared CI-only jobs, both directions' \
 	  'hermetic          the same checks with empty HOME/XDG_* from a foreign cwd' \
@@ -73,6 +75,14 @@ validate-icons:
 # "no theme" on a host).
 validate-content:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-content.py"
+
+# The templates class. This is the gate that makes the render contract executable:
+# a template with no schema, a schema that declares a name its body never reads, and
+# a `default(` fallback on a required value all fail here — before the tag, not on a
+# user's machine at render time. It reads BOTH `{{ }}` and `{% %}` expressions, so a
+# branch-only variable (config.toml.j2's greeter type) is required too.
+validate-templates:
+	@$(PYTHON) "$(CURDIR)/scripts/validate-templates.py"
 
 # Shell scripts must be shellcheck-clean, and the validators must at least compile.
 # `desktop/scripts/` is empty in v0.1.0, so shellcheck is a VACUOUS PASS and says so
@@ -130,6 +140,7 @@ hermetic:
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-catalog.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-icons.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-content.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-templates.py"; \
 	$(EMPTY_ENV) PYTHONPYCACHEPREFIX="$$tmp/pycache" $(PYTHON) -m compileall -q "$$root/scripts"; \
 	echo "hermetic: compileall $$root/scripts -> ok (bytecode outside the tree)"; \
 	find "$$root/desktop/scripts" -type f \( -name '*.sh' -o -perm -u+x \) -print \

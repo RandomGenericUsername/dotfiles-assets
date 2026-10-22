@@ -1,0 +1,24 @@
+{
+  "$comment": "The render context for templates/kitty/kitty.conf.j2. One name: the runtime-owned current/ pointer directory, embedded ABSOLUTE because kitty resolves `include` relative to the config file. An empty render is a kitty that never re-themes — silently.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/kitty/kitty.conf.vars.schema.json",
+  "title": "kitty/kitty.conf.j2 — render context",
+  "description": "The single value the kitty config reads: the runtime state-root current/ directory holding colors.kitty.",
+  "schema_major": 1,
+  "template": "kitty.conf.j2",
+  "type": "object",
+  "properties": {
+    "kitty_config_state_current_dir": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to the runtime-owned current/ pointer directory. The template emits `include <value>/colors.kitty`; kitty joins a relative include under its config dir, so a non-absolute value silently includes nothing."
+    }
+  },
+  "required": ["kitty_config_state_current_dir"],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "No `default(` fallback: the whole point of the absolute include is that a missing value fails the render instead of shipping a config that includes nothing.",
+    "name_shape": "The name is the consumer's own variable name, not a generic one — the template moved verbatim, so its contract keeps the identifier the consumer already supplies."
+  }
+}

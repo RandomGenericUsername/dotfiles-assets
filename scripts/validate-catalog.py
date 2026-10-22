@@ -16,6 +16,13 @@ WHAT THIS GATE PROVES, and why each part is separate:
      `*.vars.schema.json` under a schema-bearing class is checked too, so a
      template's contract cannot rot just because the catalog was not edited.
 
+     The `templates` class bears one contract PER TEMPLATE, so its catalog
+     `schema` value is the GLOB `templates/**/*.vars.schema.json` rather than one
+     arbitrary representative. A glob must match at least one file, every match
+     must live under the declaring class, and every match's `schema_major` must
+     equal the catalog's — the class-level version is a statement about the whole
+     set, and half a set at `schema_major: 2` is exactly the drift this catches.
+
   3. GENERATED AND MUTABLE ARTIFACTS ARE ABSENT (spine AD-11). `icons.json`,
      `settings.toml`, a rendered `kitty.conf` / `btop.conf` / `.zshrc`, and a
      mutable `active-theme` are produced by the consumer or by the runtime.
@@ -23,11 +30,11 @@ WHAT THIS GATE PROVES, and why each part is separate:
      construction. This is mechanical on purpose: a convention nobody executes is
      a convention that gets broken by the first hurried commit.
 
-WHAT IT DOES NOT PROVE (stated, not implied): that the CORPUS is valid. In v0.1.0
-the class directories are empty, so there are no mappings to resolve and no SVGs to
-parse. The class validators (`validate-icons`, `validate-templates`,
-`validate-content`, `validate-desktop`) land with their corpora; a validator with
-no corpus is a rule nobody has seen work.
+WHAT IT DOES NOT PROVE (stated, not implied): that the CORPUS is valid. The class
+validators carry that, each landing with its corpus: `validate-icons`,
+`validate-content` and `validate-templates` exist at this tag; `validate-desktop`
+arrives with the `desktop/` corpus. A validator with no corpus is a rule nobody
+has seen work.
 
 WHY NO PyYAML. A fresh clone must pass `make gates` with no virtualenv and no
 network: a validation verb that requires `uv sync` first is not a fresh-clone verb.
@@ -384,27 +391,42 @@ def check_schemas(root: Path, classes: dict, errors: list[str]) -> list[tuple[st
             errors.append(
                 f"{CATALOG}: class {name!r} schema {schema_rel!r} is outside its class dir"
             )
-        path = root / schema_rel
-        if not path.is_file():
-            errors.append(f"{schema_rel}: named by the catalog but absent")
-            continue
-        try:
-            data = json.loads(path.read_text())
-        except json.JSONDecodeError as exc:
-            errors.append(f"{schema_rel}: invalid JSON ({exc})")
-            continue
-        if not isinstance(data, dict):
-            errors.append(f"{schema_rel}: a schema document must be a JSON object")
-            continue
-        if not isinstance(data.get("schema_major"), int):
-            errors.append(f"{schema_rel}: missing an integer `schema_major` (spine AD-12)")
-        elif data["schema_major"] != major:
-            errors.append(
-                f"{schema_rel}: schema_major {data['schema_major']} disagrees with the "
-                f"catalog's {major}"
-            )
-        if schema_rel.endswith(".vars.schema.json"):
-            _check_vars_schema(path, data, errors)
+        # One contract per member (templates) is expressed as a glob; one contract
+        # for the class (icons) as a path. A glob is not a wildcard escape hatch:
+        # it must match, and every match is held to the same version.
+        if any(ch in schema_rel for ch in "*?["):
+            paths = sorted(root.glob(schema_rel))
+            if not paths:
+                errors.append(f"{schema_rel}: named by the catalog but matches no file")
+                continue
+        else:
+            paths = [root / schema_rel]
+        for path in paths:
+            rel = str(path.relative_to(root))
+            if not rel.startswith(f"{name}/"):
+                errors.append(
+                    f"{CATALOG}: class {name!r} schema {rel!r} is outside its class dir"
+                )
+            if not path.is_file():
+                errors.append(f"{rel}: named by the catalog but absent")
+                continue
+            try:
+                data = json.loads(path.read_text())
+            except json.JSONDecodeError as exc:
+                errors.append(f"{rel}: invalid JSON ({exc})")
+                continue
+            if not isinstance(data, dict):
+                errors.append(f"{rel}: a schema document must be a JSON object")
+                continue
+            if not isinstance(data.get("schema_major"), int):
+                errors.append(f"{rel}: missing an integer `schema_major` (spine AD-12)")
+            elif data["schema_major"] != major:
+                errors.append(
+                    f"{rel}: schema_major {data['schema_major']} disagrees with the "
+                    f"catalog's {major}"
+                )
+            if rel.endswith(".vars.schema.json"):
+                _check_vars_schema(path, data, errors)
         bearing.append((name, major, schema_rel))
 
     # Every vars schema in a schema-bearing class is a contract, catalogued or not:

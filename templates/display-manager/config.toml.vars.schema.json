@@ -1,0 +1,29 @@
+{
+  "$comment": "The render context for templates/display-manager/config.toml.j2 (greetd). TWO names — the greeter user in `{{ }}` and the greeter type as an `{% if %}` condition. A `{{ }}`-only count reports 1 and misses the branch variable; `make validate-templates` reads both expression forms.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/config.toml.vars.schema.json",
+  "title": "display-manager/config.toml.j2 — render context",
+  "description": "The two values the greetd config reads: which greeter runs, and the user it runs as.",
+  "schema_major": 1,
+  "template": "config.toml.j2",
+  "type": "object",
+  "properties": {
+    "display_manager_greeter_type": {
+      "type": "string",
+      "enum": ["regreet", "tuigreet"],
+      "description": "Selects the [default_session] command: regreet inside cage, or tuigreet with the hypr-session launcher. Read as an `{% if %}` condition — required even though it never appears in a `{{ }}` interpolation."
+    },
+    "display_manager_greeter_user": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The system user the greeter session runs as (the greetd `user` field)."
+    }
+  },
+  "required": ["display_manager_greeter_type", "display_manager_greeter_user"],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "No `default(` fallback on either name. An unset greeter type must fail the render, not silently choose a greeter the target has no package for.",
+    "assets_scope": "The greetd/regreet/cage package lists live in the installer (spine AD-9); this template selects among already-installed greeters."
+  }
+}

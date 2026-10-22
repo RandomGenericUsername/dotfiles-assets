@@ -1,0 +1,25 @@
+{
+  "$comment": "The render context for templates/btop/btop.conf.j2. One name: the selected theme FILE NAME (not a path) — btop matches color_theme only against the themes it discovered at startup, so an absolute path here is the silent-fallback bug the template documents.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/btop/btop.conf.vars.schema.json",
+  "title": "btop/btop.conf.j2 — render context",
+  "description": "The single value the btop config reads: the active theme's bare file name.",
+  "schema_major": 1,
+  "template": "btop.conf.j2",
+  "type": "object",
+  "properties": {
+    "btop_config_active_theme": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]+$",
+      "description": "The theme file name btop selects, e.g. colors.btop.theme. A bare name: the pattern rejects `/`, because a path outside btop's scanned theme dirs resolves to nothing and falls back to the built-in default without an error."
+    }
+  },
+  "required": ["btop_config_active_theme"],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "No `default(` fallback in the template. The consumer decides the fallback (its repo-owned active-theme setting, else the generated theme) BEFORE rendering; the template must not paper over a missing value.",
+    "value_origin": "The value is the consumer's mutable preference (design D10), never an asset: this repository ships the theme files and the selection contract, not the selection."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$comment": "The render context for templates/display-manager/regreet.toml.j2. Three names, all greeter appearance paths/strings. The template is retained for the greetd+regreet fallback path; no consumer renders it at v0.4.0, and that is why its contract is stated here rather than inferred from a role.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/regreet.toml.vars.schema.json",
+  "title": "display-manager/regreet.toml.j2 — render context",
+  "description": "The three values the regreet greeter config reads: background image path, font name, greeting message.",
+  "schema_major": 1,
+  "template": "regreet.toml.j2",
+  "type": "object",
+  "properties": {
+    "display_manager_greeter_background": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to a greeter-readable copy of a wallpaper ([background].path). Relative paths resolve against regreet's cwd, not the config dir."
+    },
+    "display_manager_greeter_font": {
+      "type": "string",
+      "minLength": 1,
+      "description": "GTK font name for the greeter UI ([GTK].font_name). Must be installed for the greeter user."
+    },
+    "display_manager_greeter_greeting": {
+      "type": "string",
+      "description": "The login card's greeting text ([appearance].greeting_msg). May be empty: an empty greeting is a deliberate design choice, and the template renders it as an empty quoted string."
+    }
+  },
+  "required": [
+    "display_manager_greeter_background",
+    "display_manager_greeter_font",
+    "display_manager_greeter_greeting"
+  ],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "No `default(` fallback: a fallback background path or font name is a greeter that renders with a wrong look and no error.",
+    "unrendered_at_v040": "Shipped as a contract, not a live render: the installer's SDDM-Pixie path is the default (spine AD-9) and the greetd+regreet templates are retained for the fallback. When that path is re-enabled the consumer supplies these three."
+  }
+}

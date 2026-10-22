@@ -57,6 +57,14 @@ jobs:
       - name: Tarball holds a top-level default.png, every *.theme is non-empty
         run: make validate-content
 
+  validate-templates:
+    name: validate-templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: One vars schema per Jinja source, contract == body, no default() on required
+        run: make validate-templates
+
   lint:
     name: lint
     runs-on: ubuntu-latest

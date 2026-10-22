@@ -1,0 +1,18 @@
+{
+  "$comment": "The render context for templates/display-manager/regreet.css.j2. ZERO variables: the stylesheet is a fixed GTK4 sheet, and this schema says so with an empty `required` and an empty `properties` map — an empty `required` is only legal here because the template reads nothing, which `make validate-templates` derives from the body rather than trusting this file.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/regreet.css.vars.schema.json",
+  "title": "display-manager/regreet.css.j2 — render context",
+  "description": "No render context: the regreet stylesheet carries no Jinja expressions. The `.j2` suffix is kept because the consumer renders it through the template module (idempotent, atomic, mode-controlled), not because it interpolates.",
+  "schema_major": 1,
+  "template": "regreet.css.j2",
+  "type": "object",
+  "properties": {},
+  "required": [],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "why_a_schema_for_a_variable_free_template": "`additionalProperties: false` with no properties is a real assertion: a `{{ }}` added later fails `make validate-templates` until a property (and a required/optional placement) is declared. The pair is what makes the empty contract checkable rather than absent.",
+    "unrendered_at_v040": "Retained for the greetd+regreet fallback path (spine AD-9)."
+  }
+}

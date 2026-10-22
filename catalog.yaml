@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.3.1
+tag: v0.4.0
 
 classes:
   icons:
@@ -32,10 +32,15 @@ classes:
     contents: 117 SVGs in 12 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml)
   templates:
     dir: templates
-    subdirs: []
-    schema: templates/example.vars.schema.json
+    subdirs:
+      - btop
+      - display-manager
+      - kitty
+      - wlogout
+      - zsh
+    schema: "templates/**/*.vars.schema.json"
     schema_major: 1
-    contents: empty in v0.3.0 (the shape contract only)
+    contents: 9 Jinja sources (zsh .zshrc, wlogout style.css, kitty.conf, btop.conf, 5 display-manager files) each with a sibling vars schema; 24 required variables and 0 optional; no rendered output
   configs:
     dir: configs
     subdirs:

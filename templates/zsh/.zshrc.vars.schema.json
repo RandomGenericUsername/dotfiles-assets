@@ -1,0 +1,80 @@
+{
+  "$comment": "The render context for templates/zsh/.zshrc.j2. `required` is derived from the template body (every name it reads in a `{{ }}` or `{% %}` expression), not from the consuming role's variable set — the zsh_config role defines far more than these eleven, and copying that set would make this contract say nothing.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/zsh/.zshrc.vars.schema.json",
+  "title": "zsh/.zshrc.j2 — render context",
+  "description": "Every value the .zshrc template reads. Path-valued names are absolute paths the consumer resolves on the target host; this repository supplies none of them.",
+  "schema_major": 1,
+  "template": ".zshrc.j2",
+  "type": "object",
+  "properties": {
+    "STARSHIP_CONFIG": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to starship.toml (exported as STARSHIP_CONFIG)."
+    },
+    "OH_MY_ZSH_DIR": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to the oh-my-zsh clone (exported as ZSH)."
+    },
+    "COLOR_SCHEME_CURRENT_DIR": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The runtime-owned current/ pointer directory; the template cats <dir>/colors.sequences. Absolute — a relative value would source a file that never exists."
+    },
+    "NVM_DIR": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to the nvm clone (exported as NVM_DIR)."
+    },
+    "PYENV_DIR": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to the pyenv clone (exported as PYENV_ROOT). Read only inside the PYENV_CONFIGURED block."
+    },
+    "PYENV_CONFIGURED": {
+      "type": "boolean",
+      "description": "Whether the pyenv clone exists on the target; gates the whole pyenv block. Read as an `{% if %}` condition, so it is required even though it never appears in a `{{ }}` interpolation."
+    },
+    "ZSH_SYNTAX_HIGHLIGHTING": {
+      "type": "string",
+      "description": "Absolute path to the zsh-syntax-highlighting script. Empty string = plugin absent = block omitted; that is a VALUE, not a missing variable."
+    },
+    "ZSH_AUTOSUGGESTIONS": {
+      "type": "string",
+      "description": "Absolute path to the zsh-autosuggestions script. Empty string = plugin absent = block omitted."
+    },
+    "ZSH_HISTORY_SUBSTRING_SEARCH": {
+      "type": "string",
+      "description": "Absolute path to the history-substring-search script. Empty string = plugin absent = block omitted."
+    },
+    "FZF_KEY_BINDINGS": {
+      "type": "string",
+      "description": "Absolute path to fzf's key-bindings.zsh (distro-dependent). Empty string = absent = block omitted."
+    },
+    "FZF_COMPLETION": {
+      "type": "string",
+      "description": "Absolute path to fzf's completion.zsh (distro-dependent). Empty string = absent = block omitted."
+    }
+  },
+  "required": [
+    "STARSHIP_CONFIG",
+    "OH_MY_ZSH_DIR",
+    "COLOR_SCHEME_CURRENT_DIR",
+    "NVM_DIR",
+    "PYENV_DIR",
+    "PYENV_CONFIGURED",
+    "ZSH_SYNTAX_HIGHLIGHTING",
+    "ZSH_AUTOSUGGESTIONS",
+    "ZSH_HISTORY_SUBSTRING_SEARCH",
+    "FZF_KEY_BINDINGS",
+    "FZF_COMPLETION"
+  ],
+  "optional": [],
+  "additionalProperties": false,
+  "x-render-contract": {
+    "no_default_on_required": "None of these names may carry a `default(` fallback in the template: a fallback turns a missing value into a silently wrong config (an empty include path is the concrete failure shape this contract exists to prevent).",
+    "empty_vs_missing": "The five plugin paths are required and may be empty. An absent plugin is expressed as an empty value by the consumer, which is why they are not optional: an OPTIONAL name can be absent, a required name with an empty string is a decision the consumer made explicitly."
+  }
+}
