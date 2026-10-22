@@ -49,7 +49,7 @@ deletes `dotfiles/applications/` and `dotfiles/scripts/` in its own commits.
 - [x] The openspec spec gains the desktop requirement with executable acceptance commands.
 - [x] `make gates`, `make gates-ci` and `make hermetic` exit 0 (worktree and a fresh anonymous
       clone); `openspec validate --specs` exit 0.
-- [ ] Annotated `v0.5.0` pushed and anonymously fetchable (tag object + peeled commit recorded);
+- [x] Annotated `v0.5.0` pushed and anonymously fetchable (tag object + peeled commit recorded);
       GitHub Release published with notes and no assets; CI green on `master`.
 
 ## Evidence
@@ -77,3 +77,12 @@ deletes `dotfiles/applications/` and `dotfiles/scripts/` in its own commits.
 - `openspec validate --specs` → rc 0, 1 passed; two >500-character requirement WARNINGs (one
   carried from the templates requirement, one on the new desktop requirement) — warnings, not
   failures.
+- Release: `v0.5.0` annotated tag object `1fdbc8584ca42c7c9f15827674dabadb83aabd11`, peeled commit
+  `fc0ce5d63f6dce547a427a55b7675faed6f08efd`; `git ls-remote --tags origin 'refs/tags/v0.5.0*'`
+  prints exactly the tag object line and its `^{}` line. Release published with notes and **zero**
+  assets (a tag is the release).
+- CI: GitHub Actions run `39813199995` on `fc0ce5d6` → `success`, **8 jobs** green — `validate`,
+  `validate-icons`, `validate-content`, `validate-templates`, `validate-desktop`, `lint`, `hermetic`,
+  `ci-gates-parity`.
+- Fresh anonymous clone: `git clone …/dotfiles-assets && git checkout v0.5.0 && make gates` → rc 0
+  (`validate-desktop: PASS`, `hermetic: PASS`); `make ci-gates-parity` → rc 0.
