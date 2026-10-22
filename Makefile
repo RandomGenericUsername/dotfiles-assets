@@ -17,8 +17,9 @@
 #   make validate-icons  every mapping template resolves, placeholders declared, SVGs parse
 #   make validate-content  the wallpaper tarball holds a top-level default.png, themes non-empty
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
+#   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
-#   make gates           validate + validate-icons + validate-content + validate-templates + lint + hermetic
+#   make gates           validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic
 #   make gates-ci        the same gate set, reproducible without a workflow runner
 #   make hermetic        the same checks with empty HOME/XDG_* and a foreign cwd
 #
@@ -32,14 +33,14 @@ PYTHON ?= python3
 
 # The developer gate set. `gates` runs ALL of it: a gate that is not run here is a
 # gate nobody runs.
-GATES := validate validate-icons validate-content validate-templates lint hermetic
+GATES := validate validate-icons validate-content validate-templates validate-desktop lint hermetic
 
 # The env every hermetic command runs with: nothing inherited but PATH. HOME and the
 # four XDG_* dirs point into a throwaway tree this recipe creates and deletes.
 EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 	XDG_CONFIG_HOME="$$config" XDG_CACHE_HOME="$$cache" XDG_STATE_HOME="$$state"
 
-.PHONY: help validate validate-icons validate-content validate-templates lint gates gates-ci ci-gates-parity hermetic
+.PHONY: help validate validate-icons validate-content validate-templates validate-desktop lint gates gates-ci ci-gates-parity hermetic
 
 help:
 	@printf '%s\n' \
@@ -47,8 +48,9 @@ help:
 	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
-	  'lint              shellcheck desktop/scripts/** (vacuous until it has scripts) + compileall scripts/' \
-	  'gates             validate + validate-icons + validate-content + validate-templates + lint + hermetic' \
+	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
+	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
+	  'gates             validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic' \
 	  'gates-ci          the same gate set, reproducible without a workflow runner' \
 	  'ci-gates-parity   workflow job set == GATES + declared CI-only jobs, both directions' \
 	  'hermetic          the same checks with empty HOME/XDG_* from a foreign cwd' \
@@ -84,10 +86,39 @@ validate-content:
 validate-templates:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-templates.py"
 
+# The desktop class (spine AD-10, layer 1). Static by design: it parses the six
+# entries, tokenizes each `Exec` with the spec's quoting rules, requires `TryExec`
+# to name the same declared binary `Exec` launches, and holds `desktop.yaml` to the
+# exact `.desktop` set both ways. `shellcheck` is the shell half of the same layer
+# and runs HERE as well as in `lint`: a reviewer who runs only this target must not
+# get a half-validated class. A missing shellcheck with scripts present is a
+# FAILURE, not a skip — a silent skip and a pass are indistinguishable in a log.
+validate-desktop:
+	@set -eu; \
+	root="$(CURDIR)"; \
+	$(PYTHON) "$$root/scripts/validate-desktop.py"; \
+	tmp="$$(mktemp -d)"; \
+	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
+	find "$$root/desktop/scripts" -type f \( -name '*.sh' -o -perm -u+x \) -print \
+	  > "$$tmp/scripts.list" 2>/dev/null || true; \
+	if [ -s "$$tmp/scripts.list" ]; then \
+	  command -v shellcheck >/dev/null 2>&1 || { \
+	    echo "validate-desktop: FAIL -- shellcheck is not installed but desktop/scripts holds script(s):" >&2; \
+	    sed 's/^/  /' "$$tmp/scripts.list" >&2; \
+	    exit 1; \
+	  }; \
+	  xargs shellcheck < "$$tmp/scripts.list"; \
+	  echo "validate-desktop: shellcheck -> $$(wc -l < "$$tmp/scripts.list") script(s) clean"; \
+	else \
+	  echo "validate-desktop: shellcheck -> 0 executable scripts (nothing to check)"; \
+	fi
+
 # Shell scripts must be shellcheck-clean, and the validators must at least compile.
-# `desktop/scripts/` is empty in v0.1.0, so shellcheck is a VACUOUS PASS and says so
-# out loud -- a silent skip and a pass would be indistinguishable in a green log.
-# Bytecode goes to a throwaway PYTHONPYCACHEPREFIX, so linting never dirties the tree.
+# `desktop/scripts/` holds `toggle-touchpad` since v0.5.0, so shellcheck is a REAL
+# check here (it was a vacuous pass while the class was empty). It also runs inside
+# `validate-desktop`: the desktop class's layer 1 owns its own scripts' hygiene, and
+# this target is the class-independent sweep. Bytecode goes to a throwaway
+# PYTHONPYCACHEPREFIX, so linting never dirties the tree.
 lint:
 	@set -eu; \
 	root="$(CURDIR)"; \
@@ -141,6 +172,7 @@ hermetic:
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-icons.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-content.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-templates.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-desktop.py"; \
 	$(EMPTY_ENV) PYTHONPYCACHEPREFIX="$$tmp/pycache" $(PYTHON) -m compileall -q "$$root/scripts"; \
 	echo "hermetic: compileall $$root/scripts -> ok (bytecode outside the tree)"; \
 	find "$$root/desktop/scripts" -type f \( -name '*.sh' -o -perm -u+x \) -print \

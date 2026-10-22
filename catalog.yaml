@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.4.0
+tag: v0.5.0
 
 classes:
   icons:
@@ -66,6 +66,6 @@ classes:
     subdirs:
       - applications
       - scripts
-    schema: null
-    schema_major: null
-    contents: empty in v0.3.0
+    schema: desktop/desktop.yaml
+    schema_major: 1
+    contents: 6 per-user application entries (3 Wayland-native IDE overrides + TIDAL's /dev/shm workaround + 2 kitty-hosted AI CLIs) and the toggle-touchpad helper; every entry declares requires/optional and carries TryExec

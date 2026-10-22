@@ -1,0 +1,53 @@
+# desktop/desktop.yaml — the class contract: one record per desktop entry.
+#
+# WHAT THIS FILE IS. The per-entry declaration a consumer resolves before it
+# deploys: `requires` are the binaries the entry cannot work without, `optional`
+# are the binaries whose absence makes the entry pointless but NOT the host
+# unprovisionable. The consumer's deploy-time layer (spine AD-10 layer 2) fails on
+# a missing `requires` entry and skips the entry (loudly) on a missing `optional`
+# one. This file never says whether a package is installed — that is a host fact
+# the assets repo cannot know (AD-10).
+#
+# HOW THE LISTS ARE DERIVED (and what validates them, `make validate-desktop`):
+#   * `requires[0]` is the entry's own launcher: `basename(Exec argv[0])`, which
+#     is also the `TryExec` value. An override entry (`code`, `tidal-hifi`, …)
+#     therefore requires the binary the packaged entry launches.
+#   * `optional` names the payload a wrapper entry runs INSIDE that launcher —
+#     today the CLI a `kitty --title … <cli>` entry runs. A missing CLI makes the
+#     entry dead, so the entry is skipped; it must not fail a provision, because
+#     the CLI's package belongs to the consumer's packages role, not to this
+#     corpus.
+#   * every declared name must appear in the entry's own `Exec` line, so a stale
+#     `requires`/`optional` cannot outlive the command it described.
+#
+# `schema_major` follows spine AD-12: the file's SHAPE is versioned separately
+# from the repository tag, so a consumer can refuse a contract it cannot parse.
+schema_major: 1
+
+entries:
+  - file: antigravity-ide.desktop
+    requires:
+      - antigravity-ide
+    optional: []
+  - file: code.desktop
+    requires:
+      - code
+    optional: []
+  - file: codex.desktop
+    requires:
+      - kitty
+    optional:
+      - codex
+  - file: copilot.desktop
+    requires:
+      - kitty
+    optional:
+      - copilot
+  - file: devin-desktop.desktop
+    requires:
+      - devin-desktop
+    optional: []
+  - file: tidal-hifi.desktop
+    requires:
+      - tidal-hifi
+    optional: []

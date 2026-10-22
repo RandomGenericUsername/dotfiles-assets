@@ -10,11 +10,15 @@ WHAT THIS GATE PROVES, and why each part is separate:
      fail here. Subdirectories are checked the same way, because a class's inner
      layout is part of the paths consumers read.
 
-  2. SCHEMA JSON IS WELL-FORMED AND VERSIONED. Every schema-bearing class names a
-     contract file; that file must parse, carry an integer `schema_major`
-     (spine AD-12), and agree with the `schema_major` the catalog declares. Every
-     `*.vars.schema.json` under a schema-bearing class is checked too, so a
-     template's contract cannot rot just because the catalog was not edited.
+  2. SCHEMA CONTRACTS ARE WELL-FORMED AND VERSIONED. Every schema-bearing class
+     names a contract file; that file must parse, carry an integer `schema_major`
+     (spine AD-12), and agree with the `schema_major` the catalog declares. A
+     contract is JSON (`icons/schema.json`, every `*.vars.schema.json`) or YAML
+     (`desktop/desktop.yaml`, the per-entry `requires`/`optional` record a consumer
+     resolves before deploy): both are read with the same strict subset, so the
+     version rule is the same rule. Every `*.vars.schema.json` under a schema-bearing
+     class is checked too, so a template's contract cannot rot just because the
+     catalog was not edited.
 
      The `templates` class bears one contract PER TEMPLATE, so its catalog
      `schema` value is the GLOB `templates/**/*.vars.schema.json` rather than one
@@ -32,17 +36,18 @@ WHAT THIS GATE PROVES, and why each part is separate:
 
 WHAT IT DOES NOT PROVE (stated, not implied): that the CORPUS is valid. The class
 validators carry that, each landing with its corpus: `validate-icons`,
-`validate-content` and `validate-templates` exist at this tag; `validate-desktop`
-arrives with the `desktop/` corpus. A validator with no corpus is a rule nobody
-has seen work.
+`validate-content`, `validate-templates` and `validate-desktop` all exist at this
+tag. A validator with no corpus is a rule nobody has seen work.
 
 WHY NO PyYAML. A fresh clone must pass `make gates` with no virtualenv and no
 network: a validation verb that requires `uv sync` first is not a fresh-clone verb.
-So this script parses the deliberately small YAML subset `catalog.yaml` actually
-uses -- nested mappings, scalar lists, `null`, `[]`, quoted or bare scalars, full
-line comments. Anything outside that subset (tabs, block scalars, flow collections,
-anchors, multi-line values) is a hard ERROR rather than a guess, so a future edit
-cannot silently change what this gate checked.
+So this script parses the deliberately small YAML subset `catalog.yaml` and the
+YAML contract (`desktop/desktop.yaml`) actually use -- nested mappings, sequence
+items that are either scalars (`- hypr`) or mappings (`- file: x.desktop`),
+scalar lists, `null`, `[]`, quoted or bare scalars, full line comments. Anything
+outside that subset (tabs, block scalars, flow collections, anchors, multi-line
+values) is a hard ERROR rather than a guess, so a future edit cannot silently
+change what this gate checked.
 
 Usage: ``python3 scripts/validate-catalog.py [--root REPO_ROOT]``
 Exit 0 = the envelope is sound. Exit 1 = at least one violation, listed by path.
@@ -188,12 +193,51 @@ def _sequence(lines: list[tuple[int, str, int]], i: int, indent: int):
             raise YamlSubsetError(f"line {lineno}: empty list item")
         if item.startswith("- "):
             raise YamlSubsetError(f"line {lineno}: nested sequences are not supported")
-        out.append(_scalar(item, lineno))
+        # A scalar item (`- hypr`) or a mapping item (`- file: code.desktop`). The
+        # colon decides, because the subset refuses to guess: a scalar that carries
+        # a colon is an inline mapping this parser does not implement.
+        if ":" not in item:
+            out.append(_scalar(item, lineno))
+            i += 1
+            if i < len(lines) and lines[i][0] > indent:
+                raise YamlSubsetError(
+                    f"line {lines[i][2]}: a scalar list item cannot have nested content"
+                )
+            continue
+        key, _, rest = item.partition(":")
+        if not key.strip():
+            raise YamlSubsetError(f"line {lineno}: empty key in a list item")
+        record: dict[str, object] = {}
+        key, rest = key.strip(), rest.strip()
         i += 1
+        if rest:
+            record[key] = _scalar(rest, lineno)
+        else:
+            if i < len(lines) and lines[i][0] > indent:
+                if lines[i][0] != indent + 2:
+                    raise YamlSubsetError(
+                        f"line {lines[i][2]}: expected exactly two spaces of indent "
+                        f"under {key!r}, got {lines[i][0] - indent}"
+                    )
+                record[key], i = _block(lines, i, indent + 2)
+            else:
+                raise YamlSubsetError(f"line {lineno}: key {key!r} has no value")
+        while i < len(lines) and lines[i][0] > indent:
+            if lines[i][0] != indent + 2:
+                raise YamlSubsetError(
+                    f"line {lines[i][2]}: a sequence item's keys must sit at "
+                    f"{indent + 2} spaces"
+                )
+            continuation, i = _mapping(lines, i, indent + 2)
+            for ckey, cvalue in continuation.items():
+                if ckey in record:
+                    raise YamlSubsetError(
+                        f"line {lines[i - 1][2]}: duplicate key {ckey!r} in a list item"
+                    )
+                record[ckey] = cvalue
+        out.append(record)
     if i < len(lines) and lines[i][0] > indent:
-        raise YamlSubsetError(
-            f"line {lines[i][2]}: nested mappings inside a sequence are not supported"
-        )
+        raise YamlSubsetError(f"line {lines[i][2]}: unexpected indentation")
     return out, i
 
 
@@ -411,9 +455,12 @@ def check_schemas(root: Path, classes: dict, errors: list[str]) -> list[tuple[st
                 errors.append(f"{rel}: named by the catalog but absent")
                 continue
             try:
-                data = json.loads(path.read_text())
-            except json.JSONDecodeError as exc:
-                errors.append(f"{rel}: invalid JSON ({exc})")
+                if path.suffix in (".yaml", ".yml"):
+                    data = parse_yaml_subset(path.read_text(), rel)
+                else:
+                    data = json.loads(path.read_text())
+            except (json.JSONDecodeError, YamlSubsetError) as exc:
+                errors.append(f"{rel}: not a parseable contract ({exc})")
                 continue
             if not isinstance(data, dict):
                 errors.append(f"{rel}: a schema document must be a JSON object")

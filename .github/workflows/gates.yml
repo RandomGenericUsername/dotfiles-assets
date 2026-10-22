@@ -65,6 +65,17 @@ jobs:
       - name: One vars schema per Jinja source, contract == body, no default() on required
         run: make validate-templates
 
+  validate-desktop:
+    name: validate-desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The Desktop Entry parse + the Exec/TryExec/requires/contract rules are stdlib
+      # Python; the same target runs `shellcheck` over desktop/scripts/*, which ships
+      # on the runner image (and fails loudly rather than skipping when absent).
+      - name: Every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
+        run: make validate-desktop
+
   lint:
     name: lint
     runs-on: ubuntu-latest

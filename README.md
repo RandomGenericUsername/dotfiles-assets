@@ -17,23 +17,23 @@ desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: `icons`, `content`, `configs` and `templates` are populated.** `icons/` holds 117 SVG
-templates in 12 template directories plus one group map and its vocabulary; `content/` holds the
-unmodified wallpaper archive and the authored btop-theme class (empty today); `configs/` holds 25
-deployment-fixed config files in six tool directories — the compositor, editor, prompt and wlogout
-layout (one file, `hyprland.lua`, carries a single host path the consumer renders; the rest are
-literal); `templates/` holds nine Jinja sources with nine vars schemas (24 required variables, zero
-optional), each imported with its body unchanged. `desktop/` is still empty and lands in a later
-tagged slice — `catalog.yaml` says so rather than describing content this repository does not have.
-Each class validator arrives **with** its corpus, so every check has run against real data before it
-can gate a tag.
+**Status: all five classes are populated.** `icons/` holds 117 SVG templates in 12 template
+directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper archive
+and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
+six tool directories — the compositor, editor, prompt and wlogout layout (one file,
+`hyprland.lua`, carries a single host path the consumer renders; the rest are literal);
+`templates/` holds nine Jinja sources with nine vars schemas (24 required variables, zero optional),
+each imported with its body unchanged; `desktop/` holds six application entries and the
+`toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
+binaries. Each class validator arrives **with** its corpus, so every check has run against real data
+before it can gate a tag.
 
 ## Two version numbers, deliberately independent
 
 | Number | Where | Answers |
 | --- | --- | --- |
 | tag `vMAJOR.MINOR.PATCH` | the git tag | *which corpus* is deployed |
-| `schema_major` | `icons/schema.json`, `templates/**/*.vars.schema.json` | *can a consumer parse it* |
+| `schema_major` | `icons/schema.json`, `templates/**/*.vars.schema.json`, `desktop/desktop.yaml` | *can a consumer parse it* |
 
 - **MAJOR** — a contract or path break: class directory renamed, a file the consumer addresses by
   path moved or removed, a mapping vocabulary rename, a template's required variable removed or
@@ -60,6 +60,14 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   **or** `{% %}`), never a consumer's variable set. `make validate-templates` enforces the pairing,
   the body equality and the no-`default(`-on-required rule; `templates/README.md` carries the
   inventory and the rules.
+- `desktop/desktop.yaml` — `schema_major: 1`; one record per entry: `{file, requires, optional}`.
+  `requires` is the entry's own launcher binary (`basename(Exec argv[0])`, which is also its
+  `TryExec`); `optional` is the payload a wrapper entry runs inside that launcher. The consumer
+  resolves `requires` before it deploys (a missing one fails the run) and skips the entry when an
+  `optional` binary is absent. `make validate-desktop` enforces the Desktop Entry parse, the
+  `Exec`/`TryExec` ↔ `requires` equality, the exact contract ↔ `.desktop` set in both directions,
+  and the scripts' mode + shebang; the same target runs `shellcheck`. `desktop/README.md` carries
+  the rules.
 - `configs/` bears **no** schema file: its contract is a boundary, not a document. `configs/README.md`
   states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
   files and mutable preferences belong to the consumer.
@@ -74,8 +82,9 @@ make validate         # catalog <-> class dirs, schema JSON, and the generated-a
 make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
-make lint             # shellcheck over desktop/scripts/** (vacuous until it has scripts) + compileall scripts/
-make gates            # validate + validate-icons + validate-content + validate-templates + lint + hermetic
+make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
+make lint             # shellcheck over desktop/scripts/** + compileall scripts/
+make gates            # validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic
 make hermetic         # the same, with empty HOME/XDG_* from a foreign cwd
 make ci-gates-parity  # the workflow's job set == the Makefile's gate set, both directions
 ```

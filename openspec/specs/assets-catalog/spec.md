@@ -268,6 +268,61 @@ find templates -name '*.j2' -o -name '*.tpl'   # expect: 9 sources, each with a 
 - **THEN** `make validate` fails on the forbidden file name (AD-11), and the template's
   `.j2`/`.tpl` source remains the only copy
 
+### Requirement: The desktop class carries a deploy contract and a static gate
+
+`desktop/` SHALL hold the application entries under `applications/`, the repo-authored helper
+scripts under `scripts/`, and `desktop/desktop.yaml` — one record per entry declaring
+`{file, requires, optional}` — and SHALL keep the static validation (spine AD-10 layer 1) in
+`make validate-desktop`. Every entry SHALL parse as a Desktop Entry (`[Desktop Entry]`, `Type`,
+`Name`, `Exec`, `Icon`), SHALL carry `TryExec` naming the binary its `Exec` launches, SHALL name
+that binary in its declared `requires`, and the contract SHALL equal the `.desktop` set exactly in
+both directions. Scripts SHALL be executable, carry a `#!` shebang and pass `shellcheck`.
+
+The class SHALL NOT decide whether a binary is installed: that host fact belongs to the consumer's
+deploy-time layer (2) and deployed layer (3). `scripts/` SHALL hold repo-authored static scripts
+only — the Jinja-rendered launcher wrappers bake in installed-binary paths and stay in the
+consumer's installer.
+
+Evidence: spine AD-10; `scripts/validate-desktop.py`; `desktop/desktop.yaml`; `desktop/README.md`.
+
+Acceptance check:
+
+```bash
+make validate-desktop   # expect: entries=6 with_TryExec=6 records=6, 1 script shellcheck-clean, PASS
+sed -i 's/^Exec=.*/Exec=definitely-not-installed --flag %F/' desktop/applications/code.desktop
+make validate-desktop   # expect: non-zero, naming code.desktop and definitely-not-installed
+```
+
+#### Scenario: An entry launches an undeclared binary
+
+- **WHEN** an entry's `Exec` argv[0] is not named in its declared `requires`
+- **THEN** `make validate-desktop` fails naming the entry and the binary: the consumer's layer 2
+  resolves only the declared list, so the launcher would never be checked on a host
+
+#### Scenario: An entry carries no TryExec
+
+- **WHEN** an entry lacks `TryExec`, or its `TryExec` names a different binary than `Exec` launches
+- **THEN** `make validate-desktop` fails: without `TryExec` a launcher still lists an entry whose
+  binary is absent, which is the dead-menu-entry failure this class exists to prevent
+
+#### Scenario: The contract and the entries diverge
+
+- **WHEN** an entry has no record in `desktop.yaml`, or a record names no entry
+- **THEN** `make validate-desktop` fails in that direction: the deploy contract and the shipped set
+  must be the same set
+
+#### Scenario: A required binary is absent on a host
+
+- **WHEN** a consumer provisions a machine missing a `requires` binary
+- **THEN** its deploy step fails naming the entry and the binary, because this repository declares
+  the requirement and the consumer resolves it — the corpus itself never asserts host packages
+
+#### Scenario: A wrapper's payload is absent on a host
+
+- **WHEN** a `kitty`-hosted entry's CLI (declared `optional`) is not installed
+- **THEN** the consumer reports it and skips that one entry instead of failing the provision, and
+  its verify layer still gates the keybind-invoked launchers
+
 ### Requirement: CI jobs and gates cannot drift
 
 The workflow SHALL run one job per `make gates` target, and `scripts/ci-gates-parity.py` SHALL
