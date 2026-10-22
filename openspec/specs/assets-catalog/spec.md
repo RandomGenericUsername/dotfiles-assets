@@ -213,6 +213,61 @@ grep -rn '{{' configs --exclude=README.md   # expect exactly hypr/hyprland.lua:7
 - **THEN** it copies `layout` from this class as one file and renders `style.css` itself from the
   template source, because only `layout` is static and a directory copy would carry both halves
 
+### Requirement: The templates class ships a variables contract per template
+
+`templates/` SHALL hold every Jinja source with a sibling `<name>.vars.schema.json`. Each
+schema SHALL declare `schema_major`, the sibling `template`, typed `properties`, disjoint
+`required`/`optional` lists and `additionalProperties: false`; `required` SHALL equal the names
+the body reads, never a consumer's variable set; and no template SHALL apply `default(` to a
+required variable.
+
+Evidence: spine AD-8/AD-9; `scripts/validate-templates.py`; `templates/README.md`.
+
+Acceptance check:
+
+```bash
+make validate-templates   # expect: 9 templates, 9 schemas, 0 defaults on required vars, PASS
+find templates -name '*.j2' -o -name '*.tpl'   # expect: 9 sources, each with a sibling schema
+```
+
+#### Scenario: A template gains a variable
+
+- **WHEN** a template reads a name its schema does not declare
+- **THEN** `make validate-templates` fails naming the template and the name: the consumer would
+  otherwise discover the missing value at render time on a user's machine
+
+#### Scenario: A required name the body never reads
+
+- **WHEN** a schema declares a `required` name the template does not read (a copy of the
+  consumer role's variable set, or an invented name)
+- **THEN** `make validate-templates` fails: a required name that no render consumes is a
+  contract that lies about what the consumer must supply
+
+#### Scenario: A silent fallback on a required value
+
+- **WHEN** a template applies `default(` to a required variable
+- **THEN** `make validate-templates` fails: the fallback converts a missing value into a
+  rendered file with a wrong value, which is strictly worse than a failed render
+
+#### Scenario: A variable read only in a branch
+
+- **WHEN** a template reads a name only inside `{% if %}` (the greetd greeter type)
+- **THEN** the name is required, because the validator reads `{% %}` expressions as well as
+  `{{ }}` — a `{{ }}`-only count would report one variable for a file that needs two
+
+#### Scenario: A variable-free template
+
+- **WHEN** a template reads nothing (the regreet stylesheet, the session launcher)
+- **THEN** `required: []` is legal and still asserted: adding a `{{ }}` later fails the gate
+  until a typed property is declared
+
+#### Scenario: A rendered file is committed
+
+- **WHEN** a rendered `.zshrc`, `style.css`, `kitty.conf` or `btop.conf` appears anywhere in
+  the tree
+- **THEN** `make validate` fails on the forbidden file name (AD-11), and the template's
+  `.j2`/`.tpl` source remains the only copy
+
 ### Requirement: CI jobs and gates cannot drift
 
 The workflow SHALL run one job per `make gates` target, and `scripts/ci-gates-parity.py` SHALL

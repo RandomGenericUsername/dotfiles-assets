@@ -17,14 +17,16 @@ desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: `icons`, `content` and `configs` are populated.** `icons/` holds 117 SVG templates in 12
-template directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper
-archive and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
-six tool directories — the compositor, editor, prompt and wlogout layout (one file, `hyprland.lua`,
-carries a single host path the consumer renders; the rest are literal). `templates/` and `desktop/`
-are still empty and land in later tagged slices — `catalog.yaml` says so rather than describing
-content this repository does not have. Each class validator arrives **with** its corpus, so every
-check has run against real data before it can gate a tag.
+**Status: `icons`, `content`, `configs` and `templates` are populated.** `icons/` holds 117 SVG
+templates in 12 template directories plus one group map and its vocabulary; `content/` holds the
+unmodified wallpaper archive and the authored btop-theme class (empty today); `configs/` holds 25
+deployment-fixed config files in six tool directories — the compositor, editor, prompt and wlogout
+layout (one file, `hyprland.lua`, carries a single host path the consumer renders; the rest are
+literal); `templates/` holds nine Jinja sources with nine vars schemas (24 required variables, zero
+optional), each imported with its body unchanged. `desktop/` is still empty and lands in a later
+tagged slice — `catalog.yaml` says so rather than describing content this repository does not have.
+Each class validator arrives **with** its corpus, so every check has run against real data before it
+can gate a tag.
 
 ## Two version numbers, deliberately independent
 
@@ -52,9 +54,12 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   placeholder vocabulary and merge order. `make validate-icons` enforces it against the corpus:
   every mapping template resolves, every used placeholder is declared, every SVG parses, and no
   second group-map file exists beside `icons.yaml`.
-- `templates/README.md` + `templates/example.vars.schema.json` — the shape every real
-  `*.vars.schema.json` takes: JSON Schema for the render context plus `schema_major`, `template`
-  and `optional`. One schema beside every template is the rule; `example.` marks the shape file.
+- `templates/<group>/<name>.vars.schema.json` — one contract per template: JSON Schema for the
+  render context plus `schema_major`, `template` and `optional`, closed with
+  `additionalProperties: false`. `required` equals the names the template body reads (in `{{ }}`
+  **or** `{% %}`), never a consumer's variable set. `make validate-templates` enforces the pairing,
+  the body equality and the no-`default(`-on-required rule; `templates/README.md` carries the
+  inventory and the rules.
 - `configs/` bears **no** schema file: its contract is a boundary, not a document. `configs/README.md`
   states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
   files and mutable preferences belong to the consumer.
@@ -68,8 +73,9 @@ make help             # the verbs below
 make validate         # catalog <-> class dirs, schema JSON, and the generated-artifact absence check
 make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
+make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make lint             # shellcheck over desktop/scripts/** (vacuous until it has scripts) + compileall scripts/
-make gates            # validate + validate-icons + validate-content + lint + hermetic
+make gates            # validate + validate-icons + validate-content + validate-templates + lint + hermetic
 make hermetic         # the same, with empty HOME/XDG_* from a foreign cwd
 make ci-gates-parity  # the workflow's job set == the Makefile's gate set, both directions
 ```

@@ -5,6 +5,52 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.4.0] — 2026-10-22
+
+### Added
+
+- **`templates/` corpus, imported verbatim.** Nine Jinja sources in five group directories, copied
+  byte-for-byte from the consumer corpus with their bodies unchanged: `zsh/.zshrc.j2`,
+  `wlogout/style.css.tpl`, `kitty/kitty.conf.j2`, `btop/btop.conf.j2` and the five
+  `display-manager/{sddm.conf,config.toml,regreet.toml,regreet.css,hypr-session}.j2`. `diff` against
+  the consumer's sources returned 0 for every file before the consumer deleted its copies.
+- **Nine `*.vars.schema.json` contracts, one beside every template.** Each is a draft 2020-12
+  object schema with `schema_major: 1`, the sibling `template`, typed `properties`, disjoint
+  `required`/`optional` and `additionalProperties: false`. Together they declare **24 required
+  variables and zero optional** — every name is one the body actually reads.
+- **`scripts/validate-templates.py` / `make validate-templates`** (`validate-templates` is a
+  `GATES` member, with its own CI job). It asserts: complete pairing in both directions; every read
+  appears in `properties` and every property is read (**contract equals body**, so a required name
+  the template never reads cannot exist); `required ∪ optional == properties`; no `default(` on a
+  required variable; `required` non-empty whenever the template reads something; and every keyword
+  is a real 2020-12 keyword (or an `x-` extension) with a correctly typed value. Stdlib-only; when
+  `jsonschema` is importable it additionally validates each schema against the 2020-12 metaschema
+  and proves the closed-world / required-missing claims with negative instances, and says so when
+  that mode is skipped.
+- **`catalog.yaml`** — `templates` declares its five group subdirectories, its real contents and a
+  **glob** contract (`templates/**/*.vars.schema.json`); `validate-catalog.py` learned to hold every
+  glob match to the catalog's `schema_major` instead of one arbitrary representative file.
+
+### Changed
+
+- **`{{ }}` is not the whole contract.** The validator reads `{% %}` expressions too, so
+  `display-manager/config.toml.j2` requires **two** names (`display_manager_greeter_type` in its
+  `{% if %}`, `display_manager_greeter_user` in the `[default_session]` line). The plan's "1 var"
+  figure came from a `{{ }}`-only grep and under-counted the branch variable.
+- **Three display-manager templates are contracts, not live renders.** `regreet.toml.j2`,
+  `regreet.css.j2` and `hypr-session.j2` are retained for the consumer's greetd+regreet fallback
+  (spine AD-9); the default login path is SDDM + Pixie. Their schemas describe the values that path
+  would need, and two of them are legitimately variable-free (`required: []`).
+- **`templates/example.vars.schema.json` removed.** The shape file is retired now that nine real
+  contracts exist; `templates/README.md` carries the schema shape, the inventory and the rules.
+- **`wlogout/style.css.tpl` keeps its source mode.** The imported file is `100755` in the consumer
+  repository; the mode came along with `cp -a`. Content (not mode) is the contract.
+
+### Not here, on purpose
+
+No rendered `.zshrc`, `style.css`, `kitty.conf` or `btop.conf`: the templates and their contracts
+ship, the values stay with the consumer (AD-8/AD-11). `make validate` fails on any of those names.
+
 ## [0.3.1] — 2026-10-21
 
 ### Fixed

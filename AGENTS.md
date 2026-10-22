@@ -38,11 +38,11 @@ catalog.yaml          what is inside each class + schema_major per schema-bearin
 icons/templates/      icon template per group (the corpus arrives in a later slice)
 icons/mappings/       group → color mapping files (the corpus arrives in a later slice)
 icons/schema.json     the icons contract: schema_major, group → variants → template path, placeholder rules
-templates/            Jinja sources + one *.vars.schema.json per template (contract shape in S0)
+templates/            Jinja sources + one *.vars.schema.json per template (9 + 9 at v0.4.0)
 configs/              static config corpus (compositor, editor, shell, prompt)
 content/              binary/large content (wallpapers, authored themes)
 desktop/              applications/ (*.desktop) + scripts/ (host scripts) + desktop.yaml (requires/optional)
-scripts/              validate-catalog.py, ci-gates-parity.py, worktree-guard.sh — validators only
+scripts/              validate-catalog.py, validate-icons.py, validate-content.py, validate-templates.py, ci-gates-parity.py, worktree-guard.sh — validators only
 .github/workflows/    one CI job per `make gates` target + ci-gates-parity
 ```
 
@@ -50,4 +50,6 @@ scripts/              validate-catalog.py, ci-gates-parity.py, worktree-guard.sh
 
 **Generated and mutable artifacts are never assets.** `icons.json`, `settings.toml`, rendered `kitty.conf`/`btop.conf`/`.zshrc`, palette/`current/` state and `btop/active-theme` are produced by the consumer or by the runtime, so committing them would make this repo a second source of truth. This is mechanical, not a convention: `make validate` fails naming the offending path (prove it with `touch icons/mappings/icons.json && make validate` → non-zero, then remove the file and it passes again).
 
-`Evidence: MISSING` for anything the tree does not yet contain — e.g. the 117-icon corpus, the wallpaper tarball and the `.desktop` entries arrive in later slices, and `catalog.yaml` records them as `empty` rather than describing content this repo does not have.
+`Evidence: MISSING` for anything the tree does not yet contain — e.g. the `.desktop` entries and
+`desktop/scripts/` arrive in a later slice, and `catalog.yaml` records that class as `empty` rather
+than describing content this repo does not have.
