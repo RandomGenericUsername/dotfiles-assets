@@ -2,7 +2,7 @@
 id: REQ-004
 title: "S3 assets cut: templates class, per-template vars schemas, v0.4.0"
 kind: requirement
-status: in-progress
+status: done
 size: M
 lane: bmad-advisory
 links:
@@ -41,9 +41,9 @@ required-var parity test and deletes its template sources in a separate commit t
       (`templates/**/*.vars.schema.json`); `validate-catalog.py` holds every glob match to the
       catalog's `schema_major` rather than one arbitrary representative.
 - [x] The openspec spec gains the templates requirement with executable acceptance commands.
-- [ ] `make gates`, `make gates-ci` and `make hermetic` exit 0 (worktree, hermetic and a fresh
+- [x] `make gates`, `make gates-ci` and `make hermetic` exit 0 (worktree, hermetic and a fresh
       anonymous clone).
-- [ ] Annotated `v0.4.0` pushed and anonymously fetchable (tag object + peeled commit recorded);
+- [x] Annotated `v0.4.0` pushed and anonymously fetchable (tag object + peeled commit recorded);
       GitHub Release published with notes and no assets; CI green on `master`.
 
 ## Deviation: the plan's "10 templates" is 9
@@ -78,3 +78,14 @@ expression forms so the next branch-only variable cannot be missed the same way.
 - Deep mode: `uv run --with jsonschema python scripts/validate-templates.py` → rc 0, "every schema
   validates against the draft 2020-12 metaschema and rejects an undeclared / required-missing
   instance"; the stdlib run prints a NOTE when that mode is skipped.
+- `make gates` / `make gates-ci` / `make hermetic` in the worktree → rc 0; the hermetic run
+  re-executes `validate-templates` with empty `HOME`/`XDG_*` from a foreign cwd.
+- Tag `v0.4.0`: object `9902c914f6138a7804cb7bb36d5bb482f669b9b3`, peeled
+  `b5b216fe9a6eafab63b9d860a8d236894325e2ef` (`git cat-file -t v0.4.0` → `tag`).
+  Release: https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.4.0
+  (notes only, no assets).
+- CI: [run 39783964966](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/39783964966)
+  on `b5b216f` → success (7/7: validate, validate-icons, validate-content,
+  **validate-templates**, lint, hermetic, ci-gates-parity).
+- Fresh anonymous clone at the tag (`git clone --branch v0.4.0`) → `make gates` rc 0; the tree
+  reports `templates=9 schemas=9`, `required=24 optional=0`.
