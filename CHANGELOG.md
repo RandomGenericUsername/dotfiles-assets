@@ -5,6 +5,56 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.5.0] — 2026-10-22
+
+### Added
+
+- **`desktop/` corpus, imported verbatim.** Six `.desktop` entries in `desktop/applications/` and
+  `toggle-touchpad` in `desktop/scripts/` (mode `0755` preserved), copied from the consumer corpus.
+  `cmp` returns 0 for the script; each entry differs from its source by exactly **one added line**,
+  its `TryExec=`, which layer 1 requires and the pre-split corpus never carried. Every packaged
+  `Exec`, comment, category, MIME type and startup hint is unchanged.
+- **`TryExec=` on all six entries.** A launcher probes `TryExec` to decide whether an application is
+  installed; without it a missing binary still produced a listed, dead menu entry. The value is the
+  binary `Exec` launches — the IDE/TIDAL binary for the four overrides, `kitty` for the two
+  kitty-hosted CLIs.
+- **`desktop/desktop.yaml`, the class contract** (`schema_major: 1`): one record per entry,
+  `{file, requires, optional}`. `requires` is the entry's own launcher (`basename(Exec argv[0])`,
+  which is also its `TryExec`); `optional` is the payload a wrapper entry runs inside that launcher
+  (`codex`, `copilot`). The consumer resolves `requires` before it deploys — a missing one fails the
+  run naming entry and binary — and reports/skips an entry whose `optional` binary is absent. The
+  corpus never decides whether a package is installed.
+- **`scripts/validate-desktop.py` / `make validate-desktop`** (`validate-desktop` is a `GATES`
+  member with its own CI job). Layer 1 of AD-10: every entry parses as a Desktop Entry
+  (`[Desktop Entry]`, `Type`, `Name`, `Exec`, `Icon`), `Exec` is tokenized with the spec's quoting
+  rules and its argv[0] basename must be a declared `require`, `TryExec` must be present and name
+  that same binary, the contract must equal the `.desktop` set exactly in both directions, and every
+  script must be executable with a `#!` shebang. The same target runs `shellcheck` over
+  `desktop/scripts/*` (and `make lint` stays the class-independent sweep).
+- **`desktop/README.md`** — the three validation layers and their owners, the `TryExec` rationale,
+  the `requires`/`optional` derivation, the scope boundary (the Jinja launcher wrappers stay with
+  the consumer's `cli_tools` role) and the vacuity proof.
+
+### Changed
+
+- **`catalog.yaml` declares `desktop` schema-bearing** (`desktop/desktop.yaml`, `schema_major: 1`)
+  and records the real contents. `desktop/` is no longer "empty in a later tag": all five classes
+  are populated at this tag.
+- **`validate-catalog.py` reads a YAML contract as well as a JSON one.** The class contract for
+  `desktop` is YAML, so the `schema_major` rule (AD-12) is applied through the same strict subset
+  parser rather than a JSON-only path. The subset gained sequence-of-mappings items
+  (`- file: x.desktop`) so a record list parses; anything outside the subset is still a hard error.
+- **`make lint` is no longer vacuous.** `desktop/scripts/` holds `toggle-touchpad`, so
+  `shellcheck` now has a real subject; the vacuous-pass message remains for a future empty class.
+
+### Not here, on purpose
+
+No launcher wrappers (`rofi-ui`, `capture-ui`, `hypr-pano-ui`, `wallpaper-selector-ui`,
+`icon-color-mapping-editor`, `btop-theme-studio`): they are Jinja-rendered by the consumer's
+`cli_tools` role because they bake in installed-binary paths (AD-10 scope boundary). No installed
+binaries, no `mimeapps.list`, no launcher database: a declared binary is not an installed package,
+and derived state belongs to the host.
+
 ## [0.4.0] — 2026-10-22
 
 ### Added
