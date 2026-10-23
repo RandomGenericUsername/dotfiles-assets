@@ -16,7 +16,7 @@ Format: any non-trivial claim gets an `Evidence:` line and a `Verify:` line (how
 
 - This repository **is** the corpus: five class directories (`icons/`, `templates/`, `configs/`, `content/`, `desktop/`) behind **one** annotated semver tag. Classes are directories, never independent version boundaries — five tags for one corpus would be five pins to bump and five answers to "which tag is the icons at?".
 - **Data only.** No importable package, no console script, no `src/`, no engine. The icon renderer, the palette generator and the provisioner are separate pinned repos; a renderer growing here would re-open the split that created this repo. Python exists only under `scripts/` as CI-executed validators.
-- **Validation is the product surface.** `make validate` proves catalog ⇄ class-dir agreement, schema JSON well-formedness, and that no generated or mutable artifact is committed; `make lint` proves the shell/Python under the tree compiles; `make gates` runs both plus `hermetic`; `make hermetic` re-runs the set with empty `HOME`/`XDG_*` and a foreign cwd, so a host-provisioned corpus cannot make a release look green. Every verb is anchored on `$(CURDIR)`: run it as `make -C <repo> <verb>` from anywhere.
+- **Validation is the product surface.** `make validate` proves catalog ⇄ class-dir agreement, schema JSON well-formedness, and that no generated or mutable artifact is committed; the class validators (`validate-icons`, `validate-content`, `validate-templates`, `validate-configs`, `validate-desktop`) prove each class contract; `make lint` proves the shell/Python under the tree compiles; `make gates` runs all of them plus `hermetic`; `make hermetic` re-runs the set with empty `HOME`/`XDG_*` and a foreign cwd, so a host-provisioned corpus cannot make a release look green. Every verb is anchored on `$(CURDIR)`: run it as `make -C <repo> <verb>` from anywhere.
 - **Contracts are versioned separately from the tag.** `icons/schema.json` and `templates/**/*.vars.schema.json` carry `schema_major`; the tag answers "which corpus", `schema_major` answers "can this consumer parse it". Raising `schema_major` requires a MAJOR tag even when no path moved.
 - **Name no destination.** This repo says what is *inside* a class (`catalog.yaml`); the consumer's manifest says *where* a class deploys. A spine path, an absolute install dir, or another repo's directory name in this tree is a defect, not documentation.
 - **One class per tag.** A migration slice lands one class, proves it (`make gates` green on a fresh clone), tags, and only then does the consumer pin it. Deletion in the consumer follows its own green proof, never precedes it.
@@ -38,11 +38,11 @@ catalog.yaml          what is inside each class + schema_major per schema-bearin
 icons/templates/      icon template per group (the corpus arrives in a later slice)
 icons/mappings/       group → color mapping files (the corpus arrives in a later slice)
 icons/schema.json     the icons contract: schema_major, group → variants → template path, placeholder rules
-templates/            Jinja sources + one *.vars.schema.json per template (9 + 9 at v0.4.0)
+templates/            Jinja sources + one *.vars.schema.json per template (9 + 9 at v0.5.1)
 configs/              static config corpus (compositor, editor, shell, prompt)
 content/              binary/large content (wallpapers, authored themes)
 desktop/              applications/ (*.desktop) + scripts/ (host scripts) + desktop.yaml (requires/optional)
-scripts/              validate-catalog.py, validate-icons.py, validate-content.py, validate-templates.py, ci-gates-parity.py, worktree-guard.sh — validators only
+scripts/              validate-catalog.py, validate-icons.py, validate-content.py, validate-templates.py, validate-configs.py, ci-gates-parity.py, worktree-guard.sh — validators only
 .github/workflows/    one CI job per `make gates` target + ci-gates-parity
 ```
 

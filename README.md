@@ -5,6 +5,12 @@ No package, no console script, no engine — the icon renderer, the palette gene
 provisioner are separate pinned repos, and a renderer growing here would re-open the split that
 created this repository.
 
+**Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
+canonical ownership/pin map is
+[`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
+`v0.5.1`; the composition still consumes `v0.5.0` (the `validate-configs` gate is repo-only, not a
+consumed surface).
+
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
 templates/   Jinja sources + one *.vars.schema.json per template
