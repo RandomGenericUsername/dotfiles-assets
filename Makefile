@@ -17,9 +17,10 @@
 #   make validate-icons  every mapping template resolves, placeholders declared, SVGs parse
 #   make validate-content  the wallpaper tarball holds a top-level default.png, themes non-empty
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
+#   make validate-configs  deployment-fixed configs, one reviewed render token, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
-#   make gates           validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic
+#   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic
 #   make gates-ci        the same gate set, reproducible without a workflow runner
 #   make hermetic        the same checks with empty HOME/XDG_* and a foreign cwd
 #
@@ -33,14 +34,14 @@ PYTHON ?= python3
 
 # The developer gate set. `gates` runs ALL of it: a gate that is not run here is a
 # gate nobody runs.
-GATES := validate validate-icons validate-content validate-templates validate-desktop lint hermetic
+GATES := validate validate-icons validate-content validate-templates validate-configs validate-desktop lint hermetic
 
 # The env every hermetic command runs with: nothing inherited but PATH. HOME and the
 # four XDG_* dirs point into a throwaway tree this recipe creates and deletes.
 EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 	XDG_CONFIG_HOME="$$config" XDG_CACHE_HOME="$$cache" XDG_STATE_HOME="$$state"
 
-.PHONY: help validate validate-icons validate-content validate-templates validate-desktop lint gates gates-ci ci-gates-parity hermetic
+.PHONY: help validate validate-icons validate-content validate-templates validate-configs validate-desktop lint gates gates-ci ci-gates-parity hermetic
 
 help:
 	@printf '%s\n' \
@@ -48,9 +49,10 @@ help:
 	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
+	  'validate-configs  deployment-fixed configs; exactly one reviewed render token; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
-	  'gates             validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic' \
+	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic' \
 	  'gates-ci          the same gate set, reproducible without a workflow runner' \
 	  'ci-gates-parity   workflow job set == GATES + declared CI-only jobs, both directions' \
 	  'hermetic          the same checks with empty HOME/XDG_* from a foreign cwd' \
@@ -85,6 +87,13 @@ validate-content:
 # branch-only variable (config.toml.j2's greeter type) is required too.
 validate-templates:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-templates.py"
+
+# The configs class (AD-11, R-05/R-06). The four release-time commands become one
+# executable gate: no *.j2/*.tpl source, no mutable/rendered file, exactly one
+# render token at configs/hypr/hyprland.lua:7, every file non-empty. A second token
+# fails naming both files and lines — that is the exception's ratchet.
+validate-configs:
+	@$(PYTHON) "$(CURDIR)/scripts/validate-configs.py"
 
 # The desktop class (spine AD-10, layer 1). Static by design: it parses the six
 # entries, tokenizes each `Exec` with the spec's quoting rules, requires `TryExec`
@@ -172,6 +181,7 @@ hermetic:
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-icons.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-content.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-templates.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-configs.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-desktop.py"; \
 	$(EMPTY_ENV) PYTHONPYCACHEPREFIX="$$tmp/pycache" $(PYTHON) -m compileall -q "$$root/scripts"; \
 	echo "hermetic: compileall $$root/scripts -> ok (bytecode outside the tree)"; \

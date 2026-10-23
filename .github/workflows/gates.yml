@@ -65,6 +65,14 @@ jobs:
       - name: One vars schema per Jinja source, contract == body, no default() on required
         run: make validate-templates
 
+  validate-configs:
+    name: validate-configs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deployment-fixed configs; exactly one reviewed render token
+        run: make validate-configs
+
   validate-desktop:
     name: validate-desktop
     runs-on: ubuntu-latest

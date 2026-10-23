@@ -26,7 +26,9 @@ six tool directories — the compositor, editor, prompt and wlogout layout (one 
 each imported with its body unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries. Each class validator arrives **with** its corpus, so every check has run against real data
-before it can gate a tag.
+before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
+rejects a Jinja source, a mutable/rendered file, or a second render token, and names
+`configs/hypr/hyprland.lua:7` as the one reviewed exception.
 
 ## Two version numbers, deliberately independent
 
@@ -82,9 +84,10 @@ make validate         # catalog <-> class dirs, schema JSON, and the generated-a
 make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
+make validate-configs # deployment-fixed configs; exactly one reviewed render token
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
-make gates            # validate + validate-icons + validate-content + validate-templates + validate-desktop + lint + hermetic
+make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic
 make hermetic         # the same, with empty HOME/XDG_* from a foreign cwd
 make ci-gates-parity  # the workflow's job set == the Makefile's gate set, both directions
 ```

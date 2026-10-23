@@ -5,6 +5,25 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.5.1] — 2026-10-22
+
+### Added
+
+- **`scripts/validate-configs.py` / `make validate-configs` (R-05/R-06).** A new `GATES` member
+  with its own CI job: no `*.j2`/`*.tpl` source under `configs/`, no mutable preference
+  (`active-theme`, `theme-map.yaml`) or rendered output (`.zshrc`, `kitty.conf`, `btop.conf`,
+  `settings.toml`, `icons.json`, `style.css`), every file non-empty, and exactly one render token
+  at `configs/hypr/hyprland.lua:7` (`{{ compositor_configs_xdg_config_home }}`). A second token
+  fails naming both files and lines; a stray `.j2` fails naming the file. This turns the four
+  release-time manual commands in `configs/README.md` into an executable release gate.
+
+### Notes
+
+- **No corpus bytes changed.** This is a validator/gate PATCH; consumers pinned at `v0.5.0` see
+  the same corpus. Per the release-runbook rule (R-12), a docs/gate-only correction ships as a
+  new tag and does not force a consumer pin bump when the corrected file is not a consumed
+  surface.
+
 ## [0.5.0] — 2026-10-22
 
 ### Added

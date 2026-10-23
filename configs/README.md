@@ -80,9 +80,16 @@ addressed path and therefore be a MAJOR change. Every other file in this class i
 subdirectory is declared, and no generated/mutable artifact name (`active-theme`, `.zshrc`,
 `kitty.conf`, `btop.conf`, `settings.toml`, `icons.json`) appears anywhere in the tree.
 
-The per-file boundary has no validator of its own at this tag — the class has no contract file
-to parse, and a gate with no corpus rule would be a rule nobody has seen work. It is checked
-at release time with four commands that must all succeed:
+`make validate-configs` (a `GATES` member with its own CI job since `v0.5.1`) implements the
+four release-time commands below as executable checks. It fails naming the file and line, and
+the second-token negative names both locations:
+
+```bash
+make validate-configs
+# PASS -- no template/mutable/rendered files; exactly one render token at configs/hypr/hyprland.lua:7
+```
+
+The same rules, written as the manual commands the gate replaced:
 
 ```bash
 test -z "$(find configs -type f \( -name '*.j2' -o -name '*.tpl' \))" \
