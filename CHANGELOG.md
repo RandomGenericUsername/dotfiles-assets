@@ -5,6 +5,27 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.6.1] — 2026-10-26
+
+### Fixed
+
+- **wlogout Logout no longer tears down the user.** `configs/wlogout/layout:15` now runs
+  `uwsm stop` instead of `loginctl terminate-user $USER`. The old action ended every session of
+  the user, including the systemd user manager; logind's SIGHUP killed the SDDM helper, and SDDM
+  0.21.0 read that exit code as an authentication error and skipped the greeter restart, leaving a
+  black VT with a cursor (provision `BUG-005`, upstream SDDM [#1908](https://github.com/sddm/sddm/issues/1908)).
+  `uwsm stop` stops the compositor unit and lets the helper exit normally, so SDDM returns to the
+  Pixie greeter. The action is user-approved (2026-10-26); the VM matrix was waived and the host
+  5-cycle logout acceptance runs after the consumer re-provision.
+- **`make validate-configs` pins the logout action.** The gate now parses `configs/wlogout/layout`
+  as a sequence of JSON tiles and fails unless the single Logout tile's action is exactly
+  `uwsm stop`, so a future edit cannot silently restore `terminate-user`.
+
+### Notes
+
+- **PATCH, no inventory change.** Same paths and no schema change, so `catalog.yaml` stays at
+  `v0.6.0` (the inventory tag); the consumer pin bump is a separate commit in its own repository.
+
 ## [0.6.0] — 2026-10-26
 
 ### Added

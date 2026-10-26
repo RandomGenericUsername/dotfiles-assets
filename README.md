@@ -8,8 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.6.0`; the composition still consumes `v0.5.0` until its own pin bump (the `validate-configs`
-gate is repo-only and `v0.6.0` adds the optional SDDM compositor contract).
+`v0.6.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -35,7 +34,9 @@ unchanged; `desktop/` holds six application entries and the
 binaries. Each class validator arrives **with** its corpus, so every check has run against real data
 before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
-`configs/hypr/hyprland.lua:7` as the one reviewed exception.
+`configs/hypr/hyprland.lua:7` as the one reviewed exception. Since `v0.6.1` it also requires the
+wlogout Logout tile to run `uwsm stop`, so a silent revert to `loginctl terminate-user` fails the
+gate.
 
 ## Two version numbers, deliberately independent
 
@@ -93,7 +94,7 @@ make validate         # catalog <-> class dirs, schema JSON, and the generated-a
 make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
-make validate-configs # deployment-fixed configs; exactly one reviewed render token
+make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
 make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic

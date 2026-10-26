@@ -2,7 +2,7 @@
 id: BUG-001
 title: "wlogout Logout runs terminate-user and leaves SDDM on a black VT"
 kind: bug
-status: triage
+status: in-progress
 lane: 2 — bounded config change (bug lane; no OpenSpec change)
 severity: high
 links:
@@ -10,34 +10,37 @@ links:
   bmad: none
 worktree: .worktrees/bug-001/
 branch: ticket/bug-001-wlogout-logout-uwsm-stop
-repro: "In the disposable dotfiles VM on the production `hyprland-uwsm.desktop` session, run wlogout -> Logout (key `e`), whose action is `loginctl terminate-user $USER` (`configs/wlogout/layout:15`); the session disappears, the VT stays black with a cursor, and no Pixie greeter returns."
+repro: "At v0.6.0 or earlier, in the disposable dotfiles VM on the production `hyprland-uwsm.desktop` session, run wlogout -> Logout (key `e`), whose action was `loginctl terminate-user $USER` (`configs/wlogout/layout:15`); the session disappears, the VT stays black with a cursor, and no Pixie greeter returns."
 observed: "Boot `ccd99035ee63446bb6493da9a6cfb82b` (2026-10-26, local -05): `Session started true` at 14:31:34, then at 14:35:11 systemd SIGTERMs `sddm-helper` inside `session-2.scope`; SDDM logs `Authentication error: SDDM::Auth::ERROR_INTERNAL \"Process crashed\"`, `sddm-helper ... crashed (exit code 1)` and `sddm-helper exited with 1`, and never logs a second `Greeter starting` or `Display server started`; both session 2 (user) and session 3 (manager) are removed; the power key at 14:36:31 is the only recovery. The same helper exit-1 signature appears on 8 boots from 2026-10-23 to 2026-10-26."
-expected: "Logout returns to the Pixie greeter on seat0 in <30 s with `Auth: sddm-helper exited successfully` and a second `Greeter starting` / `Display server started`; no `Process crashed` / `exited with 1` for the user-session helper; the next login works; repeated 5 times with each session up at least 180 s; `check-session-bounce.py` exits 0."
+expected: "After the consumer re-provision deploys v0.6.1, Logout returns to the Pixie greeter on seat0 in <30 s with `Auth: sddm-helper exited successfully` and a second `Greeter starting` / `Display server started`; no `Process crashed` / `exited with 1` for the user-session helper; the next login works; repeated 5 times with each session up at least 180 s; `check-session-bounce.py` exits 0."
 ---
 
 # wlogout Logout runs terminate-user and leaves SDDM on a black VT
 
 ## Summary
 
-The **Logout** tile in this repo's wlogout layout is the controllable trigger of
-the black-VT logout failure attributed in `dotfiles-provision` BUG-005. The tile
-runs `loginctl terminate-user $USER`, which ends every session of the user,
-including the graphical session and the systemd user manager. The
-`sddm-helper` process lives in the graphical session's scope; logind sends it
-`SIGTERM` **and** `SIGHUP`, the helper catches only `SIGTERM`, and `SIGHUP`
-kills it. SDDM 0.21.0 reads the resulting exit code 1 as
-`Auth::HELPER_AUTH_ERROR` and deliberately skips the greeter restart, so the VT
-is left with no compositor and no greeter: black VT plus cursor.
+The **Logout** tile in this repo's wlogout layout was the controllable trigger
+of the black-VT logout failure attributed in `dotfiles-provision` BUG-005.
+Through `v0.6.0` the tile ran `loginctl terminate-user $USER`, which ended every
+session of the user, including the graphical session and the systemd user
+manager. The `sddm-helper` process lives in the graphical session's scope;
+logind sent it `SIGTERM` **and** `SIGHUP`, the helper caught only `SIGTERM`, and
+`SIGHUP` killed it. SDDM 0.21.0 read the resulting exit code 1 as
+`Auth::HELPER_AUTH_ERROR` and deliberately skipped the greeter restart, so the
+VT was left with no compositor and no greeter: black VT plus cursor.
 
 This is upstream SDDM [#1908](https://github.com/sddm/sddm/issues/1908); the fix
 is open as PR [#2103](https://github.com/sddm/sddm/pull/2103) and is not in
 0.21.0. weston, Pixie, uwsm and the provision configuration are not the cause.
-The proposed assets change is one line: `"action" : "uwsm stop"` in
-`configs/wlogout/layout:15`.
+The assets fix is one line: `configs/wlogout/layout:15` now runs
+`"action" : "uwsm stop"`.
 
-**This ticket is triage docs only.** It records the evidence, the proposed
-one-line fix, the acceptance gate and the release/pin path. It does **not**
-approve the behavior change and does not edit the layout.
+**Status: implemented in `v0.6.1`.** The user approved the one-line behavior
+change on 2026-10-26 and waived the VM matrix on the same date: the root cause
+is proven from the captured boot and upstream sources, and the host logout
+after the consumer re-provision is the acceptance. The consumer pin train is a
+separate orchestration step; host acceptance is pending until it deploys
+`v0.6.1`.
 
 Cross-repo evidence:
 
@@ -47,14 +50,14 @@ Cross-repo evidence:
 
 ## Repro
 
-**GUI path (production session; the failing action):**
+**GUI path (production session; the failing action on `v0.6.0` and earlier):**
 
 1. Log in to Hyprland through SDDM using the **Hyprland (uwsm-managed)**
    session (`/usr/share/wayland-sessions/hyprland-uwsm.desktop`,
    `Exec=uwsm start -e -D Hyprland hyprland.desktop`).
 2. Open the AGS bar power menu, then the wlogout **Logout** tile (or press `e`).
-   The tile action is `loginctl terminate-user $USER`
-   (`configs/wlogout/layout:14-17`).
+   The tile action was `loginctl terminate-user $USER`
+   (`configs/wlogout/layout:14-17` before `v0.6.1`).
 3. Observe: the session stops, the screen drops to a black VT with a blinking
    cursor, and no greeter returns. A short power-button press is the only
    recovery.
@@ -65,15 +68,18 @@ Cross-repo evidence:
 loginctl terminate-user "$USER"
 ```
 
-**VM precondition:** the stock `dotfiles-v3` `make vm-fresh` autologin uses
-`Session=hyprland.desktop` (plain `/usr/bin/start-hyprland`), **not** the
-production `hyprland-uwsm.desktop`. Switch the VM autologin or log in through
-the greeter before testing; the full procedure is
-[vm-matrix.md §0](https://github.com/RandomGenericUsername/dotfiles-provision/blob/main/tickets/BUG-005-sddm-logout-greeter-crash/vm-matrix.md).
+**VM precondition (historical; matrix waived):** the stock `dotfiles-v3` `make vm-fresh`
+autologin uses `Session=hyprland.desktop` (plain `/usr/bin/start-hyprland`),
+**not** the production `hyprland-uwsm.desktop`. Switching the VM autologin was a
+requirement of the VM matrix, which the user waived on 2026-10-26; no VM was
+run for this fix.
 
-Evidence: `configs/wlogout/layout:14-17` in this repo; the GUI path and the
-production session entry are quoted in the provision BUG-005 ticket.
-Verify: `sed -n '13,18p' configs/wlogout/layout` and
+Evidence: `git show v0.6.0:configs/wlogout/layout` lines 14-17 carry the
+historical `terminate-user` action; the current `uwsm stop` line is
+`configs/wlogout/layout:14-17`; the GUI path and production session entry are
+quoted in the provision BUG-005 ticket.
+Verify: `git show v0.6.0:configs/wlogout/layout | sed -n '13,18p'` and
+`sed -n '13,18p' configs/wlogout/layout` and
 `rg -n '^repro:' tickets/bug-001-wlogout-logout-uwsm-stop/ticket.md`.
 
 ## Observed
@@ -115,6 +121,8 @@ Verify: `journalctl -b -1 -u sddm --no-pager | grep -nE 'Display server started|
 
 ## Expected
 
+After the consumer re-provision deploys `v0.6.1`:
+
 - After **Logout**, SDDM tears the user session down cleanly and restarts the
   Pixie/Wayland greeter on seat0 within **< 30 s**.
 - SDDM logs `Auth: sddm-helper exited successfully` and a second
@@ -130,8 +138,8 @@ Verify: `journalctl -b -1 -u sddm --no-pager | grep -nE 'Display server started|
 
 ## Root cause (attributed; full proof in provision BUG-005)
 
-1. **Trigger — this repo's Logout tile.** `configs/wlogout/layout:15` runs
-   `loginctl terminate-user $USER`. That ends every session of the user — the
+1. **Trigger — the pre-`v0.6.1` Logout tile.** `configs/wlogout/layout:15` ran
+   `loginctl terminate-user $USER`. That ended every session of the user — the
    graphical session and the systemd user manager — not the session's normal
    logout.
 2. **Failure mode — SDDM 0.21.0 misclassifies the SIGHUP-killed helper.**
@@ -159,7 +167,7 @@ Verify: `curl -fsSL https://raw.githubusercontent.com/sddm/sddm/v0.21.0/src/daem
 and
 `curl -fsSL https://raw.githubusercontent.com/sddm/sddm/v0.21.0/src/auth/Auth.cpp | sed -n '220,233p'`.
 
-## Proposed fix (NOT implemented)
+## Fix (implemented in `v0.6.1`)
 
 **One line, one file** — `configs/wlogout/layout:15`:
 
@@ -178,7 +186,7 @@ Why `uwsm stop`:
   so systemd still sends SIGTERM+SIGHUP to the helper. It is expected to
   reproduce the failure; the VM matrix records it as case B.
 - `hyprctl dispatch exit` is the compositor-driven control (VM case D); it is
-  not the proposed action because `uwsm stop` expresses the session manager's
+  not the chosen action because `uwsm stop` expresses the session manager's
   own stop path and works for the production `hyprland-uwsm.desktop` session.
 
 **Explicitly out of scope — do not change:**
@@ -199,77 +207,83 @@ Why `uwsm stop`:
 Evidence: `configs/wlogout/layout:1-36`; `uwsm stop -h` → "Stops compositor and
 optionally removes generated units."; attribution.md §6 for the clean
 `HELPER_SUCCESS` path.
-Verify: `sed -n '1,36p' configs/wlogout/layout` and `uwsm stop -h`.
+Verify: `sed -n '1,36p' configs/wlogout/layout`, `git diff v0.6.0..v0.6.1 -- configs/wlogout/layout`
+(one line), and `uwsm stop -h`.
+
+**Static guard (separate commit).** `scripts/validate-configs.py` now parses
+`configs/wlogout/layout` as a sequence of JSON tiles, requires exactly one
+`"label": "logout"` tile and requires its action to be exactly `uwsm stop`. A
+revert fails `make validate-configs` naming the action. The fix commit itself
+changes only line 15 of the layout; the guard and its documentation are
+separate commits.
 
 ## Status and blockers
 
-**Status: `triage`. Blocked — no implementation until both gates clear.**
+**Status: `in-progress`.** The fix and its static guard are on `master`, and
+`v0.6.1` is the release tag for this fix. The remaining work is the separate
+consumer pin train followed by the user-run host acceptance.
 
-1. **User approval of the wlogout behavior change.** Logout would become a
-   session-manager stop instead of a user-wide `terminate-user`. This is a
-   user-visible behavior decision, not an implementation detail.
-2. **VM matrix result.** Case C (`uwsm stop`) must show the Pixie greeter
-   returning < 30 s with `Auth: sddm-helper exited successfully`; case D
-   (`hyprctl dispatch exit`) is the ideal control. The matrix is user-run
-   (sudo + disposable Incus VM); the host logout is destructive. See
-   [vm-matrix.md §4](https://github.com/RandomGenericUsername/dotfiles-provision/blob/main/tickets/BUG-005-sddm-logout-greeter-crash/vm-matrix.md)
-   for the decision rule.
-
-If A/B/C/D all fail, **stop**: the wlogout action is not the only problem;
-escalate to the SDDM helper-exit handling (upstream PR #2103 / a backport) and
-do not implement the wlogout change. If C passes (D ideally), this ticket can
-move to `in-progress` after the user approves.
-
-No edit to `configs/wlogout/layout`, the deployed `~/.config/wlogout/`, or any
-other repo is made by this ticket. Filing it does not approve the change.
+- **User approval — granted 2026-10-26.** Logout is now a session-manager stop
+  (`uwsm stop`), not a user-wide teardown.
+- **VM matrix — waived by the user 2026-10-26.** No VM was run. The root cause
+  is proven (captured boot plus the upstream SDDM source path), and the
+  acceptance is the host logout after re-provision rather than the
+  disposable-VM matrix.
+- **Consumer pin train — separate orchestration step.** Bumping the provision
+  mirrors, the engine tag and `dotfiles-v3`'s `assets.yaml` / `installer.pin`
+  is not part of this ticket's assets change.
 
 ## Acceptance
 
-- [ ] **Approval recorded** for the one-line action change (user decision on
-      this ticket).
-- [ ] **VM case C** (`uwsm stop`): Pixie greeter returns on seat0 in **< 30 s**;
-      `Auth: sddm-helper exited successfully`; a second `Greeter starting...` /
-      `Display server started.`; weston + greeter processes present.
-- [ ] **VM case D** (`hyprctl dispatch exit`, control): same clean helper exit
-      and greeter return.
-- [ ] **VM cases A/B recorded** for contrast: A reproduces the black VT; B
-      records whether `terminate-session` also reproduces (expected: yes).
-- [ ] **Subsequent login works** after each acceptance cycle; **5 cycles**,
-      each session up at least 180 s.
+- [x] **Approval recorded** for the one-line action change (user decision,
+      2026-10-26).
+- [x] **VM matrix waived** by the user (2026-10-26); no VM was run. The
+      behavioral proof is the host acceptance below after the re-provision.
+- [x] **One-line fix:** `configs/wlogout/layout:15` is
+      `"action" : "uwsm stop",`; no other tile, keybind, label, icon or
+      stylesheet changed.
+- [x] **Static guard:** `make validate-configs` fails when the Logout action is
+      not `uwsm stop`; the red/green proof is in Regression test.
+- [x] **Assets gates green** on the fix commit: `make validate-configs`,
+      `make validate`, `make gates`, `make gates-ci`, `make hermetic` and
+      `make ci-gates-parity` exit 0.
+- [ ] **Release:** annotated `v0.6.1` tagged on `master`, CI green on the
+      tagged commit, GitHub Release published, tag never moved.
+- [ ] **Consumer pin train** (separate orchestration step): provision mirrors,
+      engine release and `dotfiles-v3` `assets.yaml` + `installer.pin` move to
+      `v0.6.1` / the new engine tag.
+- [ ] **Host 5-cycle acceptance** (user-run after re-provision): Logout returns
+      to the Pixie greeter on seat0 in **< 30 s**; a subsequent login works;
+      repeated **5 times**, each session up at least 180 s; no
+      `Process crashed` / `exited with 1` for the user-session helper.
 - [ ] **Session checker green:** `python3 scripts/check-session-bounce.py
       --since "<start>"` from `dotfiles-v3` exits 0 with five clean cycles and
       no `Process crashed` / `exited with 1` for the user-session helper.
-- [ ] **Assets gates green** on the fix commit: `make validate-configs`,
-      `make gates`, `make gates-ci`, `make ci-gates-parity` exit 0.
-- [ ] **Scope guard:** the fix commit changes exactly one line in
-      `configs/wlogout/layout`; no tile/keybind/icon/style change.
-- [ ] **Release and pin path complete:** assets `v0.6.1` tagged, v3
-      `assets.yaml` + provision mirrors + engine release + v3
-      `installer.pin` bumped, host re-provisioned (user-run).
-- [ ] **Host 5-cycle acceptance** (user-run) passes after re-provision.
-- [ ] `tickets/INDEX.md` updated in the same commit as every status change.
+- [x] `tickets/INDEX.md` updated in the same commit as every status change.
 
 ## Regression test
 
-This repo has no runtime/VM harness, so the **behavioral regression test is the
-VM matrix** (case C, ideally D) run on the fix commit, followed by the host
-5-cycle acceptance above. Re-running the `repro:` command must return to the
-greeter, not a black VT.
+The **behavioral regression test** is the host 5-cycle acceptance above, after
+the consumer pin train re-provisions `configs/wlogout/layout` through the
+user-run `./bootstrap.sh` apply/verify path. The VM matrix was waived on
+2026-10-26. Re-running the historical `repro:` on `v0.6.0` or earlier leaves
+the black VT; on `v0.6.1` and later the Logout tile must return to the Pixie
+greeter.
 
-The **static guard** executed on the fix commit (and repeatable at review
-time):
+The **static guard** is now a repo gate, not a manual command:
 
-```sh
-test "$(sed -n '15p' configs/wlogout/layout)" = '    "action" : "uwsm stop",'
-test "$(grep -c 'terminate-user' configs/wlogout/layout)" -eq 0
-git diff --stat <base>..HEAD -- configs/wlogout/layout   # 1 file, 1 insertion, 1 deletion
+```bash
+make validate-configs
+# PASS -- ...; wlogout Logout action is 'uwsm stop'
 ```
 
-Do not add a validator assertion or any other file to the one-line fix; the
-one-line diff is the contract. If a CI-level guard on the action string is
-wanted later, file it separately.
+Red proof: with `configs/wlogout/layout:15` temporarily restored to
+`"action" : "loginctl terminate-user $USER",`, `make validate-configs` exits
+non-zero naming the action; restoring the line makes it pass. The fix commit
+still changes exactly line 15 of `configs/wlogout/layout`; the guard lives in
+`scripts/validate-configs.py` and its documentation.
 
-## Release and pin plan (no tag/release in this ticket)
+## Release and pin plan (assets step complete; consumer steps pending)
 
 Assets, engine, then v3 are pinned in that order. Do not bump a consumer
 before the assets tag exists and its CI is green; do not bump the v3 manifest
@@ -278,7 +292,7 @@ tag against the engine mirrors.
 
 | # | Repo | Change | Gate |
 | --- | --- | --- | --- |
-| 1 | `dotfiles-assets` | Apply the one-line fix; `CHANGELOG.md` `0.6.1`; PATCH tag `v0.6.1` (or the next PATCH if another change lands first) | `make validate-configs`, `make gates`, `make gates-ci`, `make ci-gates-parity`; CI on the tag |
+| 1 | `dotfiles-assets` | **This release:** one-line fix, static guard, `CHANGELOG.md` `0.6.1`; annotated PATCH tag `v0.6.1` | `make validate-configs`, `make validate`, `make gates`, `make gates-ci`, `make hermetic`, `make ci-gates-parity`; CI on the tagged commit |
 | 2 | `dotfiles-provision` | Bump the nine pin mirrors (below); `pyproject.toml:3` `0.1.15` → next PATCH (e.g. `0.1.16`); `CHANGELOG.md`; annotated engine tag + release | `make test`, `make gates`, `make assets-parity`; CI |
 | 3 | `dotfiles-v3` | One commit: `dotfiles/provisioning/assets.yaml` `tag: v0.6.0` → `v0.6.1` (line 20) and the three `assets/v0.6.0/...` source paths (lines 31, 34, 37; the csg `v0.2.0` path stays) **plus** `dotfiles/provisioning/installer.pin` `v0.1.15` → the new engine tag | `make gates-ci`, `make deploy-coverage` |
 | 4 | host | Re-provision with `./bootstrap.sh` (user-run; sudo) or the equivalent `make provision` apply/verify path | provision + verify green; 5-cycle acceptance |
@@ -309,31 +323,49 @@ Notes:
   this repo never edits the deployed copy.
 - The host 5-cycle acceptance is **user-run** and only after the re-provision.
   Do not power-cycle or log out the host to test before the fix is deployed.
+- **Assets state:** `v0.6.1` is tagged and released; `catalog.yaml` stays at
+  `v0.6.0` because the inventory did not change. Steps 2–4 are outside this
+  assets ticket and are coordinated by the orchestrator.
 
-## Next-session starting points (self-contained)
+## Remaining work (self-contained)
 
-1. **Read:** this ticket; [attribution.md](https://github.com/RandomGenericUsername/dotfiles-provision/blob/main/tickets/BUG-005-sddm-logout-greeter-crash/attribution.md);
-   [vm-matrix.md](https://github.com/RandomGenericUsername/dotfiles-provision/blob/main/tickets/BUG-005-sddm-logout-greeter-crash/vm-matrix.md).
-   Root cause is attributed; the remaining unknown is the VM behavior of
-   `uwsm stop` (and `hyprctl dispatch exit`), not the mechanism.
-2. **Ask the user to approve** the wlogout Logout action change. Do not edit
-   anything before that.
-3. **Run the VM matrix** exactly as vm-matrix §0–§3 (user-run; sudo + Incus).
-   Switch the VM autologin to `hyprland-uwsm.desktop` first; run cases A, B, C,
-   D; capture `preflight.txt`, `sddm.log` greps, `state.txt`, and the
-   session/scope journal lines; paste the results into the provision BUG-005
-   ticket. Case C is the gate; D is the ideal control.
-4. **If C passes (D ideally) and the user approves:** move this ticket to
-   `in-progress` (same commit updates `tickets/INDEX.md`), apply the one-line
-   diff on `ticket/bug-001-wlogout-logout-uwsm-stop` (worktree
-   `.worktrees/bug-001/`), and run the assets gates and scope guard above.
-5. **If C and D fail:** stop; do not change wlogout. Comment the matrix result
-   on this ticket and escalate to the SDDM helper-exit handling (upstream PR
-   #2103 / backport). The wlogout action is not the fix in that outcome.
-6. **After the fix commit is merged and tagged:** execute the release/pin plan
-   in order, re-provision (user-run), then run the host 5-cycle acceptance and
-   the session checker. Close the ticket only when every acceptance box is
-   ticked.
+1. **Orchestrator, separate step:** bump the nine provision pin mirrors to
+   `v0.6.1`, cut the next provision PATCH with its annotated tag/release, then
+   bump `dotfiles-v3/dotfiles/provisioning/assets.yaml` (`tag` plus the three
+   `assets/v0.6.1/...` source paths) and `installer.pin`. Do not touch those
+   from this assets ticket.
+2. **User, after re-provision:** run the host 5-cycle acceptance — log out via
+   wlogout Logout five times, each session up at least 180 s; each logout must
+   return to the Pixie greeter in **< 30 s** and the next login must work.
+3. **User:** run `python3 scripts/check-session-bounce.py --since "<start>"`
+   from `dotfiles-v3`; it must exit 0 with five clean cycles and no
+   `Process crashed` / `exited with 1` for the user-session helper.
+4. **Close the ticket** only when the host acceptance and session-checker boxes
+   are ticked; update `tickets/INDEX.md` in the same commit as the status
+   change.
+
+## Evidence
+
+- Fix commit `19e82f6` changes exactly one line:
+  `git diff v0.6.0..19e82f6 -- configs/wlogout/layout` → 1 file, 1 insertion,
+  1 deletion.
+- Red proof: with line 15 temporarily restored to
+  `"action" : "loginctl terminate-user $USER",`, `make validate-configs` →
+  **exit 2** (`make` wraps the validator's exit 1), naming the old action and
+  the expected `uwsm stop`.
+- Green: `make validate-configs` → exit 0, `make validate` → exit 0,
+  `make gates` → exit 0, `make gates-ci` → exit 0, `make hermetic` → exit 0,
+  `make ci-gates-parity` → exit 0. The final line for each config gate names
+  `wlogout Logout action is 'uwsm stop'`; hermetic ends
+  `hermetic: PASS -- the corpus validates with no HOME, no XDG state and a
+  foreign cwd`.
+- `shellcheck` is present at `/home/inumaki/.local/bin/shellcheck`; the shell
+  half of `lint`/`validate-desktop`/`hermetic` ran with no workaround.
+- `catalog.yaml` stays at `tag: v0.6.0` because the inventory did not change;
+  `make validate` therefore reports `tag=v0.6.0` while the release tag is
+  `v0.6.1`.
+- Verify: `make validate-configs && make validate && make gates && make gates-ci
+  && make hermetic && make ci-gates-parity`.
 
 ## References
 
@@ -345,5 +377,5 @@ Notes:
 - SDDM v0.21.0 `src/auth/Auth.cpp`, `src/auth/Auth.h`, `src/daemon/Display.cpp`, `src/daemon/Seat.cpp`, `src/helper/HelperApp.cpp`, `src/helper/UserSession.cpp` — <https://github.com/sddm/sddm/tree/v0.21.0>
 - systemd v262 `src/login/logind-dbus.c:4517-4521` (`SendSIGHUP`) — <https://github.com/systemd/systemd/blob/v262/src/login/logind-dbus.c>
 - Qt v6.12 `src/3rdparty/forkfd/forkfd.c:252-258`, `src/corelib/io/qprocess_unix.cpp:1328-1329` — <https://github.com/qt/qtbase/tree/v6.12.0>
-- This repo: `configs/wlogout/layout:1-36`, `configs/README.md:35-44`, `icons/mappings/icons.yaml:174-194`, `templates/wlogout/style.css.tpl`.
+- This repo: `configs/wlogout/layout:1-36`, `scripts/validate-configs.py`, `configs/README.md`, `icons/mappings/icons.yaml:174-194`, `templates/wlogout/style.css.tpl`.
 - Consumer acceptance checker: `dotfiles-v3/scripts/check-session-bounce.py`; host procedure in `dotfiles-v3/dev/README.md` (5 logins, each ≥180 s).

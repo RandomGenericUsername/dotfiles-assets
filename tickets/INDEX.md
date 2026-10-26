@@ -20,5 +20,5 @@
 
 ## Bugs
 
-- [bug-001-wlogout-logout-uwsm-stop](./bug-001-wlogout-logout-uwsm-stop/ticket.md) — wlogout Logout runs `terminate-user` and leaves SDDM on a black VT | `triage` | lane 2 — bounded config change | severity: high | blocked on user approval + VM matrix case C (ideally D)
+- [bug-001-wlogout-logout-uwsm-stop](./bug-001-wlogout-logout-uwsm-stop/ticket.md) — wlogout Logout runs `terminate-user` and leaves SDDM on a black VT | `in-progress` | lane 2 — bounded config change | severity: high | fix `uwsm stop` + static guard shipped in `v0.6.1`; VM matrix waived 2026-10-26; host 5-cycle acceptance pending consumer re-provision
 
