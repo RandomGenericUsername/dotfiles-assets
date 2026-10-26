@@ -2,7 +2,7 @@
 id: BUG-001
 title: "wlogout Logout runs terminate-user and leaves SDDM on a black VT"
 kind: bug
-status: in-progress
+status: done
 lane: 2 — bounded config change (bug lane; no OpenSpec change)
 severity: high
 links:
@@ -35,12 +35,15 @@ is open as PR [#2103](https://github.com/sddm/sddm/pull/2103) and is not in
 The assets fix is one line: `configs/wlogout/layout:15` now runs
 `"action" : "uwsm stop"`.
 
-**Status: implemented in `v0.6.1`.** The user approved the one-line behavior
-change on 2026-10-26 and waived the VM matrix on the same date: the root cause
-is proven from the captured boot and upstream sources, and the host logout
-after the consumer re-provision is the acceptance. The consumer pin train is a
-separate orchestration step; host acceptance is pending until it deploys
-`v0.6.1`.
+**Status: done (2026-10-26).** The user approved the one-line behavior change on
+2026-10-26 and waived the VM matrix on the same date: the root cause is proven
+from the captured boot and upstream sources, and the host logout after the
+consumer re-provision is the acceptance. Assets `v0.6.1` is deployed on the host
+through provision engine `v0.1.16` / v3 `PIN-0115`, and the deployed
+`~/.config/wlogout/layout` shows `"action" : "uwsm stop"`. Two clean
+logout→greeter→login cycles were observed; the formal 5-login run was stopped by
+the user at 3/5 successful logins and the user accepted the fix after the two
+clean cycles (see Host acceptance).
 
 Cross-repo evidence:
 
@@ -219,9 +222,12 @@ separate commits.
 
 ## Status and blockers
 
-**Status: `in-progress`.** The fix and its static guard are on `master`; assets
-`v0.6.1` is tagged and released. The remaining work is the separate consumer
-pin train followed by the user-run host acceptance.
+**Status: `done` (2026-10-26).** The fix and its static guard are on `master`;
+assets `v0.6.1` is tagged and released. The consumer pin train landed as
+provision engine `v0.1.16` / v3 `PIN-0115`, and the host runs the deployed
+`"action" : "uwsm stop"`. Host acceptance is recorded below: two clean cycles,
+with the formal 5-login run stopped by the user at 3/5 successful logins. No
+blockers remain.
 
 - **User approval — granted 2026-10-26.** Logout is now a session-manager stop
   (`uwsm stop`), not a user-wide teardown.
@@ -229,9 +235,9 @@ pin train followed by the user-run host acceptance.
   is proven (captured boot plus the upstream SDDM source path), and the
   acceptance is the host logout after re-provision rather than the
   disposable-VM matrix.
-- **Consumer pin train — separate orchestration step.** Bumping the provision
-  mirrors, the engine tag and `dotfiles-v3`'s `assets.yaml` / `installer.pin`
-  is not part of this ticket's assets change.
+- **Consumer pin train — complete.** Provision engine `v0.1.16` / v3
+  `PIN-0115` deploy assets `v0.6.1`; the deployed layout carries
+  `"action" : "uwsm stop"`.
 
 ## Acceptance
 
@@ -253,26 +259,63 @@ pin train followed by the user-run host acceptance.
       green (9/9 jobs), GitHub Release
       [v0.6.1](https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.6.1)
       published (notes only, no assets), tag never moved.
-- [ ] **Consumer pin train** (separate orchestration step): provision mirrors,
-      engine release and `dotfiles-v3` `assets.yaml` + `installer.pin` move to
-      `v0.6.1` / the new engine tag.
-- [ ] **Host 5-cycle acceptance** (user-run after re-provision): Logout returns
-      to the Pixie greeter on seat0 in **< 30 s**; a subsequent login works;
-      repeated **5 times**, each session up at least 180 s; no
-      `Process crashed` / `exited with 1` for the user-session helper.
-- [ ] **Session checker green:** `python3 scripts/check-session-bounce.py
-      --since "<start>"` from `dotfiles-v3` exits 0 with five clean cycles and
-      no `Process crashed` / `exited with 1` for the user-session helper.
+- [x] **Consumer pin train:** provision engine `v0.1.16` / v3 `PIN-0115` deploy
+      assets `v0.6.1`; the deployed `~/.config/wlogout/layout` carries
+      `"action" : "uwsm stop"`.
+- [x] **Host acceptance** (user-run after re-provision): two clean
+      logout→greeter→login cycles (17:26:34→17:26:44 and 17:36:33→17:36:54,
+      each logged `Session started true`); no black VT/cursor, no
+      `Process crashed`, no `Session started false`, no x11-user fallback. The
+      formal **5-login** run was **stopped by the user at 3/5 successful
+      logins**; the user accepted the fix after the two clean cycles. **5/5 is
+      not claimed.**
+- [x] **Session checker run recorded:** `check-session-bounce.py` reported five
+      "attempts" because a failed password attempt at 17:36:47 was counted as an
+      attempt; actual successful `Session started true` = 3. This is a
+      dev-harness over-count, not a logout failure. No `Process crashed` /
+      `exited with 1` for the user-session helper was observed.
 - [x] `tickets/INDEX.md` updated in the same commit as every status change.
+
+## Host acceptance (2026-10-26)
+
+Deployment:
+
+- Assets **v0.6.1** deployed via provision engine **v0.1.16** / v3
+  **PIN-0115**.
+- The deployed `~/.config/wlogout/layout` shows `"action" : "uwsm stop"`.
+
+Two clean logout→greeter→login cycles:
+
+| Cycle | Logout | Greeter returned | Login |
+| --- | --- | --- | --- |
+| 1 | 17:26:34 | `Display server started` / `Greeter starting` | 17:26:44 `Session started true` |
+| 2 | 17:36:33 | `Display server started` / `Greeter starting` | 17:36:54 `Session started true` |
+
+No black VT/cursor, no `Process crashed`, no `Session started false`, and no
+x11-user fallback were observed.
+
+**Caveat — 3/5, not 5/5.** The formal 5-login acceptance was **stopped by the
+user at 3/5 successful logins**; the user accepted the fix after the two clean
+cycles above. This ticket does **not** claim 5/5.
+
+**Session checker over-count.** The session checker reported **5 "attempts"**
+because a failed password attempt at **17:36:47** was counted as an attempt;
+actual successful `Session started true` = **3**. This is a dev-harness
+over-count, not a logout failure.
+
+Evidence: the cycle timestamps and deployment pin above; the deployed layout
+action is quoted from the host after re-provision.
+Verify: `rg -n '3/5|17:36:47|PIN-0115' tickets/bug-001-wlogout-logout-uwsm-stop/ticket.md`.
 
 ## Regression test
 
-The **behavioral regression test** is the host 5-cycle acceptance above, after
-the consumer pin train re-provisions `configs/wlogout/layout` through the
+The **behavioral regression test** is the host logout acceptance above, after
+the consumer pin train re-provisioned `configs/wlogout/layout` through the
 user-run `./bootstrap.sh` apply/verify path. The VM matrix was waived on
 2026-10-26. Re-running the historical `repro:` on `v0.6.0` or earlier leaves
-the black VT; on `v0.6.1` and later the Logout tile must return to the Pixie
-greeter.
+the black VT; on `v0.6.1` and later the Logout tile returns to the Pixie
+greeter. The formal 5-cycle run was stopped by the user at 3/5 successful
+logins; the user accepted the two clean cycles, and **5/5 is not claimed**.
 
 The **static guard** is now a repo gate, not a manual command:
 
@@ -299,7 +342,7 @@ tag against the engine mirrors.
 | 1 | `dotfiles-assets` | **This release:** one-line fix, static guard, `CHANGELOG.md` `0.6.1`; annotated PATCH tag `v0.6.1` | `make validate-configs`, `make validate`, `make gates`, `make gates-ci`, `make hermetic`, `make ci-gates-parity`; CI on the tagged commit |
 | 2 | `dotfiles-provision` | Bump the nine pin mirrors (below); `pyproject.toml:3` `0.1.15` → next PATCH (e.g. `0.1.16`); `CHANGELOG.md`; annotated engine tag + release | `make test`, `make gates`, `make assets-parity`; CI |
 | 3 | `dotfiles-v3` | One commit: `dotfiles/provisioning/assets.yaml` `tag: v0.6.0` → `v0.6.1` (line 20) and the three `assets/v0.6.0/...` source paths (lines 31, 34, 37; the csg `v0.2.0` path stays) **plus** `dotfiles/provisioning/installer.pin` `v0.1.15` → the new engine tag | `make gates-ci`, `make deploy-coverage` |
-| 4 | host | Re-provision with `./bootstrap.sh` (user-run; sudo) or the equivalent `make provision` apply/verify path | provision + verify green; 5-cycle acceptance |
+| 4 | host | Re-provision with `./bootstrap.sh` (user-run; sudo) or the equivalent `make provision` apply/verify path | provision + verify green; host acceptance recorded (2 clean cycles; formal 5-cycle run stopped at 3/5, user accepted) |
 
 Provision pin mirrors — all move to the assets tag from step 1:
 
@@ -331,22 +374,25 @@ Notes:
   `v0.6.0` because the inventory did not change. Steps 2–4 are outside this
   assets ticket and are coordinated by the orchestrator.
 
-## Remaining work (self-contained)
+## Remaining work (none)
 
-1. **Orchestrator, separate step:** bump the nine provision pin mirrors to
-   `v0.6.1`, cut the next provision PATCH with its annotated tag/release, then
-   bump `dotfiles-v3/dotfiles/provisioning/assets.yaml` (`tag` plus the three
-   `assets/v0.6.1/...` source paths) and `installer.pin`. Do not touch those
-   from this assets ticket.
-2. **User, after re-provision:** run the host 5-cycle acceptance — log out via
-   wlogout Logout five times, each session up at least 180 s; each logout must
-   return to the Pixie greeter in **< 30 s** and the next login must work.
-3. **User:** run `python3 scripts/check-session-bounce.py --since "<start>"`
-   from `dotfiles-v3`; it must exit 0 with five clean cycles and no
-   `Process crashed` / `exited with 1` for the user-session helper.
-4. **Close the ticket** only when the host acceptance and session-checker boxes
-   are ticked; update `tickets/INDEX.md` in the same commit as the status
-   change.
+The pin train and host re-provision are complete, and the ticket is closed on
+the evidence in Host acceptance. The formal 5-login run was stopped by the user
+at 3/5 successful logins and is **not** claimed as complete; no further assets
+work is required for this bug.
+
+## Closeout
+
+Closed **2026-10-26** as `done` on the host evidence above. The fix itself and
+the deployed action are unchanged by this closeout — only ticket paperwork and
+`tickets/INDEX.md` were edited. **Not claimed:** 5/5 formal acceptance (stopped
+at 3/5 by the user; accepted after two clean cycles).
+
+Evidence: this ticket's Host acceptance section; the deployed
+`~/.config/wlogout/layout` shows `"action" : "uwsm stop"`; `git log -1 --
+tickets/bug-001-wlogout-logout-uwsm-stop/ticket.md` names the closeout commit.
+Verify: `rg -n '^status: done$' tickets/bug-001-wlogout-logout-uwsm-stop/ticket.md`
+and `rg -n '3/5|17:36:47|PIN-0115' tickets/bug-001-wlogout-logout-uwsm-stop/ticket.md`.
 
 ## Evidence
 
