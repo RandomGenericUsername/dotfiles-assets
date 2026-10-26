@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.5.0
+tag: v0.6.0
 
 classes:
   icons:
@@ -40,7 +40,7 @@ classes:
       - zsh
     schema: "templates/**/*.vars.schema.json"
     schema_major: 1
-    contents: 9 Jinja sources (zsh .zshrc, wlogout style.css, kitty.conf, btop.conf, 5 display-manager files) each with a sibling vars schema; 24 required variables and 0 optional; no rendered output
+    contents: 9 Jinja sources (zsh .zshrc, wlogout style.css, kitty.conf, btop.conf, 5 display-manager files) each with a sibling vars schema; 24 required variables and 1 optional (the SDDM Wayland greeter compositor command, defaulted in the body to weston --shell=kiosk); no rendered output
   configs:
     dir: configs
     subdirs:

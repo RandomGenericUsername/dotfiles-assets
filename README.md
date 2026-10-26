@@ -8,8 +8,8 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.5.1`; the composition still consumes `v0.5.0` (the `validate-configs` gate is repo-only, not a
-consumed surface).
+`v0.6.0`; the composition still consumes `v0.5.0` until its own pin bump (the `validate-configs`
+gate is repo-only and `v0.6.0` adds the optional SDDM compositor contract).
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -28,8 +28,9 @@ directories plus one group map and its vocabulary; `content/` holds the unmodifi
 and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
 six tool directories — the compositor, editor, prompt and wlogout layout (one file,
 `hyprland.lua`, carries a single host path the consumer renders; the rest are literal);
-`templates/` holds nine Jinja sources with nine vars schemas (24 required variables, zero optional),
-each imported with its body unchanged; `desktop/` holds six application entries and the
+`templates/` holds nine Jinja sources with nine vars schemas (24 required variables and one optional
+SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
+unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries. Each class validator arrives **with** its corpus, so every check has run against real data
 before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
@@ -65,9 +66,11 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `templates/<group>/<name>.vars.schema.json` — one contract per template: JSON Schema for the
   render context plus `schema_major`, `template` and `optional`, closed with
   `additionalProperties: false`. `required` equals the names the template body reads (in `{{ }}`
-  **or** `{% %}`), never a consumer's variable set. `make validate-templates` enforces the pairing,
-  the body equality and the no-`default(`-on-required rule; `templates/README.md` carries the
-  inventory and the rules.
+  **or** `{% %}`), never a consumer's variable set. The SDDM schema also declares one optional
+  compositor command, defaulted in the template body to `weston --shell=kiosk`; the rendered
+  `[Wayland]` section never depends on SDDM's implicit default. `make validate-templates` enforces
+  the pairing, the body equality, the no-`default(`-on-required rule and the SDDM Wayland assertion;
+  `templates/README.md` carries the inventory and the rules.
 - `desktop/desktop.yaml` — `schema_major: 1`; one record per entry: `{file, requires, optional}`.
   `requires` is the entry's own launcher binary (`basename(Exec argv[0])`, which is also its
   `TryExec`); `optional` is the payload a wrapper entry runs inside that launcher. The consumer

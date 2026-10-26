@@ -5,6 +5,39 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.6.0] — 2026-10-26
+
+### Added
+
+- **An explicit SDDM Wayland greeter compositor.** `templates/display-manager/sddm.conf.j2` now
+  renders a `[Wayland]` section after `[General]`:
+  `CompositorCommand={{ display_manager_sddm_compositor_command | default('weston --shell=kiosk') }}`.
+  The rendered config no longer relies on SDDM's implicit `Weston` default; a host that sets
+  `DisplayServer=wayland` and does not install `weston` can now be failed at deploy time instead of
+  falling back to `DisplayServer=x11-user` at the greeter.
+- **Optional `display_manager_sddm_compositor_command`** in
+  `templates/display-manager/sddm.conf.vars.schema.json`: a non-empty string, listed in `optional`
+  only, with **no schema-level default** — the fallback lives in the template body. `required` still
+  names only `display_manager_sddm_display_server`; `schema_major` stays **1** because the addition
+  is optional and additive.
+- **`make validate-templates` asserts the SDDM contract.** The gate fails when the `[Wayland]`
+  section, the `CompositorCommand` line or the `weston --shell=kiosk` fallback disappears, or when
+  the variable stops being optional. When `jinja2` is importable it renders the body with the
+  required variable only (fallback) and with the override (consumer value); the stdlib-only run
+  still asserts the section and the exact default expression.
+
+### Changed
+
+- `catalog.yaml` records **24 required variables and 1 optional** for `templates/` and moves the
+  corpus tag to `v0.6.0`; `README.md`, `templates/README.md` and the OpenSpec capability spec carry
+  the new inventory and the SDDM scenario.
+
+### Not here, on purpose
+
+No `weston` package, role variable, SDDM service change or pin bump: the consumer's
+`display_manager` role installs the package, passes the optional value and updates its own mirrors
+to `v0.6.0`. No rendered `sddm.conf` is committed.
+
 ## [0.5.1] — 2026-10-22
 
 ### Added

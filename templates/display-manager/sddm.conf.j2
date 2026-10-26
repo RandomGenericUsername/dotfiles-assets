@@ -7,6 +7,13 @@
 DisplayServer={{ display_manager_sddm_display_server }}
 GreeterEnvironment=QT_QPA_PLATFORM=wayland
 
+# The Wayland greeter still needs a compositor. SDDM's implicit default is
+# `weston --shell=kiosk`; naming it here keeps the dependency visible in the
+# rendered config, and the consumer can override the command for another
+# compositor without this repository knowing its package list (spine AD-9).
+[Wayland]
+CompositorCommand={{ display_manager_sddm_compositor_command | default('weston --shell=kiosk') }}
+
 [Theme]
 Current=pixie
 CursorTheme=Adwaita

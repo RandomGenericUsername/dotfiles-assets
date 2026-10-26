@@ -43,6 +43,19 @@ WHAT THIS GATE PROVES (spine AD-8):
      standard library: a typo like `"requird"` would otherwise be a keyword
      nothing reads and a rule nothing enforces.
 
+  7. THE SDDM WAYLAND GREETER NAMES ITS COMPOSITOR. SDDM's implicit default is
+     `weston --shell=kiosk`; a config that sets `DisplayServer=wayland` without a
+     `[Wayland] CompositorCommand` line depends on that default invisibly, and a
+     consumer that did not install weston gets a greeter display-server failure
+     and an x11-user fallback. The sddm template must therefore render the
+     section, read the optional override, and carry the exact fallback; the
+     schema must keep that variable optional. The check is deliberately targeted:
+     the template path is consumer-addressed, and the fallback string must match
+     the package the consumer installs. When `jinja2` is importable the gate also
+     renders the body with only the required variable and with an override;
+     otherwise the exact default expression is still asserted statically, so the
+     stdlib-only fresh-clone run cannot miss a deleted section.
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network (the S0 birth rule). The `jsonschema` package is NOT a dependency: when it
 happens to be importable the gate additionally validates each schema against the
@@ -97,6 +110,20 @@ EXPRESSION = re.compile(r"\{\{(?P<expr>.*?)\}\}|\{%(?P<stmt>.*?)%\}", re.DOTALL)
 STRING_LITERAL = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
 IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 DEFAULT_CALL = re.compile(r"\bdefault\s*\(")
+
+#: Rule 7: the one deploy-critical template. The consumer addresses this path,
+#: and the fallback string is the compositor package its role installs.
+SDDM_TEMPLATE = "templates/display-manager/sddm.conf.j2"
+SDDM_COMPOSITOR_VAR = "display_manager_sddm_compositor_command"
+SDDM_COMPOSITOR_DEFAULT = "weston --shell=kiosk"
+SDDM_COMPOSITOR_EXPRESSION = re.compile(
+    r"\{\{\s*"
+    + re.escape(SDDM_COMPOSITOR_VAR)
+    + r"\s*\|\s*default\(\s*['\"]"
+    + re.escape(SDDM_COMPOSITOR_DEFAULT)
+    + r"['\"]\s*\)\s*\}\}"
+)
+INI_SECTION = re.compile(r"(?m)^\[(?P<name>[^\]]+)\]\s*$")
 
 #: The 2020-12 keywords this class is allowed to use, with the JSON type each
 #: value must have, plus this class's three extensions (rated at the top level
@@ -194,6 +221,105 @@ def expected_schema(template: Path) -> Path:
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise TemplateError(message)
+
+
+def _ini_section(body: str, name: str) -> str | None:
+    """Return the text under `[name]`, up to the next section header (or EOF)."""
+    match = re.search(rf"(?m)^\[{re.escape(name)}\]\s*$", body)
+    if match is None:
+        return None
+    rest = body[match.end() :]
+    next_section = INI_SECTION.search(rest)
+    return rest[: next_section.start()] if next_section else rest
+
+
+def check_sddm_wayland(
+    template: Path, body: str, schema: dict, root: Path
+) -> bool:
+    """Rule 7: the SDDM body names its greeter compositor; return True if rendered.
+
+    The static assertion always runs, so a fresh clone without Jinja2 still
+    fails when the section or the fallback disappears. The render probe is the
+    optional deep mode: required variables only must produce the template
+    default, and the optional variable must override it.
+    """
+    rel = _rel(template, root)
+    wayland = _ini_section(body, "Wayland")
+    _require(
+        wayland is not None,
+        f"{rel}: no [Wayland] section -- the rendered config would depend on "
+        f"SDDM's implicit `{SDDM_COMPOSITOR_DEFAULT}` fallback, which stays "
+        f"invisible until a host without weston cannot start the greeter",
+    )
+    assert wayland is not None
+    command_lines = [
+        line.strip()
+        for line in wayland.splitlines()
+        if line.strip().startswith("CompositorCommand=")
+    ]
+    _require(
+        len(command_lines) == 1,
+        f"{rel}: [Wayland] must carry exactly one CompositorCommand line, found "
+        f"{len(command_lines)}",
+    )
+    command = command_lines[0]
+    _require(
+        SDDM_COMPOSITOR_VAR in command,
+        f"{rel}: CompositorCommand must read {SDDM_COMPOSITOR_VAR!r}, got "
+        f"{command!r}",
+    )
+    _require(
+        SDDM_COMPOSITOR_EXPRESSION.search(command) is not None,
+        f"{rel}: CompositorCommand must default to {SDDM_COMPOSITOR_DEFAULT!r} "
+        f"via `{SDDM_COMPOSITOR_VAR} | default(...)`, got {command!r}",
+    )
+
+    properties = schema.get("properties")
+    optional = schema.get("optional")
+    required = schema.get("required")
+    _require(
+        isinstance(properties, dict) and SDDM_COMPOSITOR_VAR in properties,
+        f"{rel}: the schema must declare {SDDM_COMPOSITOR_VAR!r}",
+    )
+    _require(
+        isinstance(optional, list) and SDDM_COMPOSITOR_VAR in optional,
+        f"{rel}: {SDDM_COMPOSITOR_VAR!r} must be optional -- making it required "
+        f"would break every consumer that renders the current context",
+    )
+    _require(
+        isinstance(required, list) and SDDM_COMPOSITOR_VAR not in required,
+        f"{rel}: {SDDM_COMPOSITOR_VAR!r} must not be required",
+    )
+
+    try:
+        import jinja2
+    except ImportError:
+        return False
+    try:
+        env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+        rendered = env.from_string(body).render(
+            display_manager_sddm_display_server="wayland"
+        )
+        _require(
+            f"CompositorCommand={SDDM_COMPOSITOR_DEFAULT}" in rendered,
+            f"{rel}: rendering with only the required variable must produce "
+            f"`CompositorCommand={SDDM_COMPOSITOR_DEFAULT}`, got:\n{rendered}",
+        )
+        override = "cage -- /usr/bin/sddm-greeter"
+        rendered = env.from_string(body).render(
+            display_manager_sddm_display_server="wayland",
+            display_manager_sddm_compositor_command=override,
+        )
+        _require(
+            f"CompositorCommand={override}" in rendered,
+            f"{rel}: an explicit {SDDM_COMPOSITOR_VAR!r} must override the "
+            f"default, got:\n{rendered}",
+        )
+    except jinja2.TemplateError as exc:
+        raise TemplateError(
+            f"{rel}: Jinja2 could not render the template ({exc})"
+        ) from exc
+    return True
 
 
 def check_keywords(schema: object, rel: str, where: str = "schema") -> None:
@@ -413,6 +539,8 @@ def main() -> int:
     required_total = 0
     optional_total = 0
     default_probe_count = 0
+    sddm_seen = False
+    sddm_render_probe = False
 
     template_set = set(templates)
     schema_set = set(schemas)
@@ -458,6 +586,11 @@ def main() -> int:
         try:
             required_n, optional_n = check_schema(schema_path, data, template, reads, root)
             deep_check(schema_path, data, root)
+            if _rel(template, root) == SDDM_TEMPLATE:
+                sddm_seen = True
+                sddm_render_probe = check_sddm_wayland(
+                    template, template.read_text(), data, root
+                )
         except TemplateError as exc:
             errors.append(str(exc))
             continue
@@ -484,6 +617,27 @@ def main() -> int:
         f"validate-templates: templates containing `default(`: {default_probe_count}; "
         f"defaults on required vars: 0 (rule enforced)"
     )
+    if not sddm_seen:
+        errors.append(
+            f"{SDDM_TEMPLATE}: missing -- the SDDM Wayland greeter contract "
+            f"cannot be asserted without the template"
+        )
+    else:
+        print(
+            f"validate-templates: sddm: [Wayland] CompositorCommand present "
+            f"(default={SDDM_COMPOSITOR_DEFAULT!r}; optional override asserted)"
+        )
+        if sddm_render_probe:
+            print(
+                "validate-templates: sddm deep: renders with the required variable "
+                "only and with the optional override"
+            )
+        else:
+            print(
+                "validate-templates: NOTE -- the sddm render probe did not run "
+                "(jinja2 is not installed or the probe failed); the static "
+                "section/default assertion still ran"
+            )
     try:
         import jsonschema  # noqa: F401
     except ImportError:

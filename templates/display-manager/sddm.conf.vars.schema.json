@@ -1,9 +1,9 @@
 {
-  "$comment": "The render context for templates/display-manager/sddm.conf.j2. One name: the SDDM display server. The DM TYPE, packages, the Pixie pin and service enablement stay in the installer (spine AD-9) — only the file body is an asset.",
+  "$comment": "The render context for templates/display-manager/sddm.conf.j2. One required name: the SDDM display server. One optional name: the Wayland greeter compositor command, defaulted in the template because the rendered config must always name a compositor. The DM TYPE, packages, the Pixie pin and service enablement stay in the installer (spine AD-9) — only the file body is an asset.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/display-manager/sddm.conf.vars.schema.json",
   "title": "display-manager/sddm.conf.j2 — render context",
-  "description": "The single value the SDDM config reads: DisplayServer (wayland or x11).",
+  "description": "The values the SDDM config reads: DisplayServer (wayland or x11) and the optional Wayland greeter compositor command (template default: weston --shell=kiosk).",
   "schema_major": 1,
   "template": "sddm.conf.j2",
   "type": "object",
@@ -12,13 +12,18 @@
       "type": "string",
       "enum": ["wayland", "x11"],
       "description": "SDDM's DisplayServer value. Enumerated because these are the two values the directive accepts; the consumer's default is `wayland` (the no-X11-GPU-grab choice the template documents)."
+    },
+    "display_manager_sddm_compositor_command": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The Wayland greeter's `[Wayland] CompositorCommand`. Optional: the template defaults to `weston --shell=kiosk`, which is also SDDM's implicit default; the consumer overrides it only when it installs a different compositor. The default lives in the body, not here, so the rendered file always carries a command."
     }
   },
   "required": ["display_manager_sddm_display_server"],
-  "optional": [],
+  "optional": ["display_manager_sddm_compositor_command"],
   "additionalProperties": false,
   "x-render-contract": {
-    "no_default_on_required": "No `default(` fallback: the display server is a login-path decision, and a silently defaulted value is exactly the kind of broken-greeter state this file cannot detect.",
-    "assets_scope": "No mode, ownership, service name or package list here (spine AD-9): the installer renders this at 0644 with become and owns enablement."
+    "no_default_on_required": "No `default(` fallback on the display server: it is a login-path decision, and a silently defaulted value is exactly the kind of broken-greeter state this file cannot detect. The compositor command is different: it is optional, defaults in the body to SDDM's implicit `weston --shell=kiosk`, and `make validate-templates` asserts both the fallback and an explicit override.",
+    "assets_scope": "No mode, ownership, service name or package list here (spine AD-9): the installer renders this at 0644 with become and owns enablement. The compositor package (`weston` by default) and the pin to this repository stay in the consumer."
   }
 }
