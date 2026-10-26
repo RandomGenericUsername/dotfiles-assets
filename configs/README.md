@@ -82,11 +82,13 @@ subdirectory is declared, and no generated/mutable artifact name (`active-theme`
 
 `make validate-configs` (a `GATES` member with its own CI job since `v0.5.1`) implements the
 four release-time commands below as executable checks. It fails naming the file and line, and
-the second-token negative names both locations:
+the second-token negative names both locations. Since `v0.6.1` it also parses `wlogout/layout`
+and requires the single Logout tile's action to be exactly `uwsm stop`; a revert to the
+user-wide `loginctl terminate-user` fails the gate (`BUG-001`).
 
 ```bash
 make validate-configs
-# PASS -- no template/mutable/rendered files; exactly one render token at configs/hypr/hyprland.lua:7
+# PASS -- no template/mutable/rendered files; exactly one render token at configs/hypr/hyprland.lua:7; wlogout Logout action is 'uwsm stop'
 ```
 
 The same rules, written as the manual commands the gate replaced:

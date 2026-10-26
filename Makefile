@@ -17,7 +17,7 @@
 #   make validate-icons  every mapping template resolves, placeholders declared, SVGs parse
 #   make validate-content  the wallpaper tarball holds a top-level default.png, themes non-empty
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
-#   make validate-configs  deployment-fixed configs, one reviewed render token, no mutable/rendered files
+#   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
 #   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic
@@ -49,7 +49,7 @@ help:
 	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
-	  'validate-configs  deployment-fixed configs; exactly one reviewed render token; no mutable/rendered files' \
+	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
 	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic' \
