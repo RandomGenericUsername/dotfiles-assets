@@ -2,7 +2,7 @@
 id: REQ-006
 title: "SDDM config template carries the Wayland greeter compositor (v0.6.0)"
 kind: requirement
-status: in-progress
+status: done
 size: S
 lane: 2 — openspec-single (bounded template/schema change)
 links:
@@ -62,10 +62,10 @@ Worktree created with `bash scripts/worktree-guard.sh create req-006 sddm-waylan
 - [x] `make validate`, `make validate-templates`, `make gates`, `make gates-ci`, `make hermetic` and
       `make ci-gates-parity` exit 0 in the worktree; `openspec validate sddm-wayland-template`
       and `openspec validate --specs` exit 0.
-- [ ] Fresh anonymous clone at `v0.6.0` passes `make gates` and reports the new contract.
-- [ ] Merge to the default branch only when green; annotated `v0.6.0` is pushed and anonymously
+- [x] Fresh anonymous clone at `v0.6.0` passes `make gates` and reports the new contract.
+- [x] Merge to the default branch only when green; annotated `v0.6.0` is pushed and anonymously
       fetchable; GitHub Release published with notes and no assets; tag is never moved or deleted.
-- [ ] Ticket closeout carries Evidence:/Verify: lines and `tickets/INDEX.md` is updated in the same
+- [x] Ticket closeout carries Evidence:/Verify: lines and `tickets/INDEX.md` is updated in the same
       commit as each status change.
 
 ## Evidence
@@ -101,6 +101,23 @@ Worktree created with `bash scripts/worktree-guard.sh create req-006 sddm-waylan
   sddm-wayland-template --yes` → exit 0 (`assets-catalog: +1 added`, archived as
   `2026-10-26-sddm-wayland-template`); `openspec validate --specs` → exit 0 (1 passed; the two
   pre-existing >500-character WARNINGs remain); `openspec validate --archived` → exit 0 (2 passed).
+- Merge: fast-forward `master` `02a4534..60620ac`; annotated tag object
+  `ff460db244528ec987d1f396587008382de8b320`, peeled commit
+  `60620acab73a98e56b9b4d812ed52283f757062f`; `git cat-file -t v0.6.0` → `tag`;
+  `git ls-remote --tags origin 'refs/tags/v0.6.0*'` → exactly the tag object line and its `^{}`
+  line.
+- CI: [run 40349570724](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/40349570724)
+  on `60620ac` → **success**, 9/9 jobs (validate, validate-icons, validate-content,
+  validate-templates, validate-configs, validate-desktop, lint, hermetic, ci-gates-parity).
+- Release: [v0.6.0 — SDDM Wayland compositor](https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.6.0)
+  published, notes only, `assets: 0`, not a draft/prerelease, target `master`.
+- Fresh anonymous clone: `git clone --branch v0.6.0
+  https://github.com/RandomGenericUsername/dotfiles-assets.git /tmp/opencode/assets-v0.6.0-fresh`
+  → checked out `60620ac`; `make gates` → exit 0 (`FRESH_GATES_EXIT=0`) with
+  `templates=9 schemas=9`, `required=24 optional=1`, `sddm: [Wayland] CompositorCommand present`,
+  `sddm deep: renders …`, `hermetic: PASS`; `make ci-gates-parity` → exit 0 (`GATES (8)`,
+  `workflow jobs (9)`).
 - Verify: `make validate-templates && make validate && make gates && make gates-ci && make hermetic`
   → all exit 0; `grep -A2 '^\[Wayland\]' templates/display-manager/sddm.conf.j2` → the
-  `CompositorCommand` line; `python3 scripts/validate-templates.py` → `required=24 optional=1`.
+  `CompositorCommand` line; `python3 scripts/validate-templates.py` → `required=24 optional=1`;
+  `git cat-file -t v0.6.0` → `tag`; `gh release view v0.6.0 --json assets` → `[]`.
