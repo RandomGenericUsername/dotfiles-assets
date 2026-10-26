@@ -219,9 +219,9 @@ separate commits.
 
 ## Status and blockers
 
-**Status: `in-progress`.** The fix and its static guard are on `master`, and
-`v0.6.1` is the release tag for this fix. The remaining work is the separate
-consumer pin train followed by the user-run host acceptance.
+**Status: `in-progress`.** The fix and its static guard are on `master`; assets
+`v0.6.1` is tagged and released. The remaining work is the separate consumer
+pin train followed by the user-run host acceptance.
 
 - **User approval — granted 2026-10-26.** Logout is now a session-manager stop
   (`uwsm stop`), not a user-wide teardown.
@@ -247,8 +247,12 @@ consumer pin train followed by the user-run host acceptance.
 - [x] **Assets gates green** on the fix commit: `make validate-configs`,
       `make validate`, `make gates`, `make gates-ci`, `make hermetic` and
       `make ci-gates-parity` exit 0.
-- [ ] **Release:** annotated `v0.6.1` tagged on `master`, CI green on the
-      tagged commit, GitHub Release published, tag never moved.
+- [x] **Release:** annotated `v0.6.1` tagged on `master` (tag object
+      `b2ad3a9`, commit `f8cc828`), CI run
+      [40403377594](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/40403377594)
+      green (9/9 jobs), GitHub Release
+      [v0.6.1](https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.6.1)
+      published (notes only, no assets), tag never moved.
 - [ ] **Consumer pin train** (separate orchestration step): provision mirrors,
       engine release and `dotfiles-v3` `assets.yaml` + `installer.pin` move to
       `v0.6.1` / the new engine tag.
@@ -364,8 +368,15 @@ Notes:
 - `catalog.yaml` stays at `tag: v0.6.0` because the inventory did not change;
   `make validate` therefore reports `tag=v0.6.0` while the release tag is
   `v0.6.1`.
+- Release: annotated tag object `b2ad3a90953633602ec6a04e564f6f98ae11ce2a`,
+  peeled commit `f8cc8288eebeab1f0759d6dec05b978b662ae19e`; CI run
+  [40403377594](https://github.com/RandomGenericUsername/dotfiles-assets/actions/runs/40403377594)
+  → **success**, 9/9 jobs on `f8cc828`; GitHub Release
+  [v0.6.1](https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.6.1)
+  not a draft/prerelease, `assets: 0`, target `master`.
 - Verify: `make validate-configs && make validate && make gates && make gates-ci
-  && make hermetic && make ci-gates-parity`.
+  && make hermetic && make ci-gates-parity`; `git cat-file -t v0.6.1` → `tag`;
+  `gh release view v0.6.1 --json isDraft,isPrerelease,assets`.
 
 ## References
 
