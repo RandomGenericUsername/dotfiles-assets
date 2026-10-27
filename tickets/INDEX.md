@@ -17,6 +17,7 @@
 - [req-004-assets-templates](./req-004-assets-templates/ticket.md) — S3 assets cut: 9 Jinja templates + 9 vars schemas + `validate-templates`, `v0.4.0` | `done` | tag `v0.4.0` (9902c91), CI run 39783964966 green, release published
 - [req-005-assets-desktop](./req-005-assets-desktop/ticket.md) — S4 assets cut: 6 desktop entries + `toggle-touchpad` + `TryExec` + `requires`/`optional` contract + `validate-desktop`, `v0.5.0` | `done` | tag `v0.5.0` (fc0ce5d, tag object 1fdbc85), CI run 39813199995 green, release published
 - [req-006-sddm-wayland-template](./req-006-sddm-wayland-template/ticket.md) — SDDM template carries the explicit Wayland greeter compositor, `v0.6.0` | `done` | lane 2 — openspec-single | openspec: sddm-wayland-template (archived 2026-10-26) | tag `v0.6.0` (60620ac, tag object ff460db), CI run 40349570724 green, release published
+- [req-007-ags-clipboard-launch-rename](./req-007-ags-clipboard-launch-rename/ticket.md) — Rename the clipboard launcher/autostart/keybind from hypr-pano to clipboard | `proposed` | links: none
 
 ## Bugs
 
