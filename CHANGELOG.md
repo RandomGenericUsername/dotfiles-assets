@@ -25,8 +25,8 @@ release is a tag with notes, and the corpus is the source.
   rename owned by `ags-apps` REQ-009. Comments in `configs/hypr/env-variables.lua`,
   `configs/README.md` and `desktop/README.md` carry the new launcher name.
 - **`configs/README.md` documents the AGS launch discipline** — the lock lifecycle, the
-  per-surface identity table, and the `rg` check that no live `hypr-pano` name remains under
-  `configs/` or `desktop/`.
+  per-surface identity table, and a rename note that points at the REQ-007 acceptance grep
+  proving no live retired name remains under `configs/` or `desktop/`.
 
 ### Notes
 
@@ -37,8 +37,8 @@ release is a tag with notes, and the corpus is the source.
   config link are rendered by the consumer's `cli_tools`/`config_links` roles, and the app is
   `ags-apps` REQ-009. Until that cutover deploys, the new autostart/keybind lines name launchers
   this corpus does not install — by design: no destination or installed binary is named here.
-- Historical `hypr-pano` mentions remain only in this changelog, the REQ-007 ticket/INDEX record
-  and pre-`v0.6.2` release notes; no live reference remains under `configs/` or `desktop/`.
+- Historical `hypr-pano` mentions remain only in this changelog and the REQ-007
+  ticket/INDEX record; no live reference remains under `configs/` or `desktop/`.
 
 ## [0.6.1] — 2026-10-26
 
