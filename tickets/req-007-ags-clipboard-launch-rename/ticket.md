@@ -178,10 +178,11 @@ lock, and no live reference to the retired clipboard name remains.
 
 ## Release
 
-- Assets **`v0.6.2`**, annotated PATCH tag on `master`, created locally; the
-  tag object is recorded in the follow-up commit (the `v0.6.1`/BUG-001
-  precedent). **Not pushed, not published, not provisioned** — the
-  orchestrator owns CI and the GitHub Release.
+- Assets **`v0.6.2`**, annotated PATCH tag on `master` at `4fa35c4`
+  (tag object `e94165b`), created locally; **not pushed, not published, not
+  provisioned** — the orchestrator owns CI and the GitHub Release. The tag
+  object is recorded here in the follow-up commit (the `v0.6.1`/BUG-001
+  precedent).
 - PATCH because no path, file count, catalog entry or `schema_major` changed:
   new launch lines in two existing config files plus a comment/doc rename.
 - `catalog.yaml` stays at `v0.6.0` (inventory tag).
