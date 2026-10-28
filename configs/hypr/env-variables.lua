@@ -2,7 +2,7 @@
 -- Set for the Hyprland session (Lua API)
 
 -- User tool PATH: provisioning installs every keybind launcher (rofi-ui,
--- capture-ui, hypr-pano-ui, wallpaper-selector-ui, icon-color-mapping-editor,
+-- capture-ui, clipboard-ui, wallpaper-selector-ui, icon-color-mapping-editor,
 -- btop-theme-studio, toggle-touchpad) to ~/.local/bin, but a
 -- display-manager/uwsm session never sources shell init files — without this,
 -- Hyprland's own PATH lacks the dir and every such bind silently no-ops

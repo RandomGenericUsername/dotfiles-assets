@@ -28,7 +28,7 @@ hl.bind(
 -- pressing the bind again closes a open rofi, and ESC closes it natively. The
 -- key lives only here — the launcher never learns which key it is, so changing
 -- this bind keeps open and close in sync (same contract as capture-ui,
--- hypr-pano-ui, wallpaper-selector-ui, icon-color-mapping-editor).
+-- clipboard-ui, wallpaper-selector-ui, icon-color-mapping-editor).
 hl.bind(
     mod .. " + D",
     hl.dsp.exec_cmd("rofi-ui"),
@@ -52,13 +52,13 @@ hl.bind(
     { description = "Open icon color mapping editor" }
 )
 
--- Clipboard history overlay (standalone AGS instance `hypr-pano`)
+-- Clipboard history overlay (standalone AGS instance `clipboard`)
 -- The launcher is start-if-down/toggle: provisioning quits the instance after
 -- updating its sources, and this bind both reopens a running window and
 -- restarts a quit instance on demand.
 hl.bind(
     mod .. " + V",
-    hl.dsp.exec_cmd("hypr-pano-ui"),
+    hl.dsp.exec_cmd("clipboard-ui"),
     { description = "Open clipboard history" }
 )
 
