@@ -106,6 +106,38 @@ A template source arriving here fails the first check; a mutable preference fail
 a rendered file fails `make validate` as well as the third; a second render-time token shows up
 as an extra line in the fourth and must either move to `templates/` or be documented here.
 
+## AGS startup: one launch lock, one identity per app
+
+`hypr/autostart.lua` and `hypr/keybindings.lua` are the assets-owned AGS surfaces: the
+provisioner reads them (and fails a deploy when an autostart line bypasses the lock) but never
+writes them. Since `v0.6.2` every AGS cold start goes through the shared per-user wrapper
+`ags-run-locked` (AD-28), installed by the consumer's `cli_tools` role into `~/.local/bin`:
+
+```lua
+bash -lc '$HOME/.local/bin/ags-run-locked --expect-instance <instance> ...'
+```
+
+The wrapper takes `$XDG_RUNTIME_DIR/ags-launch.lock` and releases it as soon as the named
+instance registers on the AGS bus — not for the app's lifetime — so the existing stagger sleeps
+(`sleep 2`/`3`/`4`) still order the launches without deadlocking login. `--expect-instance` is
+mandatory here: an already-running instance is a no-op, and a name that never registers fails
+the wrapper instead of leaving a silent half-start.
+
+| Surface | Config dir | Instance | Launcher / log |
+| --- | --- | --- | --- |
+| status bar | `~/.config/ags` (default) | `ags` | autostart only |
+| capture | `~/.config/ags-capture` | `capture` | `capture-ui` / `capture.log` |
+| notifications | `~/.config/ags-notifications` | `notifications` | autostart / `notifications.log` |
+| clipboard | `~/.config/ags-clipboard` | `clipboard` | `clipboard-ui` / `clipboard.log` |
+
+The clipboard overlay was renamed to `clipboard` in `v0.6.2` (AD-35): config dir
+`ags-clipboard`, instance `clipboard`, window `clipboard-window`, launcher `clipboard-ui` and
+the keybind description “Open clipboard history”. The provisioned launcher template, the
+`ags-clipboard` config link and the app itself are consumer/engine surfaces, not this corpus.
+No live reference to the retired app name may remain under `configs/` or `desktop/`; the
+historical mentions are confined to the changelog and the REQ-007 ticket record, which carries
+the acceptance grep that proves the two class directories are clean.
+
 ## Byte identity
 
 Every file in this class was imported byte-for-byte from the corpus it replaces; `diff -r`

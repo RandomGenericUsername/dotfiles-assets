@@ -5,6 +5,41 @@ Notable changes to `dotfiles-assets`. Format follows
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a
 release is a tag with notes, and the corpus is the source.
 
+## [0.6.2] — 2026-10-27
+
+### Changed
+
+- **Every AGS cold start takes the shared launch lock.** `configs/hypr/autostart.lua` now starts
+  the bar, capture, notifications and clipboard instances through the provisioned
+  `ags-run-locked` wrapper with `--expect-instance` (`ags`, `capture`, `notifications`,
+  `clipboard`), replacing four bare `ags run` lines. AGS 3.1.0 bundles into one
+  `$XDG_RUNTIME_DIR/ags.js`, so login-time starts raced each other and the runtime's restart lane
+  (AD-28). The 2/3/4 s staggers stay: the wrapper releases the lock when the expected instance
+  registers on the AGS bus, not when the process exits, so login is ordered but never deadlocked.
+  The wrapper is installed by the consumer's `cli_tools` role; autostart invokes
+  `$HOME/.local/bin/ags-run-locked` explicitly, like `gloview-activate`, so startup does not
+  depend on a login-shell PATH.
+- **The clipboard overlay is `clipboard`, not `hypr-pano`.** Autostart starts
+  `~/.config/ags-clipboard` as instance `clipboard` with `clipboard.log`, and the `SUPER + V`
+  bind invokes `clipboard-ui` (description unchanged, “Open clipboard history”), per the AD-35
+  rename owned by `ags-apps` REQ-009. Comments in `configs/hypr/env-variables.lua`,
+  `configs/README.md` and `desktop/README.md` carry the new launcher name.
+- **`configs/README.md` documents the AGS launch discipline** — the lock lifecycle, the
+  per-surface identity table, and the `rg` check that no live `hypr-pano` name remains under
+  `configs/` or `desktop/`.
+
+### Notes
+
+- **PATCH, no inventory change.** Same paths, same file count, no schema change, so
+  `catalog.yaml` stays at `v0.6.0` (the inventory tag); the consumer pin bump is a separate
+  commit in its own repository.
+- **Provision follow-up, not in this repo:** `clipboard-ui` and the `~/.config/ags-clipboard`
+  config link are rendered by the consumer's `cli_tools`/`config_links` roles, and the app is
+  `ags-apps` REQ-009. Until that cutover deploys, the new autostart/keybind lines name launchers
+  this corpus does not install — by design: no destination or installed binary is named here.
+- Historical `hypr-pano` mentions remain only in this changelog, the REQ-007 ticket/INDEX record
+  and pre-`v0.6.2` release notes; no live reference remains under `configs/` or `desktop/`.
+
 ## [0.6.1] — 2026-10-26
 
 ### Fixed

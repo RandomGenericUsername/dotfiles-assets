@@ -82,7 +82,7 @@ the command it described. `desktop.yaml` is the class's schema-bearing contract
 
 ## What is deliberately **not** here
 
-- **Launcher wrappers** (`rofi-ui`, `capture-ui`, `hypr-pano-ui`, `wallpaper-selector-ui`,
+- **Launcher wrappers** (`rofi-ui`, `capture-ui`, `clipboard-ui`, `wallpaper-selector-ui`,
   `icon-color-mapping-editor`, `btop-theme-studio`). They are Jinja-rendered by the consumer's
   `cli_tools` role because they bake in installed-binary paths (`ags`, the unit's CLIs), so they
   are code with host inputs, not static data. `scripts/` holds **repo-authored static scripts

@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.6.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.6.2`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
