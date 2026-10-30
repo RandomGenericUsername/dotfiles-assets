@@ -1,11 +1,15 @@
-# Icons manifest — semantic role migration (REQ-008 Phase A)
+# Icons manifest — semantic role migration (REQ-008)
 
-**Status: proposal only. No pin changed, no render changed.**
+**Status: APPROVED and APPLIED in Phase B (2026-10-30).** The user approved all ten
+judgment calls and every table row exactly as proposed; `icons.yaml` and
+`defaults.yaml` now carry the roles below, every group/variant declares a surface,
+and `phase_a_legacy_baseline` is empty. The `colorN` values in this document are the
+historical BEFORE values, not live pins (`rg 'color[0-9]+' icons/mappings/icons.yaml
+icons/mappings/defaults.yaml` → 0 matches).
 This is the Phase A deliverable of `tickets/req-008-icons-role-mappings`: one proposed
 semantic role and one surface class for every placeholder in
 `icons/mappings/icons.yaml`, plus the role vocabulary (`vocabulary.json`) and the
-validator that will hold Phase B to it. **Phase B is blocked on user review** — the
-pins in `icons.yaml` and `defaults.yaml` are untouched until this table is signed off.
+validator that holds Phase B to it.
 
 Scope of the proposal: **22 groups, 136 variants** — 28 group-level token rows,
 38 variant-level override rows, 4 `defaults.yaml` rows, covering **232 placeholder
@@ -462,7 +466,7 @@ fails if a group or variant in `icons.yaml` is missing from this document.
 | `media-transport-panel` | `pause` | `COLOR_BACKGROUND` | `color6` | `primary` | `dark-glass` |
 | `media-transport-panel` | `pause` | `COLOR_FOREGROUND` | `background` | `on_primary` | `dark-glass` |
 
-## Judgment calls the user must review
+## Judgment calls the reviewer approved (2026-10-30, all ten)
 
 1. **Badge ink is `on_*_container`, not `on_primary`.** The rule of thumb given for
    this proposal said "badges → `primary_container`/`on_primary`". `on_primary` is only
@@ -470,7 +474,7 @@ fails if a group or variant in `icons.yaml` is missing from this document.
    pair (white-on-light in light mode, dark-on-dark in dark mode). The tables therefore
    pair `primary_container` with `on_primary_container` and use a literal
    `primary`/`on_primary` pair only for the filled action button
-   (`media-transport-panel`). Confirm this correction.
+   (`media-transport-panel`). Approved.
 2. **`network.COLOR_CROSS` → `error`.** The cross/slash already carries the failure
    state by shape. `error` adds a hue cue, but on a bright wallpaper an error red can
    miss 4.5:1. Alternative: `on_backdrop` (shape-only, never low-contrast). The table
@@ -511,20 +515,25 @@ fails if a group or variant in `icons.yaml` is missing from this document.
     by a live pin, so Phase B removals force the list down; the target is an empty
     array. Confirm that a frozen baseline is acceptable rather than a red gate now.
 
-## Phase B — what applying this table means
+## Phase B — applied (2026-10-30)
 
-Blocked until the user reviews the ten items above **and** tpr v0.5.0 ships.
+The user approved all ten items above and tpr v0.5.0 ships `on_backdrop`, so the table
+is now the data:
 
-- Re-pin the 28 group rows and 38 variant overrides exactly as tabulated; rewrite
-  `defaults.yaml` to the four role values.
-- Declare `surface:` on every group and on the variants listed with a different
-  surface; then the validator's wallpaper rule becomes live: every `surface:
-  wallpaper` variant whose templates use `COLOR_FOREGROUND`/`COLOR_JOIN` must resolve
-  to `on_backdrop`.
-- Delete every `phase_a_legacy_baseline` entry; the gate is green only with an empty
-  array and zero `colorN` values.
-- Render the seven wallpapers in light and dark; record before/after samples in the
-  ticket.
+- Re-pinned the 28 group rows and 38 variant overrides exactly as tabulated; rewrote
+  `defaults.yaml` to the four role values (`on_surface`, `surface`, `secondary`,
+  `primary`).
+- Declared `surface:` on all 22 groups and on the 13 variants whose layer differs
+  (`system-battery-*`, `system-*` volume, `system-mic-*` → `dark-glass`;
+  `power-menu-modern-with-background` → `solid`). The validator's wallpaper rule is
+  live: 58 variants declare `surface: wallpaper` and every `COLOR_FOREGROUND` /
+  `COLOR_JOIN` among them resolves to `on_backdrop`.
+- Emptied `phase_a_legacy_baseline`; the gate is green with zero `colorN` values in
+  `icons.yaml` / `defaults.yaml`, and the shrink-only ratchet still fails an entry that
+  matches no live pin.
+- Rendered four wallpapers (two dark-band, two bright-band) in dark and light with the
+  live tpr v0.5.0 + itr v0.2.0; the before/after proof lives outside the corpus (a
+  rendered artifact is never an asset, AD-11): `/tmp/opencode/icon-rerender.html`.
 
 ## Evidence / Verify
 
@@ -536,5 +545,6 @@ Blocked until the user reviews the ten items above **and** tpr v0.5.0 ships.
   wlogout wallpaper surface `templates/wlogout/style.css.tpl:14`; group/variant counts
   and the inventory generated from `icons/mappings/icons.yaml`.
 - Verify: `make validate-icons` (vocabulary + surface + coverage checks) and
-  `make gates`; `rg -c 'color[0-9]+' icons/mappings/icons.yaml` still reports the
-  Phase A baseline until Phase B.
+  `make gates`; `rg -c 'color[0-9]+' icons/mappings/icons.yaml
+  icons/mappings/defaults.yaml` → 0 matches (the occurrences in this document are the
+  historical before-values).

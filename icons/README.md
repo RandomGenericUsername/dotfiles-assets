@@ -66,14 +66,16 @@ make validate-icons
 fails the release, naming the file, when a mapping `template:` does not resolve,
 when a token used by a template is declared for neither the group nor the vocabulary,
 when a mapping value is not a role declared in `vocabulary.json` (legacy `colorN`
-carriers and aliases are rejected unless they are an exact, shrink-only Phase A
-baseline entry), when a declared `surface` is not one of the three classes or a
+carriers and aliases are rejected; the shrink-only `phase_a_legacy_baseline` is empty
+since REQ-008 Phase B, and any entry that matches no live pin still fails), when a
+declared `surface` is not one of the three classes or a
 `surface: wallpaper` variant's ink is not `on_backdrop`, when an SVG is not
 well-formed XML, when an `output` is not a bare file name, or when a second
 group-map file appears beside `icons.yaml`. It also fails when a group or variant in
 `icons.yaml` is missing from `ROLE-MIGRATION.md`. It reports (without failing) an
 unused declared token, an unreferenced template, an undeclared surface, and the
-number of Phase A legacy-baseline pins still waiting for Phase B.
+number of legacy-baseline entries still in force (0 since Phase B; the ratchet
+mechanism stays so a future migration starts from a frozen list, not a blind spot).
 
 The contract itself is `schema.json`; the corpus checks it describes are the ones
 above, so a change to the shape and a change to the checker land together.

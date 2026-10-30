@@ -12,7 +12,7 @@
 #   3. Variant.color_mappings (per-variant override, highest priority)
 
 defaults:
-  COLOR_FOREGROUND: foreground
+  COLOR_FOREGROUND: on_surface
   COLOR_BACKGROUND: surface
-  COLOR_SECONDARY: accent
-  COLOR_ACCENT: accent-muted
+  COLOR_SECONDARY: secondary
+  COLOR_ACCENT: primary

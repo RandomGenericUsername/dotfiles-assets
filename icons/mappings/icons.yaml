@@ -1,7 +1,8 @@
 battery:
+  surface: wallpaper
   color_mappings:
-    COLOR_ACCENT: color13
-    COLOR_FOREGROUND: color15
+    COLOR_ACCENT: primary
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: battery-0
       template: status-bar/battery/battery-0/default/icon.svg
@@ -38,33 +39,38 @@ battery:
       output: plugged.svg
 
       color_mappings:
-        COLOR_FOREGROUND: color15
+        COLOR_FOREGROUND: on_backdrop
     # System-surface copies: variant-level pin exempts them from the bar contrast guard.
     - name: system-battery-0
       template: status-bar/battery/battery-0/default/icon.svg
       output: system-battery-0.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-battery-25
       template: status-bar/battery/battery-25/default/icon.svg
       output: system-battery-25.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-battery-50
       template: status-bar/battery/battery-50/default/icon.svg
       output: system-battery-50.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-battery-75
       template: status-bar/battery/battery-75/default/icon.svg
       output: system-battery-75.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-battery-100
       template: status-bar/battery/battery-100/default/icon.svg
       output: system-battery-100.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
   bar_mappings:
     widget: battery
     icon_size: 24
@@ -82,10 +88,11 @@ battery:
       plugged: plugged
 
 network:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: color15
-    COLOR_CROSS: color13
-    COLOR_WARNING: color13
+    COLOR_FOREGROUND: on_backdrop
+    COLOR_CROSS: error
+    COLOR_WARNING: tertiary
   variants:
     - name: wifi-full-default
       template: status-bar/network/wifi-full/default/icon.svg
@@ -172,7 +179,11 @@ network:
       ethernet-not-connected: ethernet-not-connected-default
 
 wlogout:
-  color_mappings: {}
+  surface: wallpaper
+  # Full-screen wallpaper with transparent buttons: the glyph floats over the
+  # image, so it pins the wallpaper ink itself instead of inheriting defaults.
+  color_mappings:
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: hibernate
       template: wlogout/hibernate/default/icon.svg
@@ -194,11 +205,12 @@ wlogout:
       output: suspend.svg
 
 power-menu:
+  surface: wallpaper
   color_mappings:
-    COLOR_BACKGROUND: background
-    COLOR_SECONDARY: color1
-    COLOR_ACCENT: color13
-    COLOR_FOREGROUND: color15
+    COLOR_BACKGROUND: primary_container
+    COLOR_SECONDARY: secondary
+    COLOR_ACCENT: primary
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: power-menu-default
       template: status-bar/power-menu/default/icon.svg
@@ -209,6 +221,11 @@ power-menu:
     - name: power-menu-modern-with-background
       template: status-bar/power-menu/modern/with-background.svg
       output: power-menu-modern-with-background.svg
+      # Paints its own disc, so it is not over the wallpaper: solid, and the ink
+      # is the matching on-container role.
+      surface: solid
+      color_mappings:
+        COLOR_FOREGROUND: on_primary_container
 
   bar_mappings:
     widget: power-menu
@@ -225,10 +242,10 @@ power-menu:
 # palette token against the wallpaper's top band; applying that here would
 # actively break the glyph on dark glass (a light wallpaper would push the token
 # bright against an already-dark surface). So `power-mode` is absent from
-# BAR_GROUPS in src/runtime/src/runtime/domain/icon_contrast.py, `COLOR_FOREGROUND`
-# resolves to the plain theme `foreground`, and the glyph reads correctly on
-# dark glass. Contrast `battery`, which IS in BAR_GROUPS precisely because it
-# floats over the wallpaper.
+# BAR_GROUPS in src/runtime/src/runtime/domain/icon_contrast.py and declares
+# `surface: dark-glass`, with `COLOR_FOREGROUND` pinned to the panel ink
+# (`on_surface`); the glyph reads correctly on dark glass. Contrast `battery`,
+# which floats over the wallpaper and pins `on_backdrop`.
 #
 # For the same reason there are NO `system-*` duplicates here: that convention
 # exists so ONE render can serve both the transparent bar AND dark glass. This
@@ -241,8 +258,9 @@ power-menu:
 # the base mode's variant rather than inventing a glyph that would
 # misrepresent them.
 power-mode:
+  surface: dark-glass
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_surface
   variants:
     - name: powersave
       template: power-mode/powersave/default/icon.svg
@@ -270,9 +288,10 @@ power-mode:
       power-mode-performance: performance
 
 capture-tool:
+  surface: dark-glass
   color_mappings:
-    COLOR_FOREGROUND: foreground
-    COLOR_ACCENT: color13
+    COLOR_FOREGROUND: on_surface
+    COLOR_ACCENT: primary
   variants:
     - name: camera
       template: capture-tool/default/camera.svg
@@ -321,43 +340,48 @@ capture-tool:
       template: capture-tool/default/stop.svg
       output: capture-tool-stop.svg
     # Notification tints: the same glyphs recoloured per outcome so the cards
-    # read at a glance (success = the accent used across the capture stack,
-    # failure = the caution slot). Variant-level color_mappings win over the
+    # read at a glance (success = primary, the action role of the capture
+    # stack; failure = error). Variant-level color_mappings win over the
     # group's, so these render as tinted copies while the base variants stay
-    # foreground-coloured for the capture window and bar.
+    # on_surface-coloured for the capture window and bar.
     - name: camera-accent
       template: capture-tool/default/camera.svg
       output: capture-tool-camera-accent.svg
       color_mappings:
-        COLOR_FOREGROUND: color6
+        COLOR_FOREGROUND: primary
     - name: video-accent
       template: capture-tool/default/video.svg
       output: capture-tool-video-accent.svg
       color_mappings:
-        COLOR_FOREGROUND: color6
+        COLOR_FOREGROUND: primary
     - name: warning-caution
       template: capture-tool/default/warning.svg
       output: capture-tool-warning-caution.svg
       color_mappings:
-        COLOR_FOREGROUND: color3
+        COLOR_FOREGROUND: error
 
 email-client:
-  color_mappings: {}
+  surface: wallpaper
+  color_mappings:
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: email-client
       template: status-bar/email-client/default/icon.svg
       output: email-client.svg
 
 wallpaper-selector:
-  color_mappings: {}
+  surface: wallpaper
+  color_mappings:
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: wallpaper-selector
       template: status-bar/wallpaper-selector/default/wallpaper-selector.svg
       output: wallpaper-selector.svg
 
 wallpaper-progress:
+  surface: dark-glass
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_surface
   variants:
     - name: picture
       template: status-bar/wallpaper-progress/default/icon.svg
@@ -367,46 +391,50 @@ wallpaper-progress:
       output: wallpaper-progress-check-circle.svg
 
 btop:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: color15
-    COLOR_JOIN: color15
+    COLOR_FOREGROUND: on_backdrop
+    COLOR_JOIN: on_backdrop
   variants:
     - name: btop
       template: status-bar/btop/default/icon.svg
       output: btop.svg
 
 thunderbird:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: color15
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: thunderbird
       template: status-bar/thunderbird/default/icon.svg
       output: thunderbird.svg
 
 tray:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: color15
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: tidal
       template: status-bar/tray/tidal/default/icon.svg
       output: tray-tidal.svg
 
 ui:
+  surface: solid
   color_mappings:
-    COLOR_FOREGROUND: color15
-    COLOR_ACCENT: color12
+    COLOR_FOREGROUND: on_surface
+    COLOR_ACCENT: primary
   variants:
     - name: search
       template: ui/search/default/icon.svg
       output: ui-search.svg
       # The magnifier sits on the SOLID search field (`@color_01`), not directly
-      # on the wallpaper, so it must follow the palette foreground like the
-      # entry text. Variant-level mappings are exempt from the bar-icon contrast
-      # guard (it only retargets group-level placeholders), which otherwise
-      # recolours this glyph against the wallpaper and can wash it out on the
-      # field. See gui-unification-ux-spec §4/§5.
+      # on the wallpaper, so it must follow the panel ink like the entry text.
+      # Variant-level mappings are exempt from the bar-icon contrast guard (it
+      # only retargets group-level placeholders), which otherwise recolours this
+      # glyph against the wallpaper and can wash it out on the field.
+      # See gui-unification-ux-spec §4/§5.
       color_mappings:
-        COLOR_FOREGROUND: color15
+        COLOR_FOREGROUND: on_surface
     - name: text
       template: ui/text/default/icon.svg
       output: ui-text.svg
@@ -427,8 +455,9 @@ ui:
       output: ui-emoji.svg
 
 settings:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: default
       template: status-bar/settings/default/icon.svg
@@ -454,8 +483,9 @@ settings:
 # the panel's `bluetooth`/`bluetooth-off` variants in `settings-panel` (which
 # DO pin their tint) cannot be reused here.
 bluetooth:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: color15
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: bluetooth-on
       template: status-bar/bluetooth/on/default/icon.svg
@@ -477,37 +507,39 @@ bluetooth:
       bluetooth-off: bluetooth-off
 
 settings-panel:
+  surface: dark-glass
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_surface
   variants:
-    # The capability glyphs bake their own on/off tint through ITR (accent when
-    # on, muted when off) so the panel renders bare glyphs — no CSS filter, no
-    # background box. Variant-level mappings win over the group's foreground.
+    # The capability glyphs bake their own on/off tint through ITR (primary
+    # when on, panel ink when off) so the panel renders bare glyphs — no CSS
+    # filter, no background box. Variant-level mappings win over the group ink.
     - name: wifi
       template: settings-panel/wifi/default/icon.svg
       output: settings-panel-wifi.svg
       color_mappings:
-        COLOR_FOREGROUND: color13
-    # The off variants use the neutral foreground token (NOT a second palette
-    # hue): on some wallpapers color11 and color13 are near-identical, so hue
-    # cannot carry the state. The panel dims the off glyph via opacity, matching
-    # the GUI family's disabled treatment — brightness, not hue, carries "off".
+        COLOR_FOREGROUND: primary
+    # The off variants use the neutral panel ink (NOT a second palette
+    # hue): on some wallpapers the accent and the neutral are near-identical,
+    # so hue cannot carry the state. The panel dims the off glyph via opacity,
+    # matching the GUI family's disabled treatment — brightness, not hue,
+    # carries "off".
     - name: wifi-off
       template: settings-panel/wifi/default/icon.svg
       output: settings-panel-wifi-off.svg
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: bluetooth
       template: settings-panel/bluetooth/default/icon.svg
       output: settings-panel-bluetooth.svg
       color_mappings:
-        COLOR_FOREGROUND: color13
+        COLOR_FOREGROUND: primary
     - name: bluetooth-off
       template: settings-panel/bluetooth/default/icon.svg
       output: settings-panel-bluetooth-off.svg
       color_mappings:
-        COLOR_FOREGROUND: foreground
-    # Hyprmod is a stateless action, so it inherits the group foreground.
+        COLOR_FOREGROUND: on_surface
+    # Hyprmod is a stateless action, so it inherits the group ink.
     - name: hyprmod
       template: settings-panel/hyprmod/default/icon.svg
       output: settings-panel-hyprmod.svg
@@ -540,62 +572,62 @@ settings-panel:
       template: settings-panel/bluetooth-signal-full/default/icon.svg
       output: settings-panel-bluetooth-signal-full.svg
       color_mappings:
-        COLOR_BACKGROUND: color12
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: primary_container
+        COLOR_FOREGROUND: on_primary_container
     - name: bluetooth-signal-good
       template: settings-panel/bluetooth-signal-good/default/icon.svg
       output: settings-panel-bluetooth-signal-good.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     - name: bluetooth-signal-medium
       template: settings-panel/bluetooth-signal-medium/default/icon.svg
       output: settings-panel-bluetooth-signal-medium.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     - name: bluetooth-signal-low
       template: settings-panel/bluetooth-signal-low/default/icon.svg
       output: settings-panel-bluetooth-signal-low.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     # WiFi signal-strength glyphs with circle badge for network rows
     # (settings-panel group, guard-exempt, no bar_mappings — system icons).
     - name: wifi-signal-full
       template: settings-panel/wifi-signal-full/default/icon.svg
       output: settings-panel-wifi-signal-full.svg
       color_mappings:
-        COLOR_BACKGROUND: color12
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: primary_container
+        COLOR_FOREGROUND: on_primary_container
     - name: wifi-signal-good
       template: settings-panel/wifi-signal-good/default/icon.svg
       output: settings-panel-wifi-signal-good.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     - name: wifi-signal-medium
       template: settings-panel/wifi-signal-medium/default/icon.svg
       output: settings-panel-wifi-signal-medium.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
-        COLOR_FOREGROUND: color0
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     - name: wifi-signal-low
       template: settings-panel/wifi-signal-low/default/icon.svg
       output: settings-panel-wifi-signal-low.svg
       color_mappings:
-        COLOR_BACKGROUND: color13
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     # Info glyph re-export for the Wi-Fi weak-security row (guard-exempt
     # group, no bar_mappings — system icon). Caution tint follows the
     # warning-caution precedent.
-        COLOR_FOREGROUND: color0
     - name: info-caution
       template: capture-tool/default/info.svg
       output: settings-panel-info-caution.svg
       color_mappings:
-        COLOR_FOREGROUND: color15
+        COLOR_FOREGROUND: tertiary
     # Password visibility eye icons for the Wi-Fi prompt (owner-supplied art,
-    # group foreground — no bar_mappings, system icons).
+    # group ink — no bar_mappings, system icons).
     - name: password-show
       template: settings-panel/password-show/default/icon.svg
       output: settings-panel-password-show.svg
@@ -604,16 +636,18 @@ settings-panel:
       output: settings-panel-password-hide.svg
 
 brightness:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: default
       template: brightness/default/icon.svg
       output: brightness.svg
 
 volume:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: muted
       template: volume/muted/default/icon.svg
@@ -635,28 +669,33 @@ volume:
     - name: system-muted
       template: volume/muted/default/icon.svg
       output: volume-system-muted.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-lowest
       template: volume/lowest/default/icon.svg
       output: volume-system-lowest.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-low
       template: volume/low/default/icon.svg
       output: volume-system-low.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-medium
       template: volume/medium/default/icon.svg
       output: volume-system-medium.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-max
       template: volume/max/default/icon.svg
       output: volume-system-max.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
 
   # The uniform icon contract (AD-7): code emits a STATE KEY (`volume-medium`),
   # this table maps key -> variant, and the registry maps variant -> art. The
@@ -678,8 +717,9 @@ volume:
 # bar groups only; capture-tool renders on its own dark panel and must stay
 # byte-identical. Two states: `mic-on` (idle/active) and `mic-off` (muted).
 microphone:
+  surface: wallpaper
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_backdrop
   variants:
     - name: mic-on
       template: microphone/default/mic-on.svg
@@ -692,13 +732,15 @@ microphone:
     - name: system-mic-on
       template: microphone/default/mic-on.svg
       output: microphone-system-mic-on.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
     - name: system-mic-off
       template: microphone/default/mic-off.svg
       output: microphone-system-mic-off.svg
+      surface: dark-glass
       color_mappings:
-        COLOR_FOREGROUND: foreground
+        COLOR_FOREGROUND: on_surface
 
   # The uniform icon contract (AD-7): the bar emits `microphone-mic-on` /
   # `microphone-mic-off`; this table maps those state keys to the group's two
@@ -717,6 +759,7 @@ microphone:
 # `application.icon-name` values (`google-chrome`, `tidal-hifi`, …); the audio
 # state module falls back to `generic` then to the device glyph.
 app-icons:
+  surface: dark-glass
   color_mappings: {}
   variants:
     - name: generic
@@ -751,12 +794,13 @@ app-icons:
       output: app-icon-youtube-music.svg
 
 # Transport-control glyphs for the audio popup's per-app MPRIS rows and the
-# Output card's master play/pause button (dispatch contract WP-D). Bar-facing
-# like `microphone`, so COLOR_FOREGROUND resolves through the palette
-# `foreground` token and stays subject to the bar-icon contrast guard.
+# Output card's master play/pause button (dispatch contract WP-D). Both
+# consumers are rows inside the audio popup, on its dark glass — not the bar —
+# so the ink is the panel ink (`on_surface`), and `surface: dark-glass` says so.
 media-transport:
+  surface: dark-glass
   color_mappings:
-    COLOR_FOREGROUND: foreground
+    COLOR_FOREGROUND: on_surface
   variants:
     - name: play
       template: media-transport/default/play.svg
@@ -778,12 +822,13 @@ media-transport:
 # and every other surface keep the icons they had -- the separation is by
 # construction, not by care. The owner's art carries its own container, so the
 # circle is tokenized rather than drawn twice: COLOR_BACKGROUND is the
-# GUI-unification primary-action role (@color_06, the concept mock's round
-# container) and COLOR_FOREGROUND is the on-action ink the glyph sits on.
+# GUI-unification primary-action role (`primary`) and COLOR_FOREGROUND is the
+# on-action ink the glyph sits on (`on_primary`).
 media-transport-panel:
+  surface: dark-glass
   color_mappings:
-    COLOR_BACKGROUND: color6
-    COLOR_FOREGROUND: background
+    COLOR_BACKGROUND: primary
+    COLOR_FOREGROUND: on_primary
   variants:
     - name: play
       template: media-transport-panel/default/play.svg
