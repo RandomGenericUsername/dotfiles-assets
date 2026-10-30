@@ -1,0 +1,437 @@
+{
+  "$comment": "The declared color-role vocabulary for the icons corpus. This file is the vocabulary of record: an icons mapping value is either one of these role names or a Phase-A legacy baseline entry (see `phase_a_legacy_baseline`, which Phase B must empty). It is not a mapping file (the consumer never loads it) and it renders nothing.",
+  "vocabulary": 1,
+  "source": {
+    "producer": "theme-producer (tpr)",
+    "requirement": "REQ-022",
+    "target_release": "v0.5.0",
+    "engine_roles": 50,
+    "produced_roles": 1,
+    "role_count": 51,
+    "note": "The 50 engine roles are matugen 4.2.0's Material 3 set; `on_backdrop` is tpr's one produced role (REQ-022: ink over the wallpaper's bar band, max WCAG contrast against the top 48 rows of the source image). At the time this file was written tpr HEAD is v0.4.0 and REQ-022 is not implemented yet, so `on_backdrop` is declared forward-looking: a consumer resolves it from colors.yaml only once tpr v0.5.0 ships. Nothing in this corpus renders from this file.",
+    "aliases_are_not_roles": {
+      "note": "tpr also resolves stable aliases to roles. Aliases are convenient for consumers but they hide the intent, and two of them name the wrong pole, so the icons corpus carries role names only.",
+      "alias_to_role": {
+        "background": "surface",
+        "surface": "surface",
+        "on_surface": "on_surface",
+        "error": "error",
+        "foreground": "on_surface",
+        "accent": "primary",
+        "accent-muted": "secondary",
+        "warning": "tertiary"
+      },
+      "not_roles": [
+        "foreground",
+        "accent",
+        "accent-muted",
+        "warning"
+      ]
+    }
+  },
+  "surface_classes": {
+    "enum": [
+      "wallpaper",
+      "dark-glass",
+      "solid"
+    ],
+    "contract": {
+      "wallpaper": "The glyph is composited directly over the wallpaper. Its ink MUST be `on_backdrop`; decorative accents may use primary/tertiary/error but the glyph must still read by shape when they do not.",
+      "dark-glass": "The glyph sits on a translucent sheet (alpha(surface*, ~0.9) over a transparent window). Use the on-surface family (on_surface, on_surface_variant, on_primary, on_primary_container, ...) for the sheet it is actually on; `on_backdrop` is wrong here because there is no wallpaper band behind the glyph.",
+      "solid": "The glyph sits on an opaque surface, field or self-painted container. Use the on-surface / on-container family for that surface; `on_backdrop` is wrong here for the same reason as dark-glass."
+    }
+  },
+  "roles": [
+    "background",
+    "error",
+    "error_container",
+    "inverse_on_surface",
+    "inverse_primary",
+    "inverse_surface",
+    "on_background",
+    "on_error",
+    "on_error_container",
+    "on_primary",
+    "on_primary_container",
+    "on_primary_fixed",
+    "on_primary_fixed_variant",
+    "on_secondary",
+    "on_secondary_container",
+    "on_secondary_fixed",
+    "on_secondary_fixed_variant",
+    "on_surface",
+    "on_surface_variant",
+    "on_tertiary",
+    "on_tertiary_container",
+    "on_tertiary_fixed",
+    "on_tertiary_fixed_variant",
+    "outline",
+    "outline_variant",
+    "primary",
+    "primary_container",
+    "primary_fixed",
+    "primary_fixed_dim",
+    "scrim",
+    "secondary",
+    "secondary_container",
+    "secondary_fixed",
+    "secondary_fixed_dim",
+    "shadow",
+    "source_color",
+    "surface",
+    "surface_bright",
+    "surface_container",
+    "surface_container_high",
+    "surface_container_highest",
+    "surface_container_low",
+    "surface_container_lowest",
+    "surface_dim",
+    "surface_tint",
+    "surface_variant",
+    "tertiary",
+    "tertiary_container",
+    "tertiary_fixed",
+    "tertiary_fixed_dim",
+    "on_backdrop"
+  ],
+  "phase_a_legacy_baseline": {
+    "$comment": "PHASE A ONLY \u2014 DELETE IN PHASE B. A frozen, exact list of the mapping values that were pinned before the role migration and are not declared roles (legacy `colorN` carriers, and the `foreground` alias). validate-icons rejects any mapping value that is neither a role nor an entry here, and rejects an entry here that no longer matches a live pin \u2014 so removing a pin in Phase B forces the corresponding entry out, and an added `colorN` cannot hide behind the list. The goal is an empty array.",
+    "entries": [
+      {
+        "scope": "defaults",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "defaults",
+        "token": "COLOR_SECONDARY",
+        "value": "accent"
+      },
+      {
+        "scope": "defaults",
+        "token": "COLOR_ACCENT",
+        "value": "accent-muted"
+      },
+      {
+        "scope": "battery",
+        "token": "COLOR_ACCENT",
+        "value": "color13"
+      },
+      {
+        "scope": "battery",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "battery/plugged",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "battery/system-battery-0",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "battery/system-battery-25",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "battery/system-battery-50",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "battery/system-battery-75",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "battery/system-battery-100",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "network",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "network",
+        "token": "COLOR_CROSS",
+        "value": "color13"
+      },
+      {
+        "scope": "network",
+        "token": "COLOR_WARNING",
+        "value": "color13"
+      },
+      {
+        "scope": "power-menu",
+        "token": "COLOR_SECONDARY",
+        "value": "color1"
+      },
+      {
+        "scope": "power-menu",
+        "token": "COLOR_ACCENT",
+        "value": "color13"
+      },
+      {
+        "scope": "power-menu",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "power-mode",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "capture-tool",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "capture-tool",
+        "token": "COLOR_ACCENT",
+        "value": "color13"
+      },
+      {
+        "scope": "capture-tool/camera-accent",
+        "token": "COLOR_FOREGROUND",
+        "value": "color6"
+      },
+      {
+        "scope": "capture-tool/video-accent",
+        "token": "COLOR_FOREGROUND",
+        "value": "color6"
+      },
+      {
+        "scope": "capture-tool/warning-caution",
+        "token": "COLOR_FOREGROUND",
+        "value": "color3"
+      },
+      {
+        "scope": "wallpaper-progress",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "btop",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "btop",
+        "token": "COLOR_JOIN",
+        "value": "color15"
+      },
+      {
+        "scope": "thunderbird",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "tray",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "ui",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "ui",
+        "token": "COLOR_ACCENT",
+        "value": "color12"
+      },
+      {
+        "scope": "ui/search",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "settings",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "bluetooth",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "settings-panel",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "settings-panel/wifi",
+        "token": "COLOR_FOREGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/wifi-off",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "settings-panel/bluetooth",
+        "token": "COLOR_FOREGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/bluetooth-off",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-full",
+        "token": "COLOR_BACKGROUND",
+        "value": "color12"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-full",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-good",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-good",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-medium",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-medium",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-low",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/bluetooth-signal-low",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-full",
+        "token": "COLOR_BACKGROUND",
+        "value": "color12"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-full",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-good",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-good",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-medium",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-medium",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-low",
+        "token": "COLOR_BACKGROUND",
+        "value": "color13"
+      },
+      {
+        "scope": "settings-panel/wifi-signal-low",
+        "token": "COLOR_FOREGROUND",
+        "value": "color0"
+      },
+      {
+        "scope": "settings-panel/info-caution",
+        "token": "COLOR_FOREGROUND",
+        "value": "color15"
+      },
+      {
+        "scope": "brightness",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume/system-muted",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume/system-lowest",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume/system-low",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume/system-medium",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "volume/system-max",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "microphone",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "microphone/system-mic-on",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "microphone/system-mic-off",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "media-transport",
+        "token": "COLOR_FOREGROUND",
+        "value": "foreground"
+      },
+      {
+        "scope": "media-transport-panel",
+        "token": "COLOR_BACKGROUND",
+        "value": "color6"
+      }
+    ]
+  }
+}

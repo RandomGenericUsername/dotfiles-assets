@@ -29,7 +29,7 @@ classes:
       - mappings
     schema: icons/schema.json
     schema_major: 1
-    contents: 117 SVGs in 12 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml)
+    contents: 117 SVGs in 12 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml); a declared role vocabulary (vocabulary.json, 50 Material roles + on_backdrop) and the reviewed role proposal (ROLE-MIGRATION.md)
   templates:
     dir: templates
     subdirs:

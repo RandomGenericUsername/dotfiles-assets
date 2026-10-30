@@ -31,6 +31,23 @@ WHAT THIS GATE PROVES, and why each part is separate:
      The six legacy per-concern files (battery, email-client, network, power-menu,
      wallpaper-selector, wlogout) were retired in v0.2.0 for exactly that reason.
 
+  6. EVERY MAPPING VALUE IS A DECLARED ROLE. The value side of a mapping (defaults,
+     group or variant) must be a role named in `mappings/vocabulary.json` (the 50
+     Material roles + `on_backdrop`). Legacy `colorN` carrier indices and producer
+     aliases (`foreground`, `accent`, `accent-muted`, `warning`) are rejected: the
+     same index meant something different in the previous 16-colour list, which is
+     how an "accent" pin became `surface_container`. The single exception is the
+     `phase_a_legacy_baseline` in `vocabulary.json`: an exact, shrink-only list of
+     the pins a role migration has not converted yet. An entry that no longer
+     matches a live pin fails, so Phase B removals cannot leave an exemption behind
+     and a new `colorN` cannot hide behind the list.
+
+  7. SURFACES AND THE ROLE PROPOSAL. A group or variant may declare
+     `surface: wallpaper | dark-glass | solid`; a declared `wallpaper` surface's
+     ink must resolve to `on_backdrop` (a wallpaper glyph cannot use a panel ink).
+     `mappings/ROLE-MIGRATION.md` must name every group and variant, so new art
+     cannot land without a reviewed role proposal.
+
 WHAT IT REPORTS WITHOUT FAILING: a token declared for one group and unused there
 (forward compatibility is allowed) and a template no variant references.
 
@@ -59,7 +76,12 @@ MAPPINGS = "icons/mappings"
 TEMPLATES = "icons/templates"
 MANIFEST = "icons/mappings/icons.yaml"
 DEFAULTS = "icons/mappings/defaults.yaml"
+VOCABULARY = "icons/mappings/vocabulary.json"
+PROPOSAL = "icons/mappings/ROLE-MIGRATION.md"
 VOCABULARY_FILES = ("icons.yaml", "defaults.yaml")
+SURFACES = ("wallpaper", "dark-glass", "solid")
+INK_TOKENS = ("COLOR_FOREGROUND", "COLOR_JOIN")
+ROLE_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 
 TOKEN = re.compile(r"\{\{\s*([^{}]*?)\s*\}\}")
 BARE_TOKEN = re.compile(r"\{\{(COLOR_[A-Z0-9_]+)\}\}")
@@ -263,6 +285,127 @@ def load_schema(root: Path, errors: list[str]) -> None:
         )
     if paths.get("defaults") != DEFAULTS:
         errors.append(f"{SCHEMA}: paths.defaults is {paths.get('defaults')!r}; expected {DEFAULTS!r}")
+    if paths.get("vocabulary") != VOCABULARY:
+        errors.append(
+            f"{SCHEMA}: paths.vocabulary is {paths.get('vocabulary')!r}; this validator "
+            f"reads {VOCABULARY!r} as the role authority"
+        )
+    if paths.get("role_proposal") != PROPOSAL:
+        errors.append(
+            f"{SCHEMA}: paths.role_proposal is {paths.get('role_proposal')!r}; this "
+            f"validator reads {PROPOSAL!r} as the coverage record"
+        )
+    surfaces = data.get("surface_classes")
+    if not isinstance(surfaces, dict):
+        errors.append(f"{SCHEMA}: `surface_classes` must be a mapping (the surface enum)")
+        return
+    if tuple(surfaces.get("enum") or ()) != SURFACES:
+        errors.append(
+            f"{SCHEMA}: surface_classes.enum is {surfaces.get('enum')!r}; this validator "
+            f"enforces {list(SURFACES)!r} -- keep the contract and the checker in step"
+        )
+
+
+def load_vocabulary(
+    root: Path, errors: list[str]
+) -> tuple[set[str], list[dict[str, str]]]:
+    """Load the declared role vocabulary and the Phase A legacy baseline."""
+    path = root / VOCABULARY
+    if not path.is_file():
+        errors.append(f"{VOCABULARY}: missing -- mapping values have no role authority")
+        return set(), []
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        errors.append(f"{VOCABULARY}: invalid JSON ({exc})")
+        return set(), []
+    if not isinstance(data, dict):
+        errors.append(f"{VOCABULARY}: a vocabulary document must be a JSON object")
+        return set(), []
+    if not isinstance(data.get("vocabulary"), int):
+        errors.append(f"{VOCABULARY}: missing an integer `vocabulary` version")
+
+    source = data.get("source")
+    if not isinstance(source, dict):
+        errors.append(f"{VOCABULARY}: `source` must be a mapping naming the producer/requirement")
+        source = {}
+    for key in ("producer", "requirement", "target_release"):
+        if not isinstance(source.get(key), str) or not source.get(key):
+            errors.append(f"{VOCABULARY}: source.{key} must be a non-empty string")
+
+    roles = data.get("roles")
+    if not isinstance(roles, list) or not roles:
+        errors.append(f"{VOCABULARY}: `roles` must be a non-empty list of role names")
+        roles = []
+    role_set: set[str] = set()
+    for role in roles:
+        if not isinstance(role, str) or not ROLE_NAME.match(role):
+            errors.append(f"{VOCABULARY}: {role!r} is not a snake_case role name")
+            continue
+        if role in role_set:
+            errors.append(f"{VOCABULARY}: role {role!r} is declared twice")
+        role_set.add(role)
+    if len(role_set) != 51:
+        errors.append(
+            f"{VOCABULARY}: {len(role_set)} role(s) declared; expected 51 (50 Material "
+            f"roles + `on_backdrop`, theme-producer REQ-022)"
+        )
+    if "on_backdrop" not in role_set:
+        errors.append(f"{VOCABULARY}: `on_backdrop` (the produced wallpaper-ink role) is missing")
+
+    aliases = source.get("aliases_are_not_roles")
+    if isinstance(aliases, dict):
+        for alias in aliases.get("not_roles") or []:
+            if alias in role_set:
+                errors.append(
+                    f"{VOCABULARY}: {alias!r} is listed as an alias but declared as a role; "
+                    f"an alias hides which pole it resolves to"
+                )
+
+    surfaces = data.get("surface_classes")
+    if not isinstance(surfaces, dict) or tuple(surfaces.get("enum") or ()) != SURFACES:
+        errors.append(
+            f"{VOCABULARY}: surface_classes.enum must be exactly {list(SURFACES)!r}"
+        )
+
+    baseline_raw = data.get("phase_a_legacy_baseline")
+    if not isinstance(baseline_raw, dict):
+        errors.append(
+            f"{VOCABULARY}: `phase_a_legacy_baseline` must be a mapping (use an empty "
+            f"`entries` list when the migration is complete)"
+        )
+        return role_set, []
+    entries = baseline_raw.get("entries")
+    if not isinstance(entries, list):
+        errors.append(f"{VOCABULARY}: phase_a_legacy_baseline.entries must be a list")
+        return role_set, []
+    baseline: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for index, entry in enumerate(entries):
+        where = f"{VOCABULARY}: phase_a_legacy_baseline.entries[{index}]"
+        if not isinstance(entry, dict):
+            errors.append(f"{where}: an entry must be a mapping")
+            continue
+        scope, token, value = entry.get("scope"), entry.get("token"), entry.get("value")
+        if not isinstance(scope, str) or not scope:
+            errors.append(f"{where}: missing `scope` (\"defaults\", a group, or group/variant)")
+            continue
+        if not isinstance(token, str) or not COLOR_NAME.match(token):
+            errors.append(f"{where}: `token` must be a COLOR_* name")
+            continue
+        if not isinstance(value, str) or not value:
+            errors.append(f"{where}: `value` must be the non-role value the pin carries")
+            continue
+        if value in role_set:
+            errors.append(
+                f"{where}: {value!r} is a declared role, so it needs no baseline exemption"
+            )
+        key = (scope, token, value)
+        if key in seen:
+            errors.append(f"{where}: duplicate baseline entry {key}")
+        seen.add(key)
+        baseline.append({"scope": scope, "token": token, "value": value})
+    return role_set, baseline
 
 
 def load_defaults(root: Path, errors: list[str]) -> dict[str, object]:
@@ -287,7 +430,48 @@ def load_defaults(root: Path, errors: list[str]) -> dict[str, object]:
     return defaults
 
 
-def _check_color_mappings(where: str, value: object, errors: list[str]) -> set[str]:
+def _check_role_value(
+    scope: str,
+    where: str,
+    token: str,
+    value: object,
+    roles: set[str],
+    baseline_keys: set[tuple[str, str, str]],
+    used_baseline: set[tuple[str, str, str]],
+    errors: list[str],
+) -> None:
+    """One mapping value must be a declared role or an exact legacy-baseline entry."""
+    if not isinstance(value, str) or not value:
+        errors.append(f"{where}: {token!r} must map to a non-empty palette role")
+        return
+    if value in roles:
+        return
+    key = (scope, token, value)
+    if key in baseline_keys:
+        used_baseline.add(key)
+        return
+    hint = ""
+    if re.fullmatch(r"color\d+", value):
+        hint = (
+            " -- `colorN` is the legacy positional carrier list; its meaning changed "
+            "under the current producer, so it is not a role"
+        )
+    errors.append(
+        f"{where}: {token!r} maps to {value!r}, which is not a declared role in "
+        f"{VOCABULARY} and not an exact `phase_a_legacy_baseline` entry{hint}. Use a "
+        f"semantic role (on_backdrop / on_surface / primary / tertiary / error, ...)"
+    )
+
+
+def _check_color_mappings(
+    scope: str,
+    where: str,
+    value: object,
+    roles: set[str],
+    baseline_keys: set[tuple[str, str, str]],
+    used_baseline: set[tuple[str, str, str]],
+    errors: list[str],
+) -> set[str]:
     if value is None:
         return set()
     if not isinstance(value, dict):
@@ -297,20 +481,43 @@ def _check_color_mappings(where: str, value: object, errors: list[str]) -> set[s
     for name, role in value.items():
         if not COLOR_NAME.match(str(name)):
             errors.append(f"{where}: {name!r} is not a COLOR_* token name")
-        if not isinstance(role, str) or not role:
-            errors.append(f"{where}: {name!r} must map to a non-empty palette role")
+        _check_role_value(
+            scope, where, str(name), role, roles, baseline_keys, used_baseline, errors
+        )
         names.add(str(name))
     return names
 
 
 def check_mappings(
-    root: Path, defaults: dict[str, object], errors: list[str], notes: list[str]
+    root: Path,
+    defaults: dict[str, object],
+    roles: set[str],
+    baseline: list[dict[str, str]],
+    errors: list[str],
+    notes: list[str],
 ) -> dict[str, int]:
     """Check the one group map; return the counts this gate reports."""
     troot = root / TEMPLATES
     if not troot.is_dir():
         errors.append(f"{TEMPLATES}/: missing -- mappings cannot resolve against nothing")
         return {"files": 0, "groups": 0, "variants": 0}
+
+    baseline_keys = {(e["scope"], e["token"], e["value"]) for e in baseline}
+    used_baseline: set[tuple[str, str, str]] = set()
+
+    # The vocabulary defaults are mapping values too: `accent` / `accent-muted`
+    # were aliases whose names contradicted the pole they resolved to.
+    for token, value in defaults.items():
+        _check_role_value(
+            "defaults",
+            DEFAULTS,
+            str(token),
+            value,
+            roles,
+            baseline_keys,
+            used_baseline,
+            errors,
+        )
 
     # ONE manifest + ONE vocabulary. A second group-map file is not a style
     # preference: the consumer loads one file, so a split is a second source of
@@ -345,6 +552,7 @@ def check_mappings(
     globally_declared: set[str] = set(defaults)
     referenced_paths: set[Path] = set()
     groups_count = variants_count = 0
+    surface_undeclared = wallpaper_checked = 0
 
     for group_name, entry in data.items():
         group_name = str(group_name)
@@ -352,9 +560,27 @@ def check_mappings(
             errors.append(f"{rel}: group {group_name!r} must be a mapping")
             continue
         groups_count += 1
+        group_surface = entry.get("surface")
+        if group_surface is not None and group_surface not in SURFACES:
+            errors.append(
+                f"{rel}:{group_name}: `surface` is {group_surface!r}; must be one of "
+                f"{list(SURFACES)!r}"
+            )
+            group_surface = None
+        if group_surface is None:
+            surface_undeclared += 1
         group_tokens = _check_color_mappings(
-            f"{rel}:{group_name}", entry.get("color_mappings"), errors
+            f"{group_name}",
+            f"{rel}:{group_name}",
+            entry.get("color_mappings"),
+            roles,
+            baseline_keys,
+            used_baseline,
+            errors,
         )
+        group_mappings = entry.get("color_mappings") or {}
+        if not isinstance(group_mappings, dict):
+            group_mappings = {}
         globally_declared |= group_tokens
         declared = set(defaults) | group_tokens
 
@@ -392,11 +618,50 @@ def check_mappings(
             elif name in names:
                 errors.append(f"{rel}:{group_name}: duplicate variant name {name!r}")
             names.add(str(name))
+            variant_surface = variant.get("surface")
+            if variant_surface is not None and variant_surface not in SURFACES:
+                errors.append(
+                    f"{where} ({name}): `surface` is {variant_surface!r}; must be one "
+                    f"of {list(SURFACES)!r}"
+                )
+                variant_surface = None
+            surface = variant_surface or group_surface
+            if surface is None:
+                surface_undeclared += 1
             variant_tokens = _check_color_mappings(
-                f"{where} ({name})", variant.get("color_mappings"), errors
+                f"{group_name}/{name}",
+                f"{where} ({name})",
+                variant.get("color_mappings"),
+                roles,
+                baseline_keys,
+                used_baseline,
+                errors,
             )
+            variant_mappings = variant.get("color_mappings") or {}
+            if not isinstance(variant_mappings, dict):
+                variant_mappings = {}
             globally_declared |= variant_tokens
             allowed = declared | variant_tokens
+
+            # A wallpaper glyph's ink is `on_backdrop`: the producer's role for
+            # exactly this band. Panel ink here is what made the old pins read
+            # muted. Only declared surfaces are checked, so Phase A is vacuous.
+            if surface == "wallpaper":
+                wallpaper_checked += 1
+                for ink in INK_TOKENS:
+                    if ink not in allowed:
+                        continue
+                    resolved = (
+                        variant_mappings.get(ink)
+                        or group_mappings.get(ink)
+                        or defaults.get(ink)
+                    )
+                    if resolved != "on_backdrop":
+                        errors.append(
+                            f"{where} ({name}): surface is `wallpaper` but {ink} resolves "
+                            f"to {resolved!r}; a wallpaper glyph's ink must be "
+                            f"`on_backdrop`"
+                        )
 
             if not isinstance(output, str) or not output:
                 errors.append(f"{where} ({name}): missing `output`")
@@ -483,11 +748,67 @@ def check_mappings(
             + (" ..." if len(unreferenced) > 5 else "")
         )
 
+    # The Phase A baseline is a ratchet: an entry that no longer matches a live
+    # pin means the pin was migrated and the exemption must go with it. Without
+    # this, Phase B could "finish" while the list still vouched for values that
+    # are no longer in the corpus -- and the next `colorN` pin would be legal.
+    for entry in baseline:
+        key = (entry["scope"], entry["token"], entry["value"])
+        if key not in used_baseline:
+            errors.append(
+                f"{VOCABULARY}: `phase_a_legacy_baseline` entry {key} matches no live "
+                f"pin -- the baseline is shrink-only; delete the migrated entry"
+            )
+    if baseline:
+        notes.append(
+            f"{len(baseline)} pin(s) still carry a pre-migration value (Phase A legacy "
+            f"baseline); Phase B drives this to 0"
+        )
+    if surface_undeclared:
+        notes.append(
+            f"{surface_undeclared} group/variant(s) declare no `surface` yet "
+            f"(Phase A: the field is optional; Phase B declares the values)"
+        )
+    if wallpaper_checked:
+        notes.append(
+            f"{wallpaper_checked} variant(s) declare `surface: wallpaper` and were "
+            f"held to `on_backdrop` ink"
+        )
+
+    # The reviewed proposal must name every group and variant: new art cannot land
+    # without the page that says which role and which surface it is for.
+    proposal = root / PROPOSAL
+    if not proposal.is_file():
+        errors.append(
+            f"{PROPOSAL}: missing -- the role proposal is the reviewed record for "
+            f"every group and variant"
+        )
+    else:
+        text = proposal.read_text()
+        missing_doc: list[str] = []
+        for group_name in data:
+            if f"`{group_name}`" not in text:
+                missing_doc.append(f"group `{group_name}`")
+            entry = data[group_name]
+            if isinstance(entry, dict) and isinstance(entry.get("variants"), list):
+                for variant in entry["variants"]:
+                    if isinstance(variant, dict) and isinstance(variant.get("name"), str):
+                        if f"`{variant['name']}`" not in text:
+                            missing_doc.append(f"{group_name}/`{variant['name']}`")
+        if missing_doc:
+            errors.append(
+                f"{PROPOSAL}: {len(missing_doc)} group/variant name(s) in {rel} are "
+                f"missing from the proposal: " + ", ".join(missing_doc[:8])
+                + (" ..." if len(missing_doc) > 8 else "")
+            )
+
     return {
         "files": 1,
         "groups": groups_count,
         "variants": variants_count,
         "svgs": len(all_svgs),
+        "baseline_remaining": len(baseline),
+        "roles": len(roles),
     }
 
 
@@ -500,13 +821,16 @@ def main() -> int:
     errors: list[str] = []
     notes: list[str] = []
     load_schema(root, errors)
+    roles, baseline = load_vocabulary(root, errors)
     defaults = load_defaults(root, errors)
-    counts = check_mappings(root, defaults, errors, notes)
+    counts = check_mappings(root, defaults, roles, baseline, errors, notes)
 
     print(
         f"validate-icons: root={root} manifest={MANIFEST} "
         f"groups={counts.get('groups', 0)} variants={counts.get('variants', 0)} "
-        f"svgs={counts.get('svgs', 0)} defaults={len(defaults)}"
+        f"svgs={counts.get('svgs', 0)} defaults={len(defaults)} "
+        f"roles={counts.get('roles', 0)} "
+        f"legacy_baseline={counts.get('baseline_remaining', 0)}"
     )
     for note in notes:
         print(f"validate-icons: note: {note}")
@@ -517,7 +841,10 @@ def main() -> int:
         return 1
     print(
         "validate-icons: PASS -- one group map (" + MANIFEST + "), every template "
-        f"resolves under {TEMPLATES}/, every used placeholder is declared, every SVG parses"
+        f"resolves under {TEMPLATES}/, every used placeholder is declared, every "
+        f"mapping value is a declared role or an exact legacy-baseline entry, every "
+        f"declared wallpaper surface resolves to on_backdrop, the proposal names every "
+        f"group and variant, every SVG parses"
     )
     return 0
 

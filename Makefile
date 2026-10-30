@@ -46,7 +46,7 @@ EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 help:
 	@printf '%s\n' \
 	  'validate          catalog <-> class dirs, schema JSON well-formedness, AD-11 absence check' \
-	  'validate-icons    mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses' \
+	  'validate-icons    mapping templates resolve, tokens declared, mapping values are declared roles, surfaces valid, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
@@ -68,8 +68,11 @@ validate:
 # The icons corpus. Three separate failures are caught here, and each one is a
 # release-time failure only because this gate exists: a mapping entry whose
 # template was deleted, a placeholder no group (and not defaults.yaml) declares,
-# and an SVG that is not well-formed XML. Run it against the corpus, not against a
-# consumer's deployed copy -- the tag must be shippable before it is published.
+# and an SVG that is not well-formed XML. It now also owns the role contract: every
+# mapping value must be a role in mappings/vocabulary.json, every declared surface
+# must be valid (and a wallpaper surface's ink must be on_backdrop), and the role
+# proposal must name every group and variant. Run it against the corpus, not against
+# a consumer's deployed copy -- the tag must be shippable before it is published.
 validate-icons:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-icons.py"
 
