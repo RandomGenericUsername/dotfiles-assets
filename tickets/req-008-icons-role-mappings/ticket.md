@@ -2,7 +2,7 @@
 id: req-008
 title: "Icons manifest: semantic role re-pin, real defaults, surface classes, vocabulary lint"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — openspec-single
 links:
   openspec: none
@@ -314,3 +314,16 @@ installs it.
   `58 variant(s) ... held to on_backdrop ink`;
   `rg -c 'color[0-9]+' icons/mappings/icons.yaml icons/mappings/defaults.yaml` →
   0 matches; `itr render` over the four palettes in the render-proof section.
+
+## Outcome
+
+Phase B applied and live 2026-10-31 (assets `v0.6.3`, deployed by PIN-0121):
+- deployed `icons/mappings/icons.yaml`: zero `colorN` tokens; e.g. `battery`
+  is `surface: wallpaper` + `COLOR_ACCENT: primary` + `COLOR_FOREGROUND: on_backdrop`;
+- `validate-icons`: 22 groups, 136 variants, 51 roles, `legacy_baseline=0`,
+  58 wallpaper variants held to `on_backdrop`;
+- live rendered icons match the palette roles: battery bolt `#b9c3ff` (primary),
+  wifi glyph `#b9c3ff`, bar ink `#e3e1e9` (`on_backdrop`); guard deleted in the
+  same deployment (runtime v0.5.1, no retargeting);
+- before/after proof: `/tmp/opencode/icon-rerender.html` — 4 wallpapers ×
+  dark/light, old vs new, 0 near-black accents after (236 before).
