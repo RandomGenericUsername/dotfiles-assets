@@ -12,24 +12,24 @@ window {
     transparency: "real";
     location: center;
     width: 548px;
-    /* Unified panel frame: same @color04 accent edge + 16px radius as the
+    /* Unified panel frame: same @primary accent edge + 16px radius as the
      * GTK tools, so rofi and the AGS windows read as siblings (spec D1/D2). */
     border: 2px;
-    border-color: @color04;
-    background-color: @color01;
+    border-color: @primary;
+    background-color: @surface-container;
     padding: 2px;
     border-radius: 16px;
 }
 
 mainbox {
-    background-color: @background;
+    background-color: @surface;
     border-radius: 8px;
     padding: 18px 18px 14px;
     spacing: 21px;
 }
 
 inputbar {
-    background-color: @color01;
+    background-color: @surface-container-high;
     border-radius: 5px;
     padding: 9px 12px;
     spacing: 10px;
@@ -49,19 +49,19 @@ icon-search {
     /* Force the glyph to the palette foreground (same colour as the entry
      * text) so it always contrasts the solid field, independent of how the
      * icon-contrast guard rendered the source SVG. */
-    tint: @foreground;
+    tint: @on-surface;
 }
 
 entry {
     placeholder: "Search...";
-    placeholder-color: @color07;
-    text-color: @foreground;
+    placeholder-color: @on-surface-variant;
+    text-color: @on-surface;
 }
 
 * {
     normal-background: transparent;
     alternate-normal-background: transparent;
-    alternate-normal-foreground: @foreground;
+    alternate-normal-foreground: @on-surface;
 }
 
 listview {
@@ -91,16 +91,16 @@ element-icon {
 }
 
 element selected.normal {
-    background-color: @color10;
-    text-color: @background;
+    background-color: @primary-container;
+    text-color: @on-primary-container;
 }
 
 element normal.normal {
     background-color: transparent;
-    text-color: @foreground;
+    text-color: @on-surface;
 }
 
 element alternate.normal {
     background-color: transparent;
-    text-color: @foreground;
+    text-color: @on-surface;
 }

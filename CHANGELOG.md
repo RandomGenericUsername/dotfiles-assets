@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.4 — static configs on semantic roles
+
+- `configs/rofi/launcher/config.rasi`: migrate from CSG carrier tokens to
+  `palette.v1` roles (rasi identifiers hyphenated): frame `@surface-container`,
+  content `@surface`, field `@surface-container-high`, accent/border
+  `@primary`, selected row `@primary-container`/`@on-primary-container`, ink
+  `@on-surface`, placeholder `@on-surface-variant`. `@color01` was the Material
+  **error** role in every palette, which is why rofi's window never changed
+  color with the wallpaper.
+- `templates/wlogout/style.css.tpl`: role names (`@on_surface`,
+  `@primary_container`) instead of `@color_15`/`@color_12`/`@color_07`.
+- No geometry or behavior changes; rendered rofi parses cleanly and resolves
+  role variables.
+
 Notable changes to `dotfiles-assets`. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow the git tags
 (`vMAJOR.MINOR.PATCH`, annotated, never moved). This repository ships no build artifacts: a

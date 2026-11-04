@@ -17,7 +17,7 @@ window {
 }
 
 button {
-    color: @color_15;
+    color: @on_surface;
     border-radius: 1em;
 	border: 0em;
     padding: 0.5em;
@@ -31,10 +31,10 @@ button {
 }
 
 button:focus, button:hover {
-    background-color: @color_12;
+    background-color: @primary_container;
 	opacity: 0.8;
     background-size: 30%;
-    box-shadow: 0 0 0.9em @color_07;
+    box-shadow: 0 0 0.9em @on_surface;
 }
 
 button span {
