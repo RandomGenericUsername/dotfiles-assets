@@ -48,15 +48,15 @@ repository, not changed here).
 
 ## Acceptance
 
-- [ ] `configs/hypr/autostart.lua` has no `ags-run-locked` line for `ags` or
+- [x] `configs/hypr/autostart.lua` has no `ags-run-locked` line for `ags` or
       `notifications`; the remaining launch lines are byte-identical.
-- [ ] The autostart comment names `dotfiles-ags-bar.service` and
+- [x] The autostart comment names `dotfiles-ags-bar.service` and
       `dotfiles-ags-notifications.service` as the systemd owners.
-- [ ] `make validate-configs` fails on a re-added `--expect-instance ags` or
+- [x] `make validate-configs` fails on a re-added `--expect-instance ags` or
       `notifications` line and passes on the cleaned file.
-- [ ] `rg -n 'ags-run-locked' configs` shows only `capture` and `clipboard`.
-- [ ] `make validate`, `make validate-configs`, `make gates` pass.
-- [ ] `v0.12.1` is an annotated tag on the fast-forward-merged commit; nothing
+- [x] `rg -n 'ags-run-locked' configs` shows only `capture` and `clipboard`.
+- [x] `make validate`, `make validate-configs`, `make gates` pass.
+- [x] `v0.12.1` is an annotated tag on the fast-forward-merged commit; nothing
       is pushed.
 
 ## Evidence / Verify
@@ -66,3 +66,37 @@ repository, not changed here).
   owns those apps as systemd user units.
 - Verify: `make validate-configs`, `make validate`, `make gates`;
   `rg -n 'ags-run-locked' configs/hypr/autostart.lua`; `git cat-file -t v0.12.1`.
+
+## Outcome (2026-11-06)
+
+**Worktree:** `.worktrees/req-016/`
+**Branch:** `ticket/req-016-autostart-supervision`
+**Commits:** `070bc41` (ticket + INDEX plan), `df906b5` (autostart, validator,
+docs, tag/catalog bump).
+**Merge:** fast-forward into `master`.
+**Tag:** `v0.12.1` (annotated) on the merged branch head; not pushed.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `configs/hypr/autostart.lua` | bar (`ags`) and `notifications` launch lines removed; comment names the two systemd user units; `capture`/`clipboard` lines unchanged |
+| `scripts/validate-configs.py` | rejects an autostart launch of the `ags` or `notifications` instance, naming the owning systemd unit |
+| `configs/README.md` | ownership table marks the bar/notifications as systemd units; wrapper section scoped to the overlays |
+| `templates/display-manager/hypr-session.j2` | header no longer claims the bar starts from the Hyprland config |
+| `README.md`, `CHANGELOG.md`, `catalog.yaml` | `v0.12.1` release note and tag |
+
+### Evidence — commands and exact results
+
+| Command | Result |
+| --- | --- |
+| `make validate-configs` | **PASS** — `autostart leaves the systemd-owned AGS instances to provisioning` |
+| negative check (temporary re-added `--expect-instance ags`) | **FAIL** — `configs/hypr/autostart.lua:57: autostart launches always-on AGS instance 'ags'; provisioning owns it as dotfiles-ags-bar.service` |
+| `make validate` | **PASS** — `tag=v0.12.1`, six classes, 406 files scanned |
+| `make gates` | **PASS** — every gate plus hermetic; `shellcheck -> 1 script(s) clean` |
+| `rg -n 'ags-run-locked' configs` | only `autostart.lua` lines for `capture` and `clipboard` |
+
+The host has no `shellcheck`; the gate run used a temporary ShellCheck 0.10.0
+binary from `/tmp/opencode/bin` on `PATH`. Without it, `validate-desktop` (and
+therefore `gates`) fails with its documented "shellcheck is not installed"
+message — an environment gap, not a corpus failure.
