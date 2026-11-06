@@ -1,6 +1,6 @@
 # dotfiles-assets
 
-The dotfiles corpus, as **data**: five class directories behind **one** annotated semver tag.
+The dotfiles corpus, as **data**: six class directories behind **one** annotated semver tag.
 No package, no console script, no engine — the icon renderer, the palette generator and the
 provisioner are separate pinned repos, and a renderer growing here would re-open the split that
 created this repository.
@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.6.2`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.7.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -16,13 +16,14 @@ templates/   Jinja sources + one *.vars.schema.json per template
 configs/     static config corpus (compositor, editor, prompt, wlogout layout)
 content/     binary/large content (wallpapers, authored themes)
 desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional)
+skins/       frozen v1 skin manifests + GTK settings/Bluetooth template + local validation target
 ```
 
 `catalog.yaml` is what is inside each class, with a `schema_major` per schema-bearing class. It
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: all five classes are populated.** `icons/` holds 117 SVG templates in 12 template
+**Status: all six classes are populated.** `icons/` holds 117 SVG templates in 12 template
 directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper archive
 and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
 six tool directories — the compositor, editor, prompt and wlogout layout (one file,
@@ -31,8 +32,10 @@ six tool directories — the compositor, editor, prompt and wlogout layout (one 
 SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
-binaries. Each class validator arrives **with** its corpus, so every check has run against real data
-before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
+binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback, `flat`, `paper`), one
+GTK settings/Bluetooth template and the local validation target that points at the canonical
+`contracts` schemas. Each class validator arrives **with** its corpus, so every check has run
+against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
 `configs/hypr/hyprland.lua:7` as the one reviewed exception. Since `v0.6.1` it also requires the
 wlogout Logout tile to run `uwsm stop`, so a silent revert to `loginctl terminate-user` fails the
@@ -43,13 +46,14 @@ gate.
 | Number | Where | Answers |
 | --- | --- | --- |
 | tag `vMAJOR.MINOR.PATCH` | the git tag | *which corpus* is deployed |
-| `schema_major` | `icons/schema.json`, `templates/**/*.vars.schema.json`, `desktop/desktop.yaml` | *can a consumer parse it* |
+| `schema_major` | `icons/schema.json`, `templates/**/*.vars.schema.json`, `desktop/desktop.yaml`, `skins/schema.json` | *can a consumer parse it* |
 
 - **MAJOR** — a contract or path break: class directory renamed, a file the consumer addresses by
   path moved or removed, a mapping vocabulary rename, a template's required variable removed or
   retyped, or a `schema_major` bump.
 - **MINOR** — additive only: a new icon group/variant, a new template (with its own first
-  `schema_major`), a new `.desktop` entry, a new wallpaper.
+  `schema_major`), a new `.desktop` entry, a new wallpaper, a new class (the additive `skins/`
+  class in `v0.7.0`).
 - **PATCH** — content fix that keeps every path: an SVG recolor, a re-encoded wallpaper, a text
   fix in a mapping.
 
@@ -83,6 +87,15 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `configs/` bears **no** schema file: its contract is a boundary, not a document. `configs/README.md`
   states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
   files and mutable preferences belong to the consumer.
+- `skins/schema.json` — `schema_major: 1`; the local data-only validation target for the frozen skin
+  vocabulary (`shape`, `rhythm`, `surface`, `ink`, `type`, `layout`), the 51-role `palette.v1` list,
+  and the pointer to the canonical `contracts` schemas (`schemas/skin-token.schema.json` +
+  `schemas/skin-manifest.schema.json`). No cross-repo runtime import: the canonical pair is not
+  present at the reachable `contracts` tag, so this file records `canonical.tag: null` and
+  `canonical.vendored: false` rather than claiming a copy. `make validate-skins` enforces the exact
+  manifest token set, role-only values, no literal hex, no transitions and two-way template
+  placeholder coverage; `skins/README.md` documents the manifests, the `paper` light-mode axis and
+  the overflow-HIDDEN rule.
 
 ## Gates
 
@@ -96,8 +109,10 @@ make validate-content # the tarball holds a top-level default.png; every *.theme
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
+make validate-skins   # skin manifests, schema pointer, palette.v1 roles, template placeholder coverage
+make test-skins       # pytest fixtures for the skins class (development dependency)
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
-make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic
+make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
 make hermetic         # the same, with empty HOME/XDG_* from a foreign cwd
 make ci-gates-parity  # the workflow's job set == the Makefile's gate set, both directions
 ```

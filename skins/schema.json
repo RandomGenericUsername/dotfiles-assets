@@ -1,0 +1,290 @@
+{
+  "$comment": "The skins contract's LOCAL validation target. The canonical schema lives in the separate `contracts` repository at `schemas/skin-token.schema.json` plus `schemas/skin-manifest.schema.json`; this repository never imports another repository at runtime. No copy is vendored here: the reachable `contracts` tag has no skin schema yet, so `canonical.tag` is null and `canonical.vendored` is false. When a canonical pair is vendored, it MUST carry the pinned `contracts` tag and a byte-equality test. `schema_major` is the consumer-compatibility version and moves independently of the repo tag.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skins/schema.json",
+  "title": "dotfiles-assets skin manifest v1",
+  "schema_major": 1,
+  "contract": "skins",
+  "status": "populated (v0.7.0)",
+  "canonical": {
+    "repository": "contracts",
+    "paths": [
+      "schemas/skin-token.schema.json",
+      "schemas/skin-manifest.schema.json"
+    ],
+    "tag": null,
+    "vendored": false,
+    "note": "Pointer only. The canonical pair is not present at the reachable contracts v0.4.0 tag (2026-11-05), so a vendored copy would be a false claim. This file is the data-only validation target that `make validate-skins` and the fixture tests read."
+  },
+  "palette": {
+    "vocabulary": "palette.v1",
+    "role_count": 51,
+    "source": "icons/mappings/vocabulary.json (the declared role vocabulary of record in this repository; 50 theme-producer Material roles + on_backdrop, REQ-022)",
+    "note": "A surface/ink expression may name only one of these roles. Producer aliases (foreground, accent, accent-muted, warning) and colorN carrier indices are not roles; the validator rejects them.",
+    "roles": [
+      "background",
+      "error",
+      "error_container",
+      "inverse_on_surface",
+      "inverse_primary",
+      "inverse_surface",
+      "on_background",
+      "on_error",
+      "on_error_container",
+      "on_primary",
+      "on_primary_container",
+      "on_primary_fixed",
+      "on_primary_fixed_variant",
+      "on_secondary",
+      "on_secondary_container",
+      "on_secondary_fixed",
+      "on_secondary_fixed_variant",
+      "on_surface",
+      "on_surface_variant",
+      "on_tertiary",
+      "on_tertiary_container",
+      "on_tertiary_fixed",
+      "on_tertiary_fixed_variant",
+      "outline",
+      "outline_variant",
+      "primary",
+      "primary_container",
+      "primary_fixed",
+      "primary_fixed_dim",
+      "scrim",
+      "secondary",
+      "secondary_container",
+      "secondary_fixed",
+      "secondary_fixed_dim",
+      "shadow",
+      "source_color",
+      "surface",
+      "surface_bright",
+      "surface_container",
+      "surface_container_high",
+      "surface_container_highest",
+      "surface_container_low",
+      "surface_container_lowest",
+      "surface_dim",
+      "surface_tint",
+      "surface_variant",
+      "tertiary",
+      "tertiary_container",
+      "tertiary_fixed",
+      "tertiary_fixed_dim",
+      "on_backdrop"
+    ]
+  },
+  "frozen": {
+    "manifest_format": "toml",
+    "required_files": [
+      "glass",
+      "flat",
+      "paper"
+    ],
+    "token_groups": {
+      "shape": [
+        "radius-panel",
+        "radius-card",
+        "radius-cell",
+        "radius-pill",
+        "border-w"
+      ],
+      "rhythm": [
+        "gap",
+        "cell-pad"
+      ],
+      "surface": [
+        "bg-panel",
+        "bg-card",
+        "border",
+        "shadow",
+        "blur"
+      ],
+      "ink": [
+        "ink",
+        "ink-dim",
+        "accent",
+        "ink-over"
+      ],
+      "type": [
+        "font-family",
+        "title-size",
+        "text-size"
+      ],
+      "layout": [
+        "panel-width",
+        "bt-list-spacing",
+        "bar-row-height",
+        "chip-min"
+      ]
+    },
+    "forbidden_keys": [
+      "structure",
+      "variant",
+      "variants",
+      "state",
+      "transition",
+      "animation",
+      "density",
+      "paint"
+    ],
+    "forbidden_patterns": [
+      "#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\b",
+      "\\btransition\\s*:",
+      "\\banimation\\s*:"
+    ],
+    "notes": [
+      "A skin is palette/ink mapping + paint + rhythm/density. Structure (which widget sits where) and variant names belong to the app.",
+      "Surface, border and shadow values are palette-role expressions or transparent; a literal hex colour is never a skin value.",
+      "GTK 4.24 ignores transitions, so the format forbids them rather than shipping dead declarations.",
+      "blur is `none` or `blur(Npx)` with an optional `saturate(N)`; backdrop-filter blur is proven to paint in GTK 4.24."
+    ]
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_major",
+    "name",
+    "shape",
+    "rhythm",
+    "surface",
+    "ink",
+    "type",
+    "layout"
+  ],
+  "properties": {
+    "schema_major": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "radius-panel",
+        "radius-card",
+        "radius-cell",
+        "radius-pill",
+        "border-w"
+      ],
+      "properties": {
+        "radius-panel": { "$ref": "#/$defs/dimension" },
+        "radius-card": { "$ref": "#/$defs/dimension" },
+        "radius-cell": { "$ref": "#/$defs/dimension" },
+        "radius-pill": { "$ref": "#/$defs/dimension" },
+        "border-w": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "rhythm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gap",
+        "cell-pad"
+      ],
+      "properties": {
+        "gap": { "$ref": "#/$defs/dimension" },
+        "cell-pad": { "$ref": "#/$defs/spacing" }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bg-panel",
+        "bg-card",
+        "border",
+        "shadow",
+        "blur"
+      ],
+      "properties": {
+        "bg-panel": { "$ref": "#/$defs/roleExpression" },
+        "bg-card": { "$ref": "#/$defs/roleExpression" },
+        "border": { "$ref": "#/$defs/roleExpression" },
+        "shadow": { "$ref": "#/$defs/shadow" },
+        "blur": { "$ref": "#/$defs/blur" }
+      }
+    },
+    "ink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ink",
+        "ink-dim",
+        "accent",
+        "ink-over"
+      ],
+      "properties": {
+        "ink": { "$ref": "#/$defs/role" },
+        "ink-dim": { "$ref": "#/$defs/role" },
+        "accent": { "$ref": "#/$defs/role" },
+        "ink-over": { "const": "auto" }
+      }
+    },
+    "type": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "font-family",
+        "title-size",
+        "text-size"
+      ],
+      "properties": {
+        "font-family": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^#;{}]+$"
+        },
+        "title-size": { "$ref": "#/$defs/dimension" },
+        "text-size": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "panel-width",
+        "bt-list-spacing",
+        "bar-row-height",
+        "chip-min"
+      ],
+      "properties": {
+        "panel-width": { "$ref": "#/$defs/dimension" },
+        "bt-list-spacing": { "$ref": "#/$defs/dimension" },
+        "bar-row-height": { "$ref": "#/$defs/dimension" },
+        "chip-min": { "$ref": "#/$defs/dimension" }
+      }
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px$"
+    },
+    "spacing": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px(?: (?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px){0,3}$"
+    },
+    "role": {
+      "type": "string",
+      "pattern": "^@[a-z][a-z0-9_]*$"
+    },
+    "roleExpression": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:transparent|@[a-z][a-z0-9_]*|alpha\\(@[a-z][a-z0-9_]*, (?:0|1|0?\\.[0-9]+)\\)|color-mix\\(in srgb, @[a-z][a-z0-9_]* (?:0|[1-9][0-9]?|100)%, (?:transparent|@[a-z][a-z0-9_]*)\\))$"
+    },
+    "shadow": {
+      "type": "string",
+      "pattern": "^(?:none|0(?: [0-9]+(?:\\.[0-9]+)?px){2} rgba\\(0, ?0, ?0, ?(?:0|1|0?\\.[0-9]+)\\))$"
+    },
+    "blur": {
+      "type": "string",
+      "pattern": "^(?:none|blur\\([0-9]+(?:\\.[0-9]+)?px\\)(?: saturate\\([0-9]+(?:\\.[0-9]+)?\\))?)$"
+    }
+  }
+}

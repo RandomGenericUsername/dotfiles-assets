@@ -3,8 +3,8 @@
 
 WHAT THIS GATE PROVES, and why each part is separate:
 
-  1. CATALOG <-> DIRS AGREE. `catalog.yaml` names five classes; the tree holds
-     five class directories. Either side alone is a claim: a class directory with
+  1. CATALOG <-> DIRS AGREE. `catalog.yaml` names six classes; the tree holds
+     six class directories. Either side alone is a claim: a class directory with
      no catalog entry is undocumented corpus, and a catalog entry with no
      directory is a path every consumer will address and nothing will answer. Both
      fail here. Subdirectories are checked the same way, because a class's inner
@@ -63,11 +63,12 @@ from pathlib import Path
 
 CATALOG = "catalog.yaml"
 
-# The five class names are a CONTRACT, not a convenience: a class directory may
+# The six class names are a CONTRACT, not a convenience: a class directory may
 # not be renamed and a file may not move between classes without a MAJOR tag,
 # because consumers address class paths literally (spine AD-3/AD-4). Hard-coding
-# the set is what makes a rename fail here instead of in five consumers.
-CLASSES = ("icons", "templates", "configs", "content", "desktop")
+# the set is what makes a rename fail here instead of in every consumer.
+# `skins` is additive in v0.7.0; the five pre-existing paths did not move.
+CLASSES = ("icons", "templates", "configs", "content", "desktop", "skins")
 
 CLASS_FIELDS = ("dir", "subdirs", "schema", "schema_major", "contents")
 

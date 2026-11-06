@@ -45,7 +45,7 @@ check_clean() {
 }
 
 case "$SUBCMD" in
-  check-clean)
+  check-clean|--check-clean)
     check_clean
     ;;
   create)

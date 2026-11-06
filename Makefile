@@ -1,6 +1,6 @@
 # dotfiles-assets — validation verbs only (spine AD-2).
 #
-# This repository is DATA: five class directories behind one annotated semver tag.
+# This repository is DATA: six class directories behind one annotated semver tag.
 # There is no package, no console script, no build, no install and no sync verb.
 # The icon renderer, the palette generator and the provisioner are separate pinned
 # repos; an `install`/`build` verb here would be the first step back toward one of
@@ -19,8 +19,10 @@
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
+#   make validate-skins  skin manifests + schema pointer + role vocabulary + template placeholder coverage
+#   make test-skins      pytest fixtures for the skins class (dev dependency)
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
-#   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic
+#   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
 #   make gates-ci        the same gate set, reproducible without a workflow runner
 #   make hermetic        the same checks with empty HOME/XDG_* and a foreign cwd
 #
@@ -31,17 +33,18 @@
 
 SHELL := /bin/sh
 PYTHON ?= python3
+PYTEST ?= $(PYTHON) -m pytest
 
 # The developer gate set. `gates` runs ALL of it: a gate that is not run here is a
 # gate nobody runs.
-GATES := validate validate-icons validate-content validate-templates validate-configs validate-desktop lint hermetic
+GATES := validate validate-icons validate-content validate-templates validate-configs validate-desktop validate-skins lint hermetic
 
 # The env every hermetic command runs with: nothing inherited but PATH. HOME and the
 # four XDG_* dirs point into a throwaway tree this recipe creates and deletes.
 EMPTY_ENV = env -i PATH="$$PATH" HOME="$$home" XDG_DATA_HOME="$$data" \
 	XDG_CONFIG_HOME="$$config" XDG_CACHE_HOME="$$cache" XDG_STATE_HOME="$$state"
 
-.PHONY: help validate validate-icons validate-content validate-templates validate-configs validate-desktop lint gates gates-ci ci-gates-parity hermetic
+.PHONY: help validate validate-icons validate-content validate-templates validate-configs validate-desktop validate-skins test-skins lint gates gates-ci ci-gates-parity hermetic
 
 help:
 	@printf '%s\n' \
@@ -51,8 +54,10 @@ help:
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
+	  'validate-skins    skin manifests + schema pointer + role vocabulary + template placeholder coverage' \
+	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
-	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + lint + hermetic' \
+	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic' \
 	  'gates-ci          the same gate set, reproducible without a workflow runner' \
 	  'ci-gates-parity   workflow job set == GATES + declared CI-only jobs, both directions' \
 	  'hermetic          the same checks with empty HOME/XDG_* from a foreign cwd' \
@@ -125,6 +130,20 @@ validate-desktop:
 	  echo "validate-desktop: shellcheck -> 0 executable scripts (nothing to check)"; \
 	fi
 
+# The skins class (frozen v1). This gate proves the local schema pointer is honest,
+# the three manifests carry the exact frozen token set, every role is palette.v1 (no
+# aliases), every surface value is a role expression (no literal hex), the template
+# has no transition/animation and every {{SKIN_*}} placeholder names a token. It is
+# stdlib-only so a fresh clone runs it; `test-skins` adds the negative fixtures.
+validate-skins:
+	@$(PYTHON) "$(CURDIR)/scripts/validate-skins.py"
+
+# The skins fixture suite. Not a member of GATES: it needs the development pytest
+# dependency, while `validate-skins` above is the fresh-clone gate. Override PYTEST
+# to point at a venv interpreter that has pytest installed.
+test-skins:
+	@$(PYTEST) "$(CURDIR)/skins/tests" -q
+
 # Shell scripts must be shellcheck-clean, and the validators must at least compile.
 # `desktop/scripts/` holds `toggle-touchpad` since v0.5.0, so shellcheck is a REAL
 # check here (it was a vacuous pass while the class was empty). It also runs inside
@@ -186,6 +205,7 @@ hermetic:
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-templates.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-configs.py"; \
 	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-desktop.py"; \
+	$(EMPTY_ENV) $(PYTHON) "$$root/scripts/validate-skins.py"; \
 	$(EMPTY_ENV) PYTHONPYCACHEPREFIX="$$tmp/pycache" $(PYTHON) -m compileall -q "$$root/scripts"; \
 	echo "hermetic: compileall $$root/scripts -> ok (bytecode outside the tree)"; \
 	find "$$root/desktop/scripts" -type f \( -name '*.sh' -o -perm -u+x \) -print \

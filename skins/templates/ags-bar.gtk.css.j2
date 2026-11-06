@@ -1,0 +1,309 @@
+/*
+ * skins/templates/ags-bar.gtk.css.j2 — settings + Bluetooth paint rules.
+ *
+ * The app owns this selector vocabulary and the widget structure. A skin
+ * supplies only palette/ink mapping, paint and rhythm/density through the
+ * SKIN_* tokens below; every token is a key in the selected TOML manifest.
+ * There are no structure or variant tokens, no literal hex colours and no
+ * transitions (GTK 4.24 ignores them, so shipping one would be dead CSS).
+ *
+ * ink-over is {{SKIN_INK_OVER}}: on a painted container the app resolves the
+ * paired on-colour automatically instead of hard-coding a second ink token.
+ *
+ * RADIUS CLIPPING: a rounded container clips its children only when the app
+ * sets overflow HIDDEN on the widget that carries the radius (GTK CSS has no
+ * overflow property). The caller MUST set overflow HIDDEN on the widget with
+ * .settings-surface and on any other radius-clipped surface whose children can
+ * reach a corner; this template can state the radius but cannot apply the clip.
+ */
+
+window.settings-panel,
+window.settings-catcher {
+  background-color: transparent;
+  color: {{SKIN_INK}};
+  font-family: {{SKIN_FONT_FAMILY}};
+  font-size: {{SKIN_TEXT_SIZE}};
+}
+
+/* The click-outside catcher needs a non-zero fill to be hit-testable on this
+   compositor. One percent is imperceptible and is not a skin value. */
+.settings-catcher-fill {
+  background-color: alpha({{SKIN_INK}}, 0.01);
+}
+
+.settings-surface {
+  min-width: {{SKIN_PANEL_WIDTH}};
+  background-color: {{SKIN_BG_PANEL}};
+  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border-radius: {{SKIN_RADIUS_PANEL}};
+  padding: {{SKIN_GAP}};
+  box-shadow: {{SKIN_SHADOW}};
+  backdrop-filter: {{SKIN_BLUR}};
+}
+
+.settings-scroll,
+.settings-scroll viewport {
+  background-color: transparent;
+  border: none;
+}
+
+.settings-scroll scrollbar slider {
+  min-width: {{SKIN_RADIUS_CELL}};
+  border-radius: {{SKIN_RADIUS_PILL}};
+  background-color: alpha({{SKIN_INK}}, 0.25);
+}
+
+/* Cards and the capability/password surfaces share the card paint. */
+.settings-card,
+.settings-tile,
+.settings-mini,
+.settings-password {
+  background-color: {{SKIN_BG_CARD}};
+  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: {{SKIN_GAP}};
+  color: {{SKIN_INK}};
+}
+
+.settings-card-title,
+.settings-tile-title,
+.settings-mini-title {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK}};
+}
+
+.settings-tile-sub,
+.settings-chevron {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+/* Bluetooth device rows. The list spacing is a layout token: the app can also
+   apply it as the list container's row spacing; the margin keeps the stylesheet
+   faithful when the app renders a plain box. */
+.settings-net {
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  padding: {{SKIN_CELL_PAD}};
+  margin-bottom: {{SKIN_BT_LIST_SPACING}};
+  background-color: transparent;
+  border: {{SKIN_BORDER_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  box-shadow: none;
+  color: {{SKIN_INK}};
+}
+
+.settings-net:hover {
+  background-color: alpha({{SKIN_INK}}, 0.08);
+}
+
+.settings-net.sel {
+  background-color: @primary_container;
+  border-color: @primary;
+  color: @on_primary_container;
+}
+
+.settings-net.out-of-range {
+  opacity: 0.45;
+}
+
+/* Inline unpair confirmation: a different mode, not a different connection
+   state, so it wins over the selected fill. */
+.settings-net.confirming {
+  background-color: alpha({{SKIN_INK}}, 0.06);
+}
+
+.settings-net-name {
+  font-size: {{SKIN_TEXT_SIZE}};
+  font-weight: 600;
+  color: {{SKIN_INK}};
+}
+
+.settings-net-sub {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+.settings-net.sel .settings-net-sub {
+  color: alpha(@on_primary_container, 0.85);
+}
+
+.settings-net-signal {
+  min-width: {{SKIN_BAR_ROW_HEIGHT}};
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+}
+
+.settings-badge {
+  font-size: {{SKIN_TEXT_SIZE}};
+  letter-spacing: 0.05em;
+  padding: 2px {{SKIN_GAP}};
+  border-radius: {{SKIN_RADIUS_PILL}};
+  background-color: alpha({{SKIN_INK}}, 0.12);
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.14);
+  color: {{SKIN_INK}};
+}
+
+.settings-badge.conn {
+  background-color: alpha({{SKIN_ACCENT}}, 0.18);
+  border-color: alpha({{SKIN_ACCENT}}, 0.45);
+  color: {{SKIN_INK}};
+}
+
+/* Row actions: Connect, Pair, Unpair. */
+.settings-rowact {
+  min-width: {{SKIN_CHIP_MIN}};
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  padding: 4px {{SKIN_GAP}};
+  font-size: {{SKIN_TEXT_SIZE}};
+  font-weight: 600;
+  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border-radius: {{SKIN_RADIUS_CELL}};
+  background-color: transparent;
+  box-shadow: none;
+  color: {{SKIN_INK}};
+}
+
+.settings-rowact:hover {
+  border-color: {{SKIN_ACCENT}};
+}
+
+.settings-rowact.disabled {
+  opacity: 0.5;
+}
+
+.settings-rowact.subtle {
+  opacity: 0.68;
+}
+
+.settings-rowact.subtle:hover {
+  opacity: 1;
+  border-color: alpha({{SKIN_INK}}, 0.4);
+}
+
+.settings-rowact.danger {
+  border-color: @tertiary;
+  color: @tertiary;
+}
+
+.settings-rowact.danger:hover {
+  border-color: @secondary;
+  color: @secondary;
+}
+
+/* Chevron disclosure row and the section heading above it. */
+.settings-chevron-row {
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  padding: {{SKIN_CELL_PAD}};
+  border-radius: {{SKIN_RADIUS_CELL}};
+}
+
+.settings-chevron-row:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.settings-chevron-label {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+.settings-section-label {
+  font-size: {{SKIN_TEXT_SIZE}};
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: {{SKIN_INK_DIM}};
+  padding: 4px {{SKIN_GAP}};
+}
+
+.settings-divider {
+  min-height: 1px;
+  background-color: alpha({{SKIN_INK}}, 0.06);
+  margin: 4px 0;
+}
+
+/* Connected-device detail table. */
+.settings-conn-details {
+  padding: 6px {{SKIN_GAP}};
+}
+
+.settings-detail-row {
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+}
+
+.settings-detail {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+/* Empty and inline message states. */
+.settings-empty {
+  padding: {{SKIN_CELL_PAD}};
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+.settings-other-networks {
+  padding: 4px 0;
+}
+
+.settings-spinner {
+  min-width: {{SKIN_TEXT_SIZE}};
+  min-height: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_ACCENT}};
+}
+
+/* Wi-Fi settings footer row and its label/note/arrow set. */
+.settings-wifi-settings-row {
+  padding: {{SKIN_CELL_PAD}};
+  border-top: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.06);
+}
+
+.settings-wifi-settings-row:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.settings-wifi-settings-label {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+.settings-wifi-settings-note {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+  opacity: 0.7;
+}
+
+.settings-wifi-settings-arrow {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+/* Subview header: back button, title and the header row itself. */
+.settings-nav-header {
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  padding-bottom: 7px;
+}
+
+.settings-back {
+  min-width: {{SKIN_BAR_ROW_HEIGHT}};
+  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  padding: 0;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  background-color: alpha({{SKIN_INK}}, 0.12);
+  border: none;
+  box-shadow: none;
+  color: {{SKIN_INK}};
+}
+
+.settings-back:hover {
+  background-color: alpha({{SKIN_INK}}, 0.2);
+}
+
+.settings-back-glyph {
+  font-size: {{SKIN_TITLE_SIZE}};
+}
+
+.settings-nav-title {
+  font-size: {{SKIN_TITLE_SIZE}};
+  font-weight: 650;
+  color: {{SKIN_INK}};
+}

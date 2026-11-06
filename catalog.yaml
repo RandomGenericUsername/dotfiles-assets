@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.6.0
+tag: v0.7.0
 
 classes:
   icons:
@@ -69,3 +69,12 @@ classes:
     schema: desktop/desktop.yaml
     schema_major: 1
     contents: 6 per-user application entries (3 Wayland-native IDE overrides + TIDAL's /dev/shm workaround + 2 kitty-hosted AI CLIs) and the toggle-touchpad helper; every entry declares requires/optional and carries TryExec
+  skins:
+    dir: skins
+    subdirs:
+      - manifests
+      - templates
+      - tests
+    schema: skins/schema.json
+    schema_major: 1
+    contents: 3 frozen v1 TOML manifests (glass default/fallback, flat, paper), one GTK settings/Bluetooth template, the local validation target pointing at the canonical contracts schemas, and the pytest fixture set; no structure/variant tokens, no literal hex, no transitions

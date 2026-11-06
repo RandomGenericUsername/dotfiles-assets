@@ -1,0 +1,40 @@
+# glass — the default/fallback skin. Its values are the frozen v1 parity target
+# for today's ags-bar look: a translucent panel, a translucent card, a primary
+# hairline, an app-local shadow and no backdrop blur.
+schema_major = 1
+name = "glass"
+
+[shape]
+radius-panel = "16px"
+radius-card = "12px"
+radius-cell = "8px"
+radius-pill = "999px"
+border-w = "1.5px"
+
+[rhythm]
+gap = "12px"
+cell-pad = "9px 12px"
+
+[surface]
+bg-panel = "alpha(@surface, 0.94)"
+bg-card = "alpha(@surface_container_high, 0.88)"
+border = "alpha(@primary, 0.35)"
+shadow = "0 16px 40px rgba(0,0,0,0.5)"
+blur = "none"
+
+[ink]
+ink = "@accent"
+ink-dim = "@on_surface_variant"
+accent = "@primary"
+ink-over = "auto"
+
+[type]
+font-family = "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif"
+title-size = "15px"
+text-size = "13px"
+
+[layout]
+panel-width = "312px"
+bt-list-spacing = "6px"
+bar-row-height = "30px"
+chip-min = "52px"

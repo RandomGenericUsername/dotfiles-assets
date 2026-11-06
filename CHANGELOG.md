@@ -1,5 +1,63 @@
 # Changelog
 
+## v0.7.0 — skins class (frozen v1)
+
+### Added
+
+- **The sixth class, `skins/`.** A skin is a palette/ink mapping, paint and
+  rhythm/density — never structure or a variant. The frozen v1 token groups are
+  `shape` (`radius-panel/card/cell/pill`, `border-w`), `rhythm` (`gap`,
+  `cell-pad`), `surface` (`bg-panel`, `bg-card`, `border`, `shadow`, `blur`),
+  `ink` (`ink`, `ink-dim`, `accent`, `ink-over`), `type` (`font-family`,
+  `title-size`, `text-size`) and `layout` (`panel-width`, `bt-list-spacing`,
+  `bar-row-height`, `chip-min`).
+- **Three manifests.** `skins/manifests/glass.toml` is the default/fallback
+  parity skin (16/12/8/999px radii, 1.5px border, 312px panel, 30px bar row);
+  `flat.toml` removes every surface/border and tightens rhythm; `paper.toml` is
+  the light/palette axis expressed with `@surface_container_lowest` (panel) and
+  `@surface_container_low` (card), so its appearance depends on the palette mode
+  rather than a baked literal.
+- **`skins/templates/ags-bar.gtk.css.j2`.** The Bluetooth-panel and settings
+  selectors (`settings-surface`, `settings-net` + selected/out-of-range/
+  confirming, `settings-rowact` + disabled/danger/subtle, chevron, section,
+  divider, connected-details, empty, Wi-Fi settings and nav-header classes) now
+  expand `{{SKIN_*}}` tokens. No literal hex, no transitions, no animation, and
+  the radius-clipping comment states that the app must set overflow HIDDEN.
+- **`make validate-skins` + `skins/tests/`.** The stdlib gate proves the local
+  schema pointer is honest, the manifest token set is exact, every role is
+  `palette.v1` (no aliases), surface values are role expressions, and template
+  placeholders cover the schema two ways. The pytest fixtures prove the no-hex,
+  no-transition, no-structure, unknown-role, missing-token, unknown-placeholder
+  and false-vendoring cases fail.
+- **`skins/schema.json`** is the data-only validation target and names the
+  canonical `contracts` paths (`schemas/skin-token.schema.json`,
+  `schemas/skin-manifest.schema.json`). The reachable `contracts` tag has no
+  skin schema, so the file records `canonical.tag: null` and
+  `canonical.vendored: false`; no copy or byte-equality claim is made.
+
+### Changed
+
+- **`catalog.yaml` now declares six classes**, `skins` is schema-bearing at
+  `schema_major: 1`, and `make validate` asserts the class set both ways. The
+  five pre-existing class paths did not move.
+- **`make gates`** adds `validate-skins`; CI has the matching job, so
+  `make ci-gates-parity` still compares the two sets in both directions.
+  `make test-skins` is the fixture suite and needs the development pytest
+  dependency, so it is not a member of the fresh-clone gate set.
+
+### Notes
+
+- **MINOR, no existing path change.** The class is additive at
+  `schema_major: 1`; no icons/templates/configs/content/desktop path or contract
+  moved. The consumer pin bump is a separate commit in its own repository.
+- **Recorded discrepancy:** `../ags-bar/style.css` paints cards at
+  `alpha(@surface_container_high, 0.18)` with a solid `@primary` border, while
+  the frozen v1 glass manifest is `0.88` and `alpha(@primary, 0.35)`. The
+  frozen spec wins; the template expands the frozen values rather than silently
+  redefining the stylesheet.
+- **Out of scope:** changing the ags-bar app, adding light/dark variants or
+  structure tokens, and installing/pinning anything in a consumer.
+
 ## v0.6.4 — static configs on semantic roles
 
 - `configs/rofi/launcher/config.rasi`: migrate from CSG carrier tokens to

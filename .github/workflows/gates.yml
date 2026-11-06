@@ -84,6 +84,16 @@ jobs:
       - name: Every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
         run: make validate-desktop
 
+  validate-skins:
+    name: validate-skins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Frozen v1 manifests + local schema pointer + palette.v1 roles + template
+      # placeholder coverage; stdlib-only, so no dev dependencies are installed.
+      - name: Skin manifests, role expressions and template placeholders
+        run: make validate-skins
+
   lint:
     name: lint
     runs-on: ubuntu-latest

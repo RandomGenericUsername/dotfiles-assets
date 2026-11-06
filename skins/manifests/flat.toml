@@ -1,0 +1,39 @@
+# flat — zero chrome. Panels, cards and borders disappear; rhythm is tighter
+# and the only paint is ink over the wallpaper/palette background.
+schema_major = 1
+name = "flat"
+
+[shape]
+radius-panel = "0px"
+radius-card = "0px"
+radius-cell = "0px"
+radius-pill = "999px"
+border-w = "0px"
+
+[rhythm]
+gap = "8px"
+cell-pad = "7px 8px"
+
+[surface]
+bg-panel = "transparent"
+bg-card = "transparent"
+border = "transparent"
+shadow = "none"
+blur = "none"
+
+[ink]
+ink = "@on_surface"
+ink-dim = "@on_surface_variant"
+accent = "@primary"
+ink-over = "auto"
+
+[type]
+font-family = "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif"
+title-size = "15px"
+text-size = "13px"
+
+[layout]
+panel-width = "312px"
+bt-list-spacing = "4px"
+bar-row-height = "28px"
+chip-min = "48px"
