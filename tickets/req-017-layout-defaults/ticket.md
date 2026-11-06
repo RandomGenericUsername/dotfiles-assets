@@ -54,13 +54,13 @@ feeds the root size request at `:188`. The CSS minima still exist, but at
 
 ## Acceptance
 
-- [ ] The three manifests carry `icme = 1280/800` and
+- [x] The three manifests carry `icme = 1280/800` and
       `wallpaper-selector = 960/640`, and `bar-row-height` / `chip-min` are
       gone from every manifest.
-- [ ] `skins/tests/` pins the new layout defaults and the removed bar tokens.
-- [ ] The audit table below is complete and every value names its source.
-- [ ] `make validate-skins`, `make test-skins` and `make validate` pass.
-- [ ] `v0.12.2` is an annotated tag on the fast-forward-merged commit; the
+- [x] `skins/tests/` pins the new layout defaults and the removed bar tokens.
+- [x] The audit table below is complete and every value names its source.
+- [x] `make validate-skins`, `make test-skins` and `make validate` pass.
+- [x] `v0.12.2` is an annotated tag on the fast-forward-merged commit; the
       branch is not left unmerged; nothing is pushed.
 
 ## Audit — every remaining layout block
@@ -108,3 +108,33 @@ named below. "Reads now" means the migrated app source in the working tree.
 - Verify: `make validate-skins`, `make test-skins`, `make validate`;
   `git cat-file -t v0.12.2`; `git merge-base --is-ancestor
   ticket/req-017-layout-defaults master`.
+
+## Outcome (2026-11-06)
+
+**Worktree:** `.worktrees/req-017/`
+**Branch:** `ticket/req-017-layout-defaults`
+**Commits:** `ad3f39d` (ticket + INDEX plan), `53daa8b` (manifests, tests,
+docs), this closing commit (ticket outcome + INDEX done).
+**Merge:** fast-forward into `master`.
+**Tag:** `v0.12.2` (annotated) on this closing commit; not pushed.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/manifests/{glass,flat,paper}.toml` | `ags-icme` `960/600 → 1280/800`; `ags-wallpaper-selector` `920/600 → 960/640`; `bar-row-height` / `chip-min` removed |
+| `skins/tests/test_skins.py` | pins the two window defaults and the full layout audit; asserts the retired bar tokens are absent |
+| `skins/tests/fixtures/invalid/*.toml` | negative fixtures updated to the same layout baseline |
+| `skins/tests/fixtures/parity/deviations.json` | layout note names only the two live bar tokens |
+| `skins/templates/ags.gtk.css.j2` | header no longer claims the retired bar tokens remain |
+| `skins/README.md`, `README.md`, `CHANGELOG.md`, `catalog.yaml` | audit table, cleanup handoff and `v0.12.2` release note |
+
+### Evidence — commands and exact results
+
+| Command | Result |
+| --- | --- |
+| `make validate-skins` | **PASS** — `manifests=3 templates=7 modes=2 expansions=6`, vendored `v0.7.0` hashes agree |
+| `make test-skins PYTHON=/home/inumaki/Development/dotfiles/dotfiles-assets/.venv/bin/python` | **PASS** — `72 passed` |
+| `make validate` | **PASS** — `tag=v0.12.2`, six classes, 411 files scanned |
+| `git cat-file -t v0.12.2` | `tag` |
+| `git merge-base --is-ancestor ticket/req-017-layout-defaults master` | exit `0` after the fast-forward merge |
