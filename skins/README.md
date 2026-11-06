@@ -25,14 +25,28 @@ skins/
   contracts/PIN                     contracts tag + sha256 of each vendored canonical schema
   contracts/skin-token.schema.json  vendored canonical flat token vocabulary
   contracts/skin-manifest.schema.json  vendored canonical grouped manifest schema
+  contracts/skin-json.schema.json   vendored canonical resolved skin.json schema
   manifests/glass.toml              default/fallback parity skin (today's ags-bar look)
   manifests/flat.toml               zero-chrome skin
   manifests/paper.toml              light/palette-axis skin
-  templates/ags-bar.gtk.css.j2      settings + Bluetooth paint rules
+  templates/ags.gtk.css.j2          settings + Bluetooth paint rules (target configDir: ags)
   tests/                            pytest fixtures mirroring the validator
-  tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string)
+  tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string, template name)
   tests/fixtures/parity/            the explicit glass-vs-source deviation record
 ```
+
+## Template set: `<configDir>.gtk.css.j2` → `<configDir>.css`
+
+The canonical artifact interface freezes one template per target config
+directory. Every file in `skins/templates/` must be named
+`<configDir>.gtk.css.j2`; the target is the prefix, so
+`templates/ags.gtk.css.j2` renders `current/skins/ags.css` and the bar consumes
+it as `$XDG_CONFIG_HOME/ags/skin.css`. The name is a contract, not a label: an
+expander that follows `skins.md` would never find `ags-bar.gtk.css.j2`, and the
+bar's `configDir` is `ags`. `scripts/validate-skins.py` enforces
+`^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$`, rejects any other file in
+`skins/templates/`, derives the target from the prefix, and prints both
+`templates=<n>` and `targets=<configDir>` in its summary.
 
 ## Value convention: numbers are unitless, `px` is added at render time
 
@@ -79,7 +93,7 @@ rhythm and surface roles; it does not add a second variant.
 
 ## What the GTK template does and does not control (v1 limitations)
 
-`templates/ags-bar.gtk.css.j2` uses a `SKIN_*` placeholder **only** where the
+`templates/ags.gtk.css.j2` uses a `SKIN_*` placeholder **only** where the
 frozen token is a genuine global knob: panel background/border/border-width/
 radius/shadow/blur, card background/radius, cell radius/padding, control radius,
 pill radius, ink/ink-dim/accent, `title-size`/`text-size`, and layout metrics.
@@ -139,10 +153,10 @@ validate-skins` enforces role membership, not a mode.
 ## Vendoring and pinning the canonical schema
 
 The canonical documents live in the separate `contracts` repository:
-`schemas/skin-token.schema.json` and `schemas/skin-manifest.schema.json`. This
-repository still does **not** import them at runtime; it vendors byte-for-byte
-copies under `skins/contracts/` so the gate validates the same types a consumer
-will parse.
+`schemas/skin-token.schema.json`, `schemas/skin-manifest.schema.json` and
+`schemas/skin-json.schema.json`. This repository still does **not** import them
+at runtime; it vendors byte-for-byte copies under `skins/contracts/` so the gate
+validates the same types a consumer will parse.
 
 - `skins/contracts/PIN` records `contracts=<tag>`, the source commit, and one
   `sha256` line per vendored file. Editing a vendored schema by hand is a
@@ -152,20 +166,25 @@ will parse.
   `canonical.pin`. It carries the frozen local envelope (`schema_major` + the six
   flat groups) and **delegates every token value type by external `$ref`** to
   `skins/contracts/skin-manifest.schema.json`; it has no local `px`/dimension
-  lookalike grammar.
+  lookalike grammar. `canonical.resolved_document` names the vendored
+  `skins/contracts/skin-json.schema.json`, the schema for the runtime-emitted
+  `current/skin.json` (`version: 1` plus the six groups, numeric tokens as raw
+  JSON numbers).
 - `scripts/validate-skins.py` and `skins/tests/` assert the recorded hashes, the
   delegation (every token property is a canonical `$ref`), the canonical numeric
-  types, and the unit-rule expansion.
+  types, the unit-rule expansion, the template naming rule, and that a resolved
+  glass `skin.json` validates against the vendored `skin-json` schema.
 
-At `v0.9.0` the vendored pair is pinned at `contracts=v0.5.1`, the tag that
-states the unit convention. The skin schemas are unchanged again at `v0.5.2`,
-but the pin intentionally stays on the tag that defines the convention;
+At `v0.9.1` the vendored set is pinned at `contracts=v0.5.2`, the artifact-
+interface release that names `<configDir>.gtk.css.j2` and freezes
+`schemas/skin-json.schema.json`. The token/manifest pair is byte-identical to
+`v0.5.1` (the unit-convention patch), so the recorded hashes are unchanged;
 re-vendoring is a tag/hash update, not a schema rewrite. Do not claim a tag whose
 bytes are not present.
 
 ## Template rules
 
-`skins/templates/ags-bar.gtk.css.j2` keeps the app-local selector vocabulary
+`skins/templates/ags.gtk.css.j2` keeps the app-local selector vocabulary
 (`settings-surface`, `settings-net` and its `.sel` / `.out-of-range` /
 `.confirming` states, `settings-rowact` and its states, the chevron, section,
 divider, connected-details, empty, level-slider, Wi-Fi settings and nav-header
@@ -188,14 +207,16 @@ stylesheet can set the radius but cannot apply the clip.
 ## Validation
 
 ```bash
-make validate-skins   # vendored hashes + canonical types + unit expansion + placeholder coverage
-make test-skins       # pytest fixtures, including the parity and negative cases
+make validate-skins   # vendored hashes + template naming/targets + canonical types + unit expansion + placeholder coverage
+make test-skins       # pytest fixtures, including the parity, resolved-document and negative cases
 ```
 
 `make validate-skins` is stdlib-only and part of `make gates`. `make test-skins`
 is the fixture suite and uses the repository's development pytest dependency.
 `skins/tests/test_skins.py` checks the PIN hashes, the canonical `$ref`
-delegation, unitless numeric values and the numeric-string rejection.
+delegation, the template target (`ags`), unitless numeric values, the
+numeric-string rejection, and a resolved glass `skin.json` against the vendored
+`skin-json` schema.
 `skins/tests/test_parity.py` expands `glass` through `validate-skins`' own
 unit-rule expander and compares the result with the source declarations (with
 line references), the explicit deviation fixture, and the no-shadow/no-transition/

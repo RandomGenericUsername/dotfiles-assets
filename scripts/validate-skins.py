@@ -33,6 +33,19 @@ WHAT THIS GATE PROVES (frozen skin spec v1):
      CSS length position; `cell-pad` is emitted verbatim. An underscore spelling
      that names no token fails.
 
+  5. THE TEMPLATE SET NAMES ITS TARGETS. The contract freezes one template per
+     target config directory, named `<configDir>.gtk.css.j2`; the expander
+     renders `<configDir>.css`. Every file in `skins/templates/` must match
+     `^[a-z0-9][a-z0-9_-]*\\.gtk\\.css\\.j2$`, and the target reported in the
+     summary is the prefix before `.gtk.css.j2`. A stale name such as
+     `ags-bar.gtk.css.j2` fails here instead of leaving the bar's `ags` target
+     unreachable at runtime.
+
+  6. THE RESOLVED DOCUMENT SCHEMA IS VENDORED WITH THE PAIR. `skin-json.schema.
+     json` is a byte copy from the same `contracts` tag and is pinned by sha256;
+     it is the schema the platform uses to parse the runtime-emitted
+     `current/skin.json` (version 1 + the six groups, numeric tokens raw).
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. The manifest format is TOML (`tomllib`, Python >= 3.11), the contract is
 JSON, and the mini-validator below covers the exact JSON-Schema subset the
@@ -68,12 +81,28 @@ PIN = "skins/contracts/PIN"
 VENDORED = {
     "token": "skins/contracts/skin-token.schema.json",
     "manifest": "skins/contracts/skin-manifest.schema.json",
+    "resolved": "skins/contracts/skin-json.schema.json",
+}
+#: Only the token/manifest pair is referenced by `$ref` from skins/schema.json;
+#: the resolved-document schema describes the runtime output, not the manifest
+#: envelope, so it is vendored and pinned without being a delegate.
+DELEGATES = {
+    "token": VENDORED["token"],
+    "manifest": VENDORED["manifest"],
+}
+VENDORED_FILES = {
+    posixpath.basename(rel): rel for rel in VENDORED.values()
 }
 CANONICAL_PATHS = {
     "schemas/skin-token.schema.json",
     "schemas/skin-manifest.schema.json",
+    "schemas/skin-json.schema.json",
 }
 PIN_HASH = re.compile(r"^sha256\s+([0-9a-f]{64})\s+(\S+)$")
+SOURCE_COMMIT = re.compile(r"^[0-9a-f]{40}$")
+#: `<configDir>.gtk.css.j2`; the target config directory is the prefix.
+TEMPLATE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$")
+TEMPLATE_SUFFIX = ".gtk.css.j2"
 
 HEX_LITERAL = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
@@ -401,10 +430,29 @@ def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
             f"{sorted(expected_vendored)}"
         )
     delegates = canonical.get("delegates")
-    if not isinstance(delegates, dict) or delegates != VENDORED:
+    if not isinstance(delegates, dict) or delegates != DELEGATES:
         errors.append(
-            f"{SCHEMA}: canonical.delegates must be exactly {VENDORED}"
+            f"{SCHEMA}: canonical.delegates must be exactly {DELEGATES}"
         )
+    resolved_document = canonical.get("resolved_document")
+    if not isinstance(resolved_document, dict):
+        errors.append(
+            f"{SCHEMA}: canonical.resolved_document must name the vendored "
+            f"resolved skin.json schema"
+        )
+    else:
+        if resolved_document.get("path") != VENDORED["resolved"]:
+            errors.append(
+                f"{SCHEMA}: canonical.resolved_document.path must be "
+                f"{VENDORED['resolved']!r}"
+            )
+        if not isinstance(resolved_document.get("note"), str) or not resolved_document[
+            "note"
+        ].strip():
+            errors.append(
+                f"{SCHEMA}: canonical.resolved_document.note must describe the "
+                f"runtime-emitted skin.json"
+            )
     if canonical.get("pin") != PIN:
         errors.append(f"{SCHEMA}: canonical.pin must be {PIN!r}")
 
@@ -424,12 +472,15 @@ def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
         errors.append(
             f"{PIN}: contracts={pin_tag!r} disagrees with canonical.tag {tag!r}"
         )
+    source_commit = metadata.get("source-commit", "")
+    if not SOURCE_COMMIT.match(source_commit):
+        errors.append(
+            f"{PIN}: source-commit must be the 40-hex contracts commit the "
+            f"vendored bytes came from, got {source_commit!r}"
+        )
     if not expected_hashes:
         errors.append(f"{PIN}: no sha256 entries")
-    for name, rel in (
-        ("skin-token.schema.json", VENDORED["token"]),
-        ("skin-manifest.schema.json", VENDORED["manifest"]),
-    ):
+    for name, rel in VENDORED_FILES.items():
         path = root / rel
         if not path.is_file():
             errors.append(f"{rel}: missing vendored canonical schema")
@@ -447,10 +498,7 @@ def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
             errors.append(
                 f"{rel}: sha256 {actual} does not match {PIN} ({recorded})"
             )
-    extras = sorted(set(expected_hashes) - {
-        "skin-token.schema.json",
-        "skin-manifest.schema.json",
-    })
+    extras = sorted(set(expected_hashes) - set(VENDORED_FILES))
     if extras:
         errors.append(f"{PIN}: unexpected sha256 entries {extras}")
     _check_delegation(schema, errors)
@@ -712,7 +760,13 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
     """Validate the skins class; return (errors, notes, stats)."""
     errors: list[str] = []
     notes: list[str] = []
-    stats: dict = {"manifests": 0, "templates": 0, "tokens": 0, "roles": 0}
+    stats: dict = {
+        "manifests": 0,
+        "templates": 0,
+        "targets": [],
+        "tokens": 0,
+        "roles": 0,
+    }
 
     schema_path = root / SCHEMA
     if not schema_path.is_file():
@@ -783,9 +837,22 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
     if not templates_dir.is_dir():
         errors.append(f"{TEMPLATES_DIR}/: missing")
     else:
-        templates = sorted(templates_dir.glob("*.j2"))
+        for path in sorted(p for p in templates_dir.iterdir() if p.is_file()):
+            rel = _rel(path, root)
+            if not TEMPLATE_NAME.match(path.name):
+                errors.append(
+                    f"{rel}: template name {path.name!r} does not match "
+                    f"{TEMPLATE_NAME.pattern}; the target configDir is the prefix "
+                    f"before {TEMPLATE_SUFFIX}"
+                )
+                continue
+            templates.append(path)
+            stats["targets"].append(path.name[: -len(TEMPLATE_SUFFIX)])
+        stats["targets"] = sorted(set(stats["targets"]))
         if not templates:
-            errors.append(f"{TEMPLATES_DIR}/: no *.j2 template")
+            errors.append(
+                f"{TEMPLATES_DIR}/: no template named <configDir>{TEMPLATE_SUFFIX}"
+            )
     expected = _placeholder_map(groups)
     for path in templates:
         _check_template(path, root, expected, roles_set, patterns, errors, notes)
@@ -805,9 +872,11 @@ def main() -> int:
     root = Path(args.root) if args.root else Path(__file__).resolve().parent.parent
 
     errors, notes, stats = validate(root)
+    targets = ",".join(stats["targets"]) or "-"
     print(
         f"validate-skins: root={root} manifests={stats['manifests']} "
-        f"templates={stats['templates']} tokens={stats['tokens']} roles={stats['roles']}"
+        f"templates={stats['templates']} targets={targets} "
+        f"tokens={stats['tokens']} roles={stats['roles']}"
     )
     for note in notes:
         print(f"validate-skins: note: {note}")
@@ -818,7 +887,8 @@ def main() -> int:
         return 1
     print(
         "validate-skins: PASS -- vendored canonical hashes/types, manifests, "
-        "unit-rule expansion, role vocabulary and template coverage agree"
+        "template naming/targets, unit-rule expansion, role vocabulary and "
+        "template coverage agree"
     )
     return 0
 

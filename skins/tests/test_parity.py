@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "skins" / "schema.json"
 MANIFESTS = ROOT / "skins" / "manifests"
-TEMPLATE = ROOT / "skins" / "templates" / "ags-bar.gtk.css.j2"
+TEMPLATE = ROOT / "skins" / "templates" / "ags.gtk.css.j2"
 DEVIATIONS = Path(__file__).parent / "fixtures" / "parity" / "deviations.json"
 HEX = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 

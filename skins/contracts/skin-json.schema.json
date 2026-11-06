@@ -1,0 +1,383 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dotfiles.local/schemas/skin-json.schema.json",
+  "title": "Resolved skin token map (version 1)",
+  "description": "A runtime-resolved skin.json: version 1 plus the six frozen token groups, grouped exactly like the selected manifest. Numeric tokens are unitless JSON numbers (for example 12); CSS expansion renders them as <number>px and units are never stored. cell-pad is the only literal length-pair string (\"Npx Npx\"). There are no flat tokens, no extra groups and no structure/variant keys.",
+  "status": "frozen",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": {
+    "$ref": "#/definitions/forbiddenName"
+  },
+  "required": [
+    "version",
+    "shape",
+    "surface",
+    "ink",
+    "type",
+    "rhythm",
+    "layout"
+  ],
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Resolved skin document version; exactly 1."
+    },
+    "shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "radius-panel",
+        "radius-card",
+        "radius-cell",
+        "radius-pill",
+        "border-w"
+      ],
+      "properties": {
+        "radius-panel": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "radius-card": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "radius-cell": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "radius-pill": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "border-w": {
+          "$ref": "#/definitions/number"
+        }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "bg-panel",
+        "bg-card",
+        "border",
+        "shadow",
+        "blur"
+      ],
+      "properties": {
+        "bg-panel": {
+          "$ref": "#/definitions/paint"
+        },
+        "bg-card": {
+          "$ref": "#/definitions/paint"
+        },
+        "border": {
+          "$ref": "#/definitions/paint"
+        },
+        "shadow": {
+          "$ref": "#/definitions/paint"
+        },
+        "blur": {
+          "$ref": "#/definitions/blurValue"
+        }
+      }
+    },
+    "ink": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "ink",
+        "ink-dim",
+        "accent",
+        "ink-over"
+      ],
+      "properties": {
+        "ink": {
+          "$ref": "#/definitions/inkValue"
+        },
+        "ink-dim": {
+          "$ref": "#/definitions/inkValue"
+        },
+        "accent": {
+          "$ref": "#/definitions/inkValue"
+        },
+        "ink-over": {
+          "const": "auto",
+          "description": "Derived at runtime from the backdrop; the only legal value is auto."
+        }
+      }
+    },
+    "type": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "font-family",
+        "title-size",
+        "text-size"
+      ],
+      "properties": {
+        "font-family": {
+          "$ref": "#/definitions/fontFamily"
+        },
+        "title-size": {
+          "$ref": "#/definitions/number"
+        },
+        "text-size": {
+          "$ref": "#/definitions/number"
+        }
+      }
+    },
+    "rhythm": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "gap",
+        "cell-pad"
+      ],
+      "properties": {
+        "gap": {
+          "$ref": "#/definitions/number"
+        },
+        "cell-pad": {
+          "$ref": "#/definitions/cellPad"
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "required": [
+        "panel-width",
+        "bt-list-spacing",
+        "bar-row-height",
+        "chip-min"
+      ],
+      "properties": {
+        "panel-width": {
+          "$ref": "#/definitions/number"
+        },
+        "bt-list-spacing": {
+          "$ref": "#/definitions/number"
+        },
+        "bar-row-height": {
+          "$ref": "#/definitions/number"
+        },
+        "chip-min": {
+          "$ref": "#/definitions/number"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "paletteRole": {
+      "type": "string",
+      "enum": [
+        "background",
+        "error",
+        "error_container",
+        "inverse_on_surface",
+        "inverse_primary",
+        "inverse_surface",
+        "on_background",
+        "on_error",
+        "on_error_container",
+        "on_primary",
+        "on_primary_container",
+        "on_primary_fixed",
+        "on_primary_fixed_variant",
+        "on_secondary",
+        "on_secondary_container",
+        "on_secondary_fixed",
+        "on_secondary_fixed_variant",
+        "on_surface",
+        "on_surface_variant",
+        "on_tertiary",
+        "on_tertiary_container",
+        "on_tertiary_fixed",
+        "on_tertiary_fixed_variant",
+        "outline",
+        "outline_variant",
+        "primary",
+        "primary_container",
+        "primary_fixed",
+        "primary_fixed_dim",
+        "scrim",
+        "secondary",
+        "secondary_container",
+        "secondary_fixed",
+        "secondary_fixed_dim",
+        "shadow",
+        "source_color",
+        "surface",
+        "surface_bright",
+        "surface_container",
+        "surface_container_high",
+        "surface_container_highest",
+        "surface_container_low",
+        "surface_container_lowest",
+        "surface_dim",
+        "surface_tint",
+        "surface_variant",
+        "tertiary",
+        "tertiary_container",
+        "tertiary_fixed",
+        "tertiary_fixed_dim",
+        "on_backdrop"
+      ],
+      "description": "A palette.v1 role name (50 Material roles + on_backdrop). No new roles are introduced by a skin."
+    },
+    "forbiddenName": {
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "(?:^|_)(?:structure|order|presence)(?:_|$)"
+          },
+          {
+            "pattern": "variant"
+          }
+        ]
+      }
+    },
+    "noForbiddenValue": {
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "#"
+          },
+          {
+            "pattern": "transition"
+          }
+        ]
+      }
+    },
+    "paint": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "$ref": "#/definitions/noForbiddenValue"
+        }
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "blur\\("
+          },
+          {
+            "pattern": "calc\\([^)]*%"
+          },
+          {
+            "pattern": "@(?!(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop)(?![A-Za-z0-9_-]))"
+          },
+          {
+            "pattern": "alpha\\(\\s*@(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop)\\s*,\\s*(?!\\s*(?:0(?:\\.\\d+)?|1(?:\\.0+)?)\\s*\\))"
+          },
+          {
+            "pattern": "color-mix\\((?![^)]*\\bin srgb\\b)"
+          },
+          {
+            "pattern": "color-mix\\((?![^)]*%\\s*,)"
+          }
+        ]
+      }
+    },
+    "roleExpression": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "$ref": "#/definitions/noForbiddenValue"
+        }
+      ],
+      "anyOf": [
+        {
+          "pattern": "^@(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop)$"
+        },
+        {
+          "pattern": "^alpha\\(\\s*@(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop)\\s*,\\s*(?:0(?:\\.\\d+)?|1(?:\\.0+)?)\\s*\\)$"
+        },
+        {
+          "pattern": "^color-mix\\(\\s*in srgb\\s*,\\s*@(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop)\\s+\\d{1,3}%\\s*,\\s*(?:transparent|@(?:background|error|error_container|inverse_on_surface|inverse_primary|inverse_surface|on_background|on_error|on_error_container|on_primary|on_primary_container|on_primary_fixed|on_primary_fixed_variant|on_secondary|on_secondary_container|on_secondary_fixed|on_secondary_fixed_variant|on_surface|on_surface_variant|on_tertiary|on_tertiary_container|on_tertiary_fixed|on_tertiary_fixed_variant|outline|outline_variant|primary|primary_container|primary_fixed|primary_fixed_dim|scrim|secondary|secondary_container|secondary_fixed|secondary_fixed_dim|shadow|source_color|surface|surface_bright|surface_container|surface_container_high|surface_container_highest|surface_container_low|surface_container_lowest|surface_dim|surface_tint|surface_variant|tertiary|tertiary_container|tertiary_fixed|tertiary_fixed_dim|on_backdrop))\\s*\\)$"
+        }
+      ]
+    },
+    "inkValue": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/paletteRole"
+        },
+        {
+          "$ref": "#/definitions/roleExpression"
+        }
+      ]
+    },
+    "blurValue": {
+      "oneOf": [
+        {
+          "const": "none"
+        },
+        {
+          "type": "string",
+          "pattern": "^blur\\(\\d+(?:\\.\\d+)?px\\)(?: saturate\\(\\d+(?:\\.\\d+)?\\))?$",
+          "description": "blur(<n>px) with an optional saturate(<n>); this is the ONLY token that may contain \"blur(\"."
+        }
+      ]
+    },
+    "nonNegativeNumber": {
+      "type": "number",
+      "minimum": 0,
+      "description": "A non-negative, unitless JSON number (for example 12). In a CSS length position the expander renders it as <number>px; a unit string such as \"12px\" is invalid.",
+      "examples": [
+        12,
+        1.5,
+        312
+      ]
+    },
+    "number": {
+      "type": "number",
+      "description": "A unitless JSON number (for example 12 or 1.5). In a CSS length position the expander renders it as <number>px; a unit string such as \"12px\" is invalid.",
+      "examples": [
+        12,
+        1.5,
+        312
+      ]
+    },
+    "fontFamily": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A CSS font-family string; the default skin may use \"inherit\".",
+      "examples": [
+        "inherit",
+        "Inter, sans-serif"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/definitions/noForbiddenValue"
+        }
+      ]
+    },
+    "cellPad": {
+      "type": "string",
+      "pattern": "^\\d+px \\d+px$",
+      "description": "Exactly two pixel lengths, \"Npx Npx\". This is the only token that stores a literal CSS length-pair string; the numbers stay integers and carry their px units.",
+      "examples": [
+        "8px 9px"
+      ]
+    }
+  }
+}

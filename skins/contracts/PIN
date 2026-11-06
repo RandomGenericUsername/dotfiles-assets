@@ -1,14 +1,18 @@
 # Vendored canonical skin contract pin.
 #
 # Rule: these files are byte copies from the `contracts` repository. A change to
-# either vendored file MUST update its sha256 here, and the copy must be
-# re-taken from the tag named below. Do not edit a vendored schema by hand.
+# any vendored file MUST update its sha256 here, and the copy must be re-taken
+# from the tag named below. Do not edit a vendored schema by hand.
 #
-# v0.5.1 is the unit-convention patch: it states that numeric tokens are
-# unitless JSON numbers and that the CSS expander appends `px`. The skin schemas
-# are unchanged again at v0.5.2, but this pin stays on the tag that defines the
-# convention.
-contracts=v0.5.1
-source-commit=d1adb19904217ef2def02d47da8d509bd69c2d57
-sha256  aac5d8caf3997eb45bb8c03068f708b07b79cdd68a098de29e4e96c9319bb48a  skin-manifest.schema.json
+# v0.5.2 is the artifact-interface release: it names the template
+# `<configDir>.gtk.css.j2` (the expander renders `<configDir>.css`), freezes the
+# runtime-emitted resolved document as `schemas/skin-json.schema.json`, and keeps
+# the v0.5.1 unit convention (numeric tokens are unitless JSON numbers and the
+# CSS expander appends `px`). The skin token/manifest schemas are byte-identical
+# to v0.5.1; the pin names v0.5.2 because that is the interface this repository
+# implements.
+contracts=v0.5.2
+source-commit=320ad69105456500693eb938e3d1d51ef287a455
 sha256  22e81ec4e73a659ed94334f323e6c578886842ed873abac50eacc6608ba906fd  skin-token.schema.json
+sha256  aac5d8caf3997eb45bb8c03068f708b07b79cdd68a098de29e4e96c9319bb48a  skin-manifest.schema.json
+sha256  12eeb2cdcbb3883212a7fde50dbc4f9028adaa6d5ca05bbbd35dcdcf715b3728  skin-json.schema.json

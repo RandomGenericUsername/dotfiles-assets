@@ -25,13 +25,28 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "skins" / "schema.json"
 MANIFESTS = ROOT / "skins" / "manifests"
-TEMPLATE = ROOT / "skins" / "templates" / "ags-bar.gtk.css.j2"
+TEMPLATE = ROOT / "skins" / "templates" / "ags.gtk.css.j2"
 CONTRACTS = ROOT / "skins" / "contracts"
 PIN = CONTRACTS / "PIN"
 FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
 VENDORED = {
     "skin-token.schema.json": "skins/contracts/skin-token.schema.json",
     "skin-manifest.schema.json": "skins/contracts/skin-manifest.schema.json",
+    "skin-json.schema.json": "skins/contracts/skin-json.schema.json",
+}
+NUMERIC_TOKENS = {
+    "radius-panel",
+    "radius-card",
+    "radius-cell",
+    "radius-pill",
+    "border-w",
+    "gap",
+    "title-size",
+    "text-size",
+    "panel-width",
+    "bt-list-spacing",
+    "bar-row-height",
+    "chip-min",
 }
 PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
 HEX = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
@@ -112,8 +127,21 @@ def errors_for(root: Path) -> list[str]:
 def test_corpus_passes_the_gate() -> None:
     errors, notes, stats = validate_skins.validate(ROOT)
     assert errors == []
-    assert stats == {"manifests": 3, "templates": 1, "tokens": 23, "roles": 51}
+    assert stats == {
+        "manifests": 3,
+        "templates": 1,
+        "targets": ["ags"],
+        "tokens": 23,
+        "roles": 51,
+    }
     assert any("palette roles ==" in note for note in notes)
+
+
+def test_template_target_is_the_filename_prefix() -> None:
+    assert TEMPLATE.name == "ags.gtk.css.j2"
+    assert TEMPLATE.name[: -len(".gtk.css.j2")] == "ags"
+    assert validate_skins.TEMPLATE_NAME.match(TEMPLATE.name)
+    assert not (TEMPLATE.parent / "ags-bar.gtk.css.j2").exists()
 
 
 def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
@@ -140,16 +168,23 @@ def test_schema_vendors_the_pinned_contracts_pair() -> None:
     assert set(canonical["paths"]) == {
         "schemas/skin-token.schema.json",
         "schemas/skin-manifest.schema.json",
+        "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.5.1"
+    assert canonical["tag"] == "v0.5.2"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "token": "skins/contracts/skin-token.schema.json",
         "manifest": "skins/contracts/skin-manifest.schema.json",
     }
+    assert canonical["resolved_document"]["path"] == (
+        "skins/contracts/skin-json.schema.json"
+    )
+    assert "version 1" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
+    assert metadata["source-commit"] == "320ad69105456500693eb938e3d1d51ef287a455"
+    assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
 def test_vendored_files_match_the_pin_hashes() -> None:
@@ -231,6 +266,49 @@ def test_manifest_documents_validate_against_the_local_schema() -> None:
             manifest = tomllib.load(handle)
         errors = sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
         assert errors == [], [error.message for error in errors]
+
+
+def test_resolved_glass_document_matches_the_vendored_skin_json_schema() -> None:
+    """The runtime emits this document; the platform parses it with this schema."""
+    jsonschema = pytest.importorskip("jsonschema")
+    skin_json_schema = json.loads((CONTRACTS / "skin-json.schema.json").read_text())
+    jsonschema.Draft7Validator.check_schema(skin_json_schema)
+
+    manifest = load_manifest("glass")
+    groups = schema()["frozen"]["token_groups"]
+    resolved = {"version": 1}
+    for group, tokens in groups.items():
+        resolved[group] = {token: manifest[group][token] for token in tokens}
+
+    assert set(resolved) == {"version", *groups}
+    assert resolved["version"] == 1
+    for group, tokens in groups.items():
+        assert set(resolved[group]) == set(tokens)
+        for token in tokens:
+            if token in NUMERIC_TOKENS:
+                value = resolved[group][token]
+                assert isinstance(value, (int, float)) and not isinstance(value, bool)
+                assert not isinstance(value, str)
+
+    errors = sorted(
+        jsonschema.Draft7Validator(skin_json_schema).iter_errors(resolved),
+        key=lambda error: list(error.path),
+    )
+    assert errors == [], [error.message for error in errors]
+
+
+def test_resolved_document_rejects_a_numeric_string() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    skin_json_schema = json.loads((CONTRACTS / "skin-json.schema.json").read_text())
+    manifest = load_manifest("glass")
+    groups = schema()["frozen"]["token_groups"]
+    resolved = {"version": 1}
+    for group, tokens in groups.items():
+        resolved[group] = {token: manifest[group][token] for token in tokens}
+    resolved["shape"]["radius-panel"] = "12px"
+
+    errors = list(jsonschema.Draft7Validator(skin_json_schema).iter_errors(resolved))
+    assert errors, "the resolved-document schema must reject a numeric string"
 
 
 def test_numeric_string_is_not_a_valid_token_value() -> None:
@@ -410,8 +488,9 @@ def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
 @pytest.mark.parametrize(
     ("fixture", "needle"),
     [
-        ("template-transition.j2", "CSS transition"),
-        ("template-unknown-placeholder.j2", "is not a token"),
+        ("transition.gtk.css.j2", "CSS transition"),
+        ("unknown-placeholder.gtk.css.j2", "is not a token"),
+        ("ags-bar.css.j2", "template name"),
     ],
 )
 def test_bad_template_fails(tmp_path: Path, fixture: str, needle: str) -> None:

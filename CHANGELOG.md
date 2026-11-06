@@ -1,5 +1,52 @@
 # Changelog
 
+## v0.9.1 — skins template naming and the resolved skin.json schema
+
+### Fixed
+
+- **The GTK template now has the contract name.** `skins/templates/ags-bar.gtk.css.j2`
+  is renamed to `skins/templates/ags.gtk.css.j2` (`git mv`, body unchanged).
+  `contracts` `v0.5.2` freezes one template per target config directory, named
+  `<configDir>.gtk.css.j2` and rendered as `<configDir>.css`; the bar's
+  `configDir` is `ags`. The old prefix was a name an expander following
+  `skins.md` would never find, so the target was unreachable even with a green
+  gate.
+- **`scripts/validate-skins.py` enforces the naming convention.** Every file in
+  `skins/templates/` must match
+  `^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$`; the target is the prefix. An unexpected
+  file is an error, and the summary now prints `templates=<n>` and
+  `targets=<configDir>` (`targets=ags` for this corpus). A stale
+  `ags-bar.gtk.css.j2` fixture proves the check bites.
+
+### Changed
+
+- **The canonical set is re-vendored at `contracts=v0.5.2`.** `skins/contracts/`
+  now holds byte copies of `skin-token.schema.json`,
+  `skin-manifest.schema.json` and the resolved-document
+  `skin-json.schema.json`; `skins/contracts/PIN` records `contracts=v0.5.2`, the
+  source commit `320ad69` and the sha256 of all three. The token/manifest bytes
+  are unchanged from `v0.5.1`, so only the pin tag and the new file change.
+- **`skins/schema.json` names the current interface and the resolved document.**
+  `canonical.tag` moves to `v0.5.2`, `canonical.resolved_document` names
+  `skins/contracts/skin-json.schema.json`, and the note states that the runtime
+  emits one shared `current/skin.json` (`version: 1` plus the six groups, numeric
+  tokens as raw JSON numbers). Token/manifest delegation is unchanged.
+- **The test suite validates the document the platform parses.** A resolved glass
+  document built from the manifest (`version: 1` + the six groups, raw numbers)
+  is validated against the vendored `skin-json` schema; a numeric string in that
+  document is rejected. The suite also asserts the template target and the PIN's
+  source commit.
+- **README, `skins/README.md`, `Makefile`, `catalog.yaml` and the ticket** record
+  the `<configDir>.gtk.css.j2` rule, the `ags` target, the `v0.5.2` pin and the
+  resolved-document schema.
+
+### Notes
+
+- **PATCH, no token or `schema_major` change.** The 23-token vocabulary, six
+  groups, all manifest values and `schema_major: 1` are unchanged. The class
+  path `skins/templates/` did not move; only the template filename changed to
+  the name the contract freezes. Existing tags are not moved.
+
 ## v0.9.0 — skins value types (unitless numbers, vendored canonical schemas)
 
 ### Fixed

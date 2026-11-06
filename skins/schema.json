@@ -1,29 +1,35 @@
 {
-  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
+  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata; the vendored skin-json schema validates the resolved runtime document (version 1 + the same six groups) and the template set is named <configDir>.gtk.css.j2. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "skins/schema.json",
   "title": "dotfiles-assets skin manifest v1",
   "schema_major": 1,
   "contract": "skins",
-  "status": "populated (v0.9.0)",
+  "status": "populated (v0.9.1)",
   "canonical": {
     "repository": "contracts",
     "paths": [
       "schemas/skin-token.schema.json",
-      "schemas/skin-manifest.schema.json"
+      "schemas/skin-manifest.schema.json",
+      "schemas/skin-json.schema.json"
     ],
-    "tag": "v0.5.1",
+    "tag": "v0.5.2",
     "vendored": true,
     "pin": "skins/contracts/PIN",
     "vendored_paths": [
       "skins/contracts/skin-token.schema.json",
-      "skins/contracts/skin-manifest.schema.json"
+      "skins/contracts/skin-manifest.schema.json",
+      "skins/contracts/skin-json.schema.json"
     ],
     "delegates": {
       "token": "skins/contracts/skin-token.schema.json",
       "manifest": "skins/contracts/skin-manifest.schema.json"
     },
-    "note": "Byte-for-byte copies of the canonical pair are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.5.1, the unit-convention patch: numeric tokens are unitless JSON numbers (the CSS expander adds px) and cell-pad is the only literal length-pair string. Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
+    "resolved_document": {
+      "path": "skins/contracts/skin-json.schema.json",
+      "note": "The runtime emits one shared current/skin.json: version 1 plus the six frozen token groups, with numeric tokens as raw JSON numbers. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
+    },
+    "note": "Byte-for-byte copies of the canonical token, manifest and resolved-document schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.5.2, the artifact-interface release: templates are named <configDir>.gtk.css.j2 (the expander renders <configDir>.css), the runtime document is skin.json, and the v0.5.1 unit convention still holds (numeric tokens are unitless JSON numbers; the CSS expander adds px; cell-pad is the only literal length-pair string). Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
   },
   "palette": {
     "vocabulary": "palette.v1",
