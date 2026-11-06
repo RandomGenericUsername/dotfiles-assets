@@ -81,8 +81,8 @@ palette-role expressions, never literal hex.
 **Commits:** `3eb79f2` (ticket + OpenSpec plan), `58e6edb` (class,
 manifests, template, validator, tests, inventory/gate updates). The OpenSpec
 change is archived at `openspec/changes/archive/2026-11-05-skins-class/`.
-**Tag:** `v0.7.0` (annotated; the exact object is recorded in the follow-up
-index commit because a tag cannot contain its own hash).
+**Tag:** `v0.7.0` (annotated object `8428b75`, commit `e989c03`; recorded in the
+follow-up index commit because a tag cannot contain its own hash).
 
 ### Delivered
 

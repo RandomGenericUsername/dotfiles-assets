@@ -19,7 +19,7 @@
 - [req-006-sddm-wayland-template](./req-006-sddm-wayland-template/ticket.md) — SDDM template carries the explicit Wayland greeter compositor, `v0.6.0` | `done` | lane 2 — openspec-single | openspec: sddm-wayland-template (archived 2026-10-26) | tag `v0.6.0` (60620ac, tag object ff460db), CI run 40349570724 green, release published
 - [req-008-icons-role-mappings](./req-008-icons-role-mappings/ticket.md) — Icons manifest: semantic role re-pin, real defaults, surface classes, vocabulary lint | `done` | tag: v0.6.3 | live: no colorN, 58 on_backdrop variants
 - [req-007-ags-clipboard-launch-rename](./req-007-ags-clipboard-launch-rename/ticket.md) — Rename the clipboard launcher/autostart/keybind from hypr-pano to clipboard | `done` | lane 2 — assets config cutover | commits `16a43b8` + `e11b545`; `rg 'hypr-pano' configs desktop` → 0 matches; gates green; tag `v0.6.2` local (object `e94165b`, commit `4fa35c4`; not pushed/published); provision follow-up open (wrapper install, `clipboard-ui`, `ags-clipboard` link)
-- [req-009-skins-class](./req-009-skins-class/ticket.md) — Skins class: frozen v1 manifests, GTK template, local validation target | `done` | lane 2 — openspec-single | openspec: skins-class (archived 2026-11-05) | worktree `.worktrees/req-009/`, branch `ticket/req-009-skins-class` | tag `v0.7.0`
+- [req-009-skins-class](./req-009-skins-class/ticket.md) — Skins class: frozen v1 manifests, GTK template, local validation target | `done` | lane 2 — openspec-single | openspec: skins-class (archived 2026-11-05) | worktree `.worktrees/req-009/`, branch `ticket/req-009-skins-class` | tag `v0.7.0` (object `8428b75`, commit `e989c03`)
 
 ## Bugs
 
