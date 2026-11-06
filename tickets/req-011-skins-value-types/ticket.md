@@ -2,7 +2,7 @@
 id: req-011
 title: "Skins value types: unitless numeric tokens, vendored canonical schemas"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded correction
 links:
   openspec: none
@@ -64,18 +64,18 @@ the local schema alone says `dimension: string, pattern ^...px$`.
 
 ## Acceptance
 
-- [ ] `skins/contracts/{skin-token,skin-manifest}.schema.json` are byte copies
+- [x] `skins/contracts/{skin-token,skin-manifest}.schema.json` are byte copies
       from `contracts` and `skins/contracts/PIN` records `contracts=<tag>` plus
       a matching sha256 for each file.
-- [ ] `skins/schema.json` delegates token types to the vendored canonical pair
+- [x] `skins/schema.json` delegates token types to the vendored canonical pair
       (`canonical.vendored: true`, `canonical.tag` set, no local dimension
       grammar) and tests enforce byte equality and delegation.
-- [ ] `glass`, `flat` and `paper` use unitless numbers for every numeric token;
+- [x] `glass`, `flat` and `paper` use unitless numbers for every numeric token;
       `cell-pad` and all paint/ink/font strings are unchanged in kind.
-- [ ] `make validate-skins` rejects a numeric string and passes the corpus;
+- [x] `make validate-skins` rejects a numeric string and passes the corpus;
       `make test-skins PYTHON=$PWD/.venv/bin/python` includes the negative
       numeric-string fixture and the expanded-parity assertions.
-- [ ] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
+- [x] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
       `make validate` pass; the ticket branch is fast-forward merged to `master`
       (no unmerged ticket branch) and `v0.9.0` is an annotated tag on the merged
       commit. Existing tags are not moved.
@@ -108,3 +108,54 @@ the local schema alone says `dimension: string, pattern ^...px$`.
   correction.
 - **`paper` / `flat` title-size.** Both keep `15` (they already shipped
   `"15px"`); only glass is `12.5`, preserving the `v0.8.0` parity extraction.
+
+## Outcome (2026-11-05)
+
+**Worktree:** `.worktrees/req-011/`
+**Branch:** `ticket/req-011-skins-value-types`
+**Commits:** `f4a0419` (ticket + INDEX plan), `5a62c2d` (vendored schemas,
+manifests, validator, tests, docs/version updates).
+**Merge:** fast-forward into `master` (`6233613..5a62c2d`); the ticket branch is
+not left unmerged.
+**Tag:** `v0.9.0` (annotated object `4e70950`, commit `5a62c2d`), created on the
+merged commit before this close-out commit; the object hash is recorded here
+because a tag cannot contain its own hash.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/contracts/skin-token.schema.json`, `skin-manifest.schema.json` | byte copies from `contracts` `v0.5.1` (`d1adb19`) |
+| `skins/contracts/PIN` | `contracts=v0.5.1`, source commit, sha256 of both files |
+| `skins/schema.json` | `canonical.vendored: true`, `tag: v0.5.1`, PIN/delegate paths; all 23 token properties are external `$ref`s to the vendored manifest schema; local `$defs` dimension/spacing grammar removed |
+| `skins/manifests/{glass,flat,paper}.toml` | numeric tokens are TOML numbers; `cell-pad` stays `"Npx Npx"`; paint/ink/font strings unchanged |
+| `scripts/validate-skins.py` | PIN hash/byte check, canonical `$ref` resolver, canonical type/minimum/pattern checks, numeric-string rejection, unit-rule expansion (`number -> <n>px`, `cell-pad` verbatim) |
+| `skins/tests/test_skins.py`, `test_parity.py`, `fixtures/invalid/numeric-string.toml` | hash/delegation/type tests, numeric-string negative fixture, expansion assertions including `border-radius: 12px`, `border: 1.5px solid @primary`, `padding: 8px 9px`, `border-radius: 20px` |
+| `skins/README.md`, `README.md`, `CHANGELOG.md`, `catalog.yaml`, `Makefile` | value convention (number = unitless, `px` at render time), vendoring/pin rule, `contracts/` subdir, `v0.9.0` inventory |
+
+### Evidence — commands and exact results (in `.worktrees/req-011/`)
+
+| Command | Result |
+| --- | --- |
+| `make validate-skins` | **PASS** — `manifests=3 templates=1 tokens=23 roles=51`; expanded 3 manifests through 1 template with the unit rule |
+| `make test-skins PYTHON=$PWD/../../.venv/bin/python` | **PASS** — `34 passed` |
+| `make validate` | **PASS** — 6 classes, 27 directories, 391 files scanned, tag `v0.9.0` |
+| `PATH=/tmp/opencode/shellcheck/shellcheck-v0.10.0:$PATH make gates` | **exit 0** — all 9 gates incl. shellcheck and hermetic PASS |
+| `make ci-gates-parity` | **PASS** — 9 GATES, 10 workflow jobs, declared CI-only `ci-gates-parity` |
+| `cmp skins/contracts/*.schema.json` against `contracts` `v0.5.1` | byte-identical; `sha256sum` matches `skins/contracts/PIN` |
+
+### Value decisions for `flat` / `paper`
+
+- **`flat`**: radii `0/0/0/999`, `border-w = 0`, `gap = 8`, `cell-pad =
+  "7px 8px"`, `title-size/text-size = 15/13`, layout `312/4/28/48`. These are
+  exactly the `v0.8.0` values, converted from strings to numbers; no value was
+  reinterpreted.
+- **`paper`**: radii `6/4/3/999`, `border-w = 1`, `gap = 9`, `cell-pad =
+  "8px 10px"`, `title-size/text-size = 15/13`, layout `312/6/30/52`. Its
+  `bg-panel`/`bg-card`/`border` role expressions, the `rgba` shadow string and
+  `cell-pad` remain strings, untouched.
+- **`glass`**: `12/9/7/20`, `border-w = 1.5`, `gap = 8`,
+  `cell-pad = "8px 9px"`, `title-size/text-size = 12.5/13`, layout
+  `312/4/0/0` — the `v0.8.0` parity values with only the representation
+  converted, so the expanded CSS still contains the exact source-length
+  declarations.
