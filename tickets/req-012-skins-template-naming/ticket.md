@@ -2,7 +2,7 @@
 id: req-012
 title: "Skins template naming: <configDir>.gtk.css.j2 and the resolved skin.json schema"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded correction
 links:
   openspec: none
@@ -62,21 +62,21 @@ Evidence: `contracts` `v0.5.2` (`320ad69`) `skins.md:136-191`; the current tree
 
 ## Acceptance
 
-- [ ] `skins/templates/ags.gtk.css.j2` exists, the old `ags-bar` name is gone,
+- [x] `skins/templates/ags.gtk.css.j2` exists, the old `ags-bar` name is gone,
       and the template body is byte-identical to the `v0.9.0` file.
-- [ ] `make validate-skins` fails a template whose name does not match
+- [x] `make validate-skins` fails a template whose name does not match
       `^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$`, derives the target from the prefix,
       and its summary prints `templates=<n>` and the target(s).
-- [ ] `skins/contracts/{skin-token,skin-manifest,skin-json}.schema.json` are
+- [x] `skins/contracts/{skin-token,skin-manifest,skin-json}.schema.json` are
       byte copies from `contracts` `v0.5.2` (`320ad69`), and
       `skins/contracts/PIN` records `contracts=v0.5.2`, the source commit and a
       matching sha256 for each file.
-- [ ] `skins/schema.json` names `canonical.tag: v0.5.2`, vendors the resolved-
+- [x] `skins/schema.json` names `canonical.tag: v0.5.2`, vendors the resolved-
       document schema, and its note describes the resolved `skin.json` shape.
-- [ ] The test suite validates a resolved glass document (`version: 1` + six
+- [x] The test suite validates a resolved glass document (`version: 1` + six
       groups, numeric tokens raw numbers) against the vendored `skin-json`
       schema, and includes the bad-template-name negative fixture.
-- [ ] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
+- [x] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
       `make validate` pass; the ticket branch is fast-forward merged to `master`
       (no unmerged ticket branch) and `v0.9.1` is an annotated tag on the merged
       commit. Existing tags are not moved.
@@ -106,3 +106,59 @@ Evidence: `contracts` `v0.5.2` (`320ad69`) `skins.md:136-191`; the current tree
   at `v0.5.1` and `v0.5.2`; the PIN moves to `v0.5.2` because that is the tag
   that freezes the artifact interface this slice implements. The hashes still
   match the unchanged bytes.
+- **The naming regex cannot identify the bar's target by itself.** `ags-bar` is
+  a syntactically valid `configDir` prefix, so `ags-bar.gtk.css.j2` still matches
+  the generic regex. The rename to `ags.gtk.css.j2` is driven by the contract's
+  bar `configDir = ags`; the regex + reported target catch malformed names, not
+  a syntactically valid wrong target for a specific consumer. The negative
+  fixture is therefore `ags-bar.css.j2`, which genuinely violates the suffix.
+- **The resolved-document schema is vendored but not a `$ref` delegate.** The
+  local manifest envelope still delegates token types only to
+  `skin-manifest.schema.json`; `skin-json.schema.json` describes the runtime
+  output, so it is a third pinned file and `canonical.resolved_document`, not a
+  fourth token delegate.
+
+## Outcome (2026-11-05)
+
+**Worktree:** `.worktrees/req-012/`
+**Branch:** `ticket/req-012-skins-template-naming`
+**Commits:** `50528fb` (ticket + INDEX plan), `db33e7e` (template rename,
+validator, vendored schemas, tests, docs/version updates).
+**Merge:** fast-forward into `master` (`49f9235..db33e7e`); the ticket branch is
+not left unmerged.
+**Tag:** `v0.9.1` (annotated object `34fa2e2`, commit `db33e7e`), created on the
+merged commit before this close-out commit; the object hash is recorded here
+because a tag cannot contain its own hash.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/templates/ags.gtk.css.j2` | `git mv` from `ags-bar.gtk.css.j2`; body byte-identical (`sha256 02619b…`) |
+| `scripts/validate-skins.py` | enforces `^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$` on every file in `skins/templates/`, derives the target from the prefix, prints `templates=<n> targets=<configDir>`, pins three vendored files, checks `source-commit`, and requires `canonical.resolved_document` |
+| `skins/contracts/skin-json.schema.json` | byte copy from `contracts` `v0.5.2` (`12eeb2cd…`) |
+| `skins/contracts/PIN` | `contracts=v0.5.2`, source commit `320ad69…`, sha256 for token/manifest/skin-json |
+| `skins/schema.json` | `canonical.tag: v0.5.2`, three `paths`/`vendored_paths`, `resolved_document` note |
+| `skins/tests/test_skins.py`, `test_parity.py`, fixtures | template target test, bad-name fixture (`ags-bar.css.j2`), resolved-glass `skin.json` validation, resolved numeric-string rejection, new template path |
+| `README.md`, `skins/README.md`, `CHANGELOG.md`, `Makefile`, `catalog.yaml` | naming rule/target, `v0.9.1` inventory, `v0.5.2` pin, resolved-document schema |
+
+### Evidence — commands and exact results
+
+| Command | Result |
+| --- | --- |
+| `make validate-skins` | **PASS** — `manifests=3 templates=1 targets=ags tokens=23 roles=51` |
+| `make test-skins PYTHON=$PWD/.venv/bin/python` | **PASS** — `38 passed` |
+| `make validate` | **PASS** — 6 classes, 27 directories, 395 files scanned, tag `v0.9.1` |
+| `PATH=/tmp/opencode/shellcheck/shellcheck-v0.10.0:$PATH make gates` | **exit 0** — all 9 gates incl. shellcheck and hermetic PASS |
+| `git show v0.9.0:skins/templates/ags-bar.gtk.css.j2 \| cmp - skins/templates/ags.gtk.css.j2` | byte-identical |
+| `git -C ../contracts show v0.5.2:schemas/<name>.schema.json \| cmp - skins/contracts/<name>.schema.json` | byte-identical for token, manifest and skin-json |
+
+### New PIN (verbatim)
+
+```text
+contracts=v0.5.2
+source-commit=320ad69105456500693eb938e3d1d51ef287a455
+sha256  22e81ec4e73a659ed94334f323e6c578886842ed873abac50eacc6608ba906fd  skin-token.schema.json
+sha256  aac5d8caf3997eb45bb8c03068f708b07b79cdd68a098de29e4e96c9319bb48a  skin-manifest.schema.json
+sha256  12eeb2cdcbb3883212a7fde50dbc4f9028adaa6d5ca05bbbd35dcdcf715b3728  skin-json.schema.json
+```
