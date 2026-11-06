@@ -1,5 +1,42 @@
 # Changelog
 
+## v0.11.0 — skins templates for every non-bar AGS app
+
+### Added
+
+- **One extracted GTK template per non-bar app.** `skins/templates/` now holds
+  `ags-clipboard.gtk.css.j2`, `ags-notifications.gtk.css.j2`,
+  `ags-wallpaper-selector.gtk.css.j2`, `ags-capture.gtk.css.j2`,
+  `ags-icme.gtk.css.j2` and `ags-btop-studio.gtk.css.j2`, named for each app's
+  real `configDir` and rendered as `<configDir>.css`. Each template keeps the
+  selectors and class vocabulary of that app's canonical `style.css`.
+- **Fidelity extraction, not a second design system.** `{{SKIN_*}}` is used
+  only for genuine global knobs (panel background/border/border-width/radius/
+  shadow/blur, card background/radius, cell radius/padding, control radius,
+  pill radius, hairlines via `hairline-w`, ink/ink-dim/accent and title/text
+  sizes). Component paddings, small type, thumbnail radii, selection rings and
+  the recording red stay source literals expressed as `palette.v1`
+  roles/alpha derivatives.
+- **Per-app checks.** `skins/tests/test_skins.py` expands every template through
+  `glass`, `flat` and `paper`, asserts placeholder coverage, rejects literal hex,
+  transitions/animations and layout placeholders, and names the expected
+  top-level selectors for all seven targets.
+
+### Changed
+
+- **`make validate-skins` reports the full template set.** Its summary prints
+  `templates=7` and every target, and its notes record that each template
+  expanded for all three manifests. The gate still enforces the PIN hashes,
+  canonical numeric types, palette roles, naming and unit-rule expansion.
+- **README, `skins/README.md`, `catalog.yaml` and the ticket** record the
+  seven-target template set and the `v0.11.0` inventory.
+
+### Notes
+
+- **MINOR, additive only.** No token changes, no class path moves and
+  `schema_major` stays `1`; the shared `glass`/`flat`/`paper` values now paint
+  the new app surfaces through the same 24-token vocabulary.
+
 ## v0.10.0 — skins hairline token and TSX-owned layout
 
 ### Added

@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.10.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.11.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -33,13 +33,16 @@ SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imp
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback parity with today's ags-bar
-look, `flat`, `paper`), the `ags.gtk.css.j2` settings/Bluetooth template (target `configDir` `ags`,
-rendered as `ags.css`), and the pinned byte copies of the canonical `contracts` schemas under
-`skins/contracts/` — the token/manifest pair plus the resolved-document
+look, `flat`, `paper`), seven `<configDir>.gtk.css.j2` templates (the bar's settings/Bluetooth set
+plus clipboard, notifications, wallpaper selector, capture, icme and btop studio; targets
+`ags`, `ags-clipboard`, `ags-notifications`, `ags-wallpaper-selector`, `ags-capture`, `ags-icme`,
+`ags-btop-studio`, rendered as `<configDir>.css`), and the pinned byte copies of the canonical
+`contracts` schemas under `skins/contracts/` — the token/manifest pair plus the resolved-document
 `skin-json.schema.json` (numeric tokens are unitless numbers; the expander adds `px`). Since
 `v0.10.0` the shape group splits `border-w` (outer panel/frame) from `hairline-w` (card/control/
 badge), and the four layout tokens are TSX-owned: they stay in `skin.json` for `skinValue()` but
-the template never emits them as CSS. Each class
+the templates never emit them as CSS. Since `v0.11.0` every non-bar AGS app also has a template
+extracted from its canonical `style.css`. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
@@ -106,11 +109,12 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   (card, row-action and badge hairlines), and the layout tokens are declared TSX-owned: they
   remain in the manifest/`skin.json` for `skinValue()` but templates MUST NOT expand them into
   CSS. `make validate-skins` enforces the PIN hashes, template naming
-  (`<configDir>.gtk.css.j2` → target `ags`, reported in the summary), canonical numeric types
-  (a `"12px"` string fails), the exact manifest token set, role-only values, no literal hex, no
-  transitions, two-way template placeholder coverage, and the unit-rule expansion (number →
-  `<n>px`, `cell-pad` verbatim); `skins/README.md` documents the value convention, the template
-  naming rule, the manifests, the `paper` light-mode axis and the overflow-HIDDEN rule.
+  (`<configDir>.gtk.css.j2`; all seven targets are reported in the summary), canonical numeric
+  types (a `"12px"` string fails), the exact manifest token set, role-only values, no literal hex,
+  no transitions, two-way template placeholder coverage, and the unit-rule expansion (number →
+  `<n>px`, `cell-pad` verbatim) of every template through every manifest; `skins/README.md`
+  documents the value convention, the template naming rule, the manifests, the `paper` light-mode
+  axis and the overflow-HIDDEN rule.
 
 ## Gates
 

@@ -1,4 +1,4 @@
-# `skins/` — frozen skin manifests and the GTK paint template
+# `skins/` — frozen skin manifests and the GTK paint templates
 
 A **skin** is a palette/ink mapping, paint and rhythm/density. It is not a
 variant and it is not structure: which widget sits where, and which named
@@ -40,7 +40,13 @@ skins/
   manifests/glass.toml              default/fallback parity skin (today's ags-bar look)
   manifests/flat.toml               zero-chrome skin
   manifests/paper.toml              light/palette-axis skin
-  templates/ags.gtk.css.j2          settings + Bluetooth paint rules (target configDir: ags)
+  templates/ags.gtk.css.j2          bar settings + Bluetooth paint (target configDir: ags)
+  templates/ags-clipboard.gtk.css.j2          clipboard overlay (target: ags-clipboard)
+  templates/ags-notifications.gtk.css.j2      notification cards (target: ags-notifications)
+  templates/ags-wallpaper-selector.gtk.css.j2 selector dialog (target: ags-wallpaper-selector)
+  templates/ags-capture.gtk.css.j2            capture bar/overlay/panel (target: ags-capture)
+  templates/ags-icme.gtk.css.j2               icon color mapping editor (target: ags-icme)
+  templates/ags-btop-studio.gtk.css.j2        btop theme studio (target: ags-btop-studio)
   tests/                            pytest fixtures mirroring the validator
   tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string, template name)
   tests/fixtures/parity/            the glass-vs-source ownership/parity record (no border-width deviation)
@@ -54,10 +60,24 @@ directory. Every file in `skins/templates/` must be named
 `templates/ags.gtk.css.j2` renders `current/skins/ags.css` and the bar consumes
 it as `$XDG_CONFIG_HOME/ags/skin.css`. The name is a contract, not a label: an
 expander that follows `skins.md` would never find `ags-bar.gtk.css.j2`, and the
-bar's `configDir` is `ags`. `scripts/validate-skins.py` enforces
+bar's `configDir` is `ags`.
+
+At `v0.11.0` the set covers every AGS app, not only the bar:
+
+| Template | Target `configDir` | Canonical source |
+| --- | --- | --- |
+| `ags.gtk.css.j2` | `ags` | bar settings/Bluetooth |
+| `ags-clipboard.gtk.css.j2` | `ags-clipboard` | clipboard overlay |
+| `ags-notifications.gtk.css.j2` | `ags-notifications` | notification cards |
+| `ags-wallpaper-selector.gtk.css.j2` | `ags-wallpaper-selector` | selector dialog |
+| `ags-capture.gtk.css.j2` | `ags-capture` | capture bar/overlay/panel |
+| `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
+| `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
+
+`scripts/validate-skins.py` enforces
 `^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$`, rejects any other file in
-`skins/templates/`, derives the target from the prefix, and prints both
-`templates=<n>` and `targets=<configDir>` in its summary.
+`skins/templates/`, derives every target from the prefix, prints all targets in
+its summary, and expands every template through `glass`, `flat` and `paper`.
 
 ## Value convention: numbers are unitless, `px` is added at render time
 
@@ -71,7 +91,7 @@ TOML. Paint, ink and `font-family` values are strings and render verbatim.
 
 That rule is mechanical in both directions: `scripts/validate-skins.py` rejects
 `radius-panel = "12px"` against the vendored canonical schema (AGS would reject
-it at startup), and it expands each manifest through the template with the
+it at startup), and it expands each manifest through every template with the
 number → `<n>px` rule so a green gate means the rendered CSS is length-correct.
 
 ## The three manifests
@@ -190,7 +210,7 @@ validates the same types a consumer will parse.
   types, the unit-rule expansion, the template naming rule, and that a resolved
   glass `skin.json` validates against the vendored `skin-json` schema.
 
-At `v0.10.0` the vendored set is pinned at `contracts=v0.6.0`, the
+At `v0.11.0` the vendored set is still pinned at `contracts=v0.6.0`, the
 hairline/layout-ownership release. It adds the numeric `hairline-w` shape token
 (24 tokens total), keeps the `v0.5.1` unit convention, and declares the four
 layout tokens TSX-owned: they remain in the manifest/`skin.json` for
@@ -200,19 +220,24 @@ the same change.
 
 ## Template rules
 
-`skins/templates/ags.gtk.css.j2` keeps the app-local selector vocabulary
-(`settings-surface`, `settings-net` and its `.sel` / `.out-of-range` /
-`.confirming` states, `settings-rowact` and its states, the chevron, section,
-divider, connected-details, empty, level-slider, Wi-Fi settings and nav-header
-classes) and substitutes a `{{SKIN_*}}` placeholder only for the genuine knobs
-above. The placeholder name is the upper-snake form of the token:
-`radius-panel` → `{{SKIN_RADIUS_PANEL}}`, `bg-panel` → `{{SKIN_BG_PANEL}}`.
+Every template keeps its app-local selector vocabulary and substitutes a
+`{{SKIN_*}}` placeholder only for the genuine knobs above. The bar template,
+for example, keeps `settings-surface`, `settings-net` and its `.sel` /
+`.out-of-range` / `.confirming` states, `settings-rowact` and its states, the
+chevron, section, divider, connected-details, empty, level-slider, Wi-Fi
+settings and nav-header classes. The non-bar templates keep the same contract
+for their own windows: the clipboard kind/head/card classes, the notification
+card/tile/chip and progress-card classes, the selector panel/card/crumb/LIVE
+classes, the capture bar/overlay/field/recording classes, the icme pane/tree/
+card/inspector classes, and the studio rail/tree/stage/diff classes.
 
-The template has no literal hex colour, no `transition`, no `animation`, no
-non-`none` shadow and no structure/variant vocabulary. State colours that are
-not skin tokens (for example a selected row's `@primary_container` /
-`@on_primary_container`, or a destructive action's `@tertiary`) are named
-`palette.v1` roles, not literals.
+Component-specific values (paddings, small font sizes, thumbnail radii,
+selection rings and per-element state colours) stay as literals copied from
+that app's `style.css`, expressed only as `palette.v1` roles or alpha
+derivatives. No template has a literal hex colour, a `transition`, an
+`animation`, a layout placeholder or structure/variant vocabulary. The
+placeholder name is the upper-snake form of the token: `radius-panel` →
+`{{SKIN_RADIUS_PANEL}}`, `bg-panel` → `{{SKIN_BG_PANEL}}`.
 
 **Radius clipping is the app's job.** GTK CSS has no `overflow` property. When a
 radius-clipped container's children can reach its corners, the app MUST set
@@ -230,9 +255,11 @@ make test-skins       # pytest fixtures, including the parity, resolved-document
 `make validate-skins` is stdlib-only and part of `make gates`. `make test-skins`
 is the fixture suite and uses the repository's development pytest dependency.
 `skins/tests/test_skins.py` checks the PIN hashes, the canonical `$ref`
-delegation, the template target (`ags`), unitless numeric values, the
+delegation, all seven template targets, unitless numeric values, the
 numeric-string rejection, and a resolved glass `skin.json` against the vendored
-`skin-json` schema.
+`skin-json` schema. Its per-app cases expand every template for `glass`, `flat`
+and `paper`, assert the expected top-level selectors and genuine placeholder
+coverage, and reject literal hex, transitions/animations and layout tokens.
 `skins/tests/test_parity.py` expands `glass` through `validate-skins`' own
 unit-rule expander and compares the result with the source declarations (with
 line references): the `1.5px` panel vs `1px` hairlines, `.settings-net` with

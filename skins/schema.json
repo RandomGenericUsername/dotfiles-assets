@@ -5,7 +5,7 @@
   "title": "dotfiles-assets skin manifest v1",
   "schema_major": 1,
   "contract": "skins",
-  "status": "populated (v0.10.0)",
+  "status": "populated (v0.11.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [

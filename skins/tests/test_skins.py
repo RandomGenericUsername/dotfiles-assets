@@ -25,8 +25,211 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "skins" / "schema.json"
 MANIFESTS = ROOT / "skins" / "manifests"
-TEMPLATE = ROOT / "skins" / "templates" / "ags.gtk.css.j2"
+TEMPLATES = ROOT / "skins" / "templates"
+TEMPLATE = TEMPLATES / "ags.gtk.css.j2"
 CONTRACTS = ROOT / "skins" / "contracts"
+LAYOUT_PLACEHOLDERS = {
+    "SKIN_PANEL_WIDTH",
+    "SKIN_BT_LIST_SPACING",
+    "SKIN_BAR_ROW_HEIGHT",
+    "SKIN_CHIP_MIN",
+}
+#: target configDir -> (top-level selectors the app really applies, genuine
+#: skin placeholders the extraction must use).
+APP_TEMPLATES = {
+    "ags": {
+        "selectors": [
+            "window.settings-panel",
+            ".settings-surface",
+            ".settings-card",
+            ".settings-net",
+            ".settings-badge",
+            ".settings-rowact",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BORDER",
+            "SKIN_BORDER_W",
+            "SKIN_RADIUS_PANEL",
+            "SKIN_SHADOW",
+            "SKIN_BLUR",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_CELL_PAD",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-clipboard": {
+        "selectors": [
+            "window#clipboard-window",
+            ".clipboard-panel",
+            ".clipboard-search",
+            ".clipboard-card",
+            ".clipboard-head",
+            ".clipboard-empty",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BORDER",
+            "SKIN_BORDER_W",
+            "SKIN_RADIUS_PANEL",
+            "SKIN_SHADOW",
+            "SKIN_BLUR",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-notifications": {
+        "selectors": [
+            "window#notifications-window",
+            ".notif-card",
+            ".notif-tile",
+            ".notif-chip",
+            ".wallpaper-progress-card",
+            ".speedtest-progress-cell",
+        ],
+        "tokens": {
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_CELL_PAD",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_SHADOW",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-wallpaper-selector": {
+        "selectors": [
+            "window#wallpaper-selector-window",
+            ".ws-panel",
+            ".ws-search",
+            ".ws-card",
+            ".ws-hoverbar",
+            ".ws-live",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BORDER",
+            "SKIN_BORDER_W",
+            "SKIN_RADIUS_PANEL",
+            "SKIN_SHADOW",
+            "SKIN_BLUR",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-capture": {
+        "selectors": [
+            "window#capture-window",
+            "window#capture-overlay",
+            ".capture-bar",
+            ".capture-panel",
+            ".capture-view",
+            ".rec-cluster",
+            "switch.palette-switch",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BORDER",
+            "SKIN_BORDER_W",
+            "SKIN_RADIUS_PANEL",
+            "SKIN_SHADOW",
+            "SKIN_BLUR",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_CELL_PAD",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-icme": {
+        "selectors": [
+            "window#icon-color-mapping-editor-window",
+            ".icme-left",
+            ".vcard",
+            ".tree .item",
+            ".cell",
+            ".inspector-nav",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_CELL_PAD",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_INK_DIM",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+    "ags-btop-studio": {
+        "selectors": [
+            ".btop-theme-studio",
+            ".studio-header",
+            ".titem",
+            ".canvas",
+            ".live-frame",
+            ".key-hit",
+        ],
+        "tokens": {
+            "SKIN_BG_PANEL",
+            "SKIN_BG_CARD",
+            "SKIN_RADIUS_CARD",
+            "SKIN_HAIRLINE_W",
+            "SKIN_RADIUS_CELL",
+            "SKIN_CELL_PAD",
+            "SKIN_RADIUS_PILL",
+            "SKIN_INK",
+            "SKIN_ACCENT",
+            "SKIN_TITLE_SIZE",
+            "SKIN_TEXT_SIZE",
+            "SKIN_FONT_FAMILY",
+        },
+    },
+}
 PIN = CONTRACTS / "PIN"
 FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
 VENDORED = {
@@ -130,12 +333,20 @@ def test_corpus_passes_the_gate() -> None:
     assert errors == []
     assert stats == {
         "manifests": 3,
-        "templates": 1,
-        "targets": ["ags"],
+        "templates": 7,
+        "targets": sorted(APP_TEMPLATES),
         "tokens": 24,
         "roles": 51,
     }
     assert any("palette roles ==" in note for note in notes)
+    for target in APP_TEMPLATES:
+        note = next(
+            (item for item in notes if f"target={target} expanded for" in item),
+            "",
+        )
+        assert note, target
+        for manifest_name in ("glass", "flat", "paper"):
+            assert manifest_name in note, f"{target}: {note}"
 
 
 def test_template_target_is_the_filename_prefix() -> None:
@@ -143,6 +354,54 @@ def test_template_target_is_the_filename_prefix() -> None:
     assert TEMPLATE.name[: -len(".gtk.css.j2")] == "ags"
     assert validate_skins.TEMPLATE_NAME.match(TEMPLATE.name)
     assert not (TEMPLATE.parent / "ags-bar.gtk.css.j2").exists()
+    assert sorted(path.name[: -len(".gtk.css.j2")] for path in TEMPLATES.glob("*.j2")) == sorted(
+        APP_TEMPLATES
+    )
+
+
+@pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
+def test_app_template_expands_for_every_manifest(target: str) -> None:
+    path = TEMPLATES / f"{target}.gtk.css.j2"
+    text = path.read_text()
+    for manifest_name in ("glass", "flat", "paper"):
+        css = render(text, load_manifest(manifest_name))
+        assert "{{" not in css, f"{path.name}: {manifest_name}"
+        for selector in APP_TEMPLATES[target]["selectors"]:
+            assert re.search(
+                rf"(?m)^\s*{re.escape(selector)}\s*(?:,|\{{)", text
+            ), f"{path.name}: missing selector {selector}"
+
+
+@pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
+def test_app_template_placeholder_coverage(target: str) -> None:
+    text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
+    expected = set(token_value_map(load_manifest("glass")))
+    used = {match.strip() for match in PLACEHOLDER.findall(text)}
+    assert used
+    assert used <= expected, f"{target}: unknown placeholders {sorted(used - expected)}"
+    assert not {name for name in used if not name.startswith("SKIN_")}
+    missing = APP_TEMPLATES[target]["tokens"] - used
+    assert missing == set(), f"{target}: expected genuine tokens missing: {sorted(missing)}"
+
+
+@pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
+def test_app_template_has_no_literal_hex_or_transition(target: str) -> None:
+    text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
+    assert not HEX.search(text), f"{target}: literal hex colour"
+    assert not re.search(r"\btransition\s*:", text), f"{target}: transition"
+    assert not re.search(r"\banimation\s*:", text), f"{target}: animation"
+    assert "@keyframes" not in text, f"{target}: keyframes"
+
+
+@pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
+def test_app_template_does_not_expand_layout_tokens(target: str) -> None:
+    text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
+    for placeholder in LAYOUT_PLACEHOLDERS:
+        assert "{{" + placeholder + "}}" not in text, f"{target}: {placeholder}"
+    for manifest_name in ("glass", "flat", "paper"):
+        css = render(text, load_manifest(manifest_name))
+        for placeholder in LAYOUT_PLACEHOLDERS:
+            assert placeholder not in css, f"{target}: {manifest_name} {placeholder}"
 
 
 def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:

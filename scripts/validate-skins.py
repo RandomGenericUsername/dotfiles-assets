@@ -39,7 +39,9 @@ WHAT THIS GATE PROVES (frozen skin spec v1):
      `^[a-z0-9][a-z0-9_-]*\\.gtk\\.css\\.j2$`, and the target reported in the
      summary is the prefix before `.gtk.css.j2`. A stale name such as
      `ags-bar.gtk.css.j2` fails here instead of leaving the bar's `ags` target
-     unreachable at runtime.
+     unreachable at runtime. Every discovered template is expanded through
+     every manifest (glass/flat/paper), so a template that only renders for one
+     skin cannot pass unnoticed.
 
   6. THE RESOLVED DOCUMENT SCHEMA IS VENDORED WITH THE PAIR. `skin-json.schema.
      json` is a byte copy from the same `contracts` tag and is pinned by sha256;
@@ -686,14 +688,18 @@ def _check_expansion(
     """Expand every manifest through every template and enforce the unit rule."""
     for path in templates:
         rel = _rel(path, root)
+        target = path.name[: -len(TEMPLATE_SUFFIX)]
         text = path.read_text()
+        rendered_for: list[str] = []
         for manifest in manifests:
+            name = manifest.get("name")
+            rendered_for.append(str(name))
             expanded = expand_template(text, manifest, groups)
             leftovers = sorted(set(PLACEHOLDER.findall(expanded)))
             if leftovers:
                 errors.append(
                     f"{rel}: unexpanded placeholder(s) {leftovers} after "
-                    f"rendering {manifest.get('name')!r}"
+                    f"rendering {name!r}"
                 )
             for group, tokens in groups.items():
                 for token in tokens:
@@ -704,6 +710,9 @@ def _check_expansion(
                         errors.append(
                             f"{rel}: {group}.{token} did not render as {expected!r}"
                         )
+        notes.append(
+            f"{rel}: target={target} expanded for {','.join(rendered_for)}"
+        )
     notes.append(
         f"expanded {len(manifests)} manifest(s) through {len(templates)} "
         f"template(s) with the unit rule (number -> <n>px, cell-pad verbatim)"

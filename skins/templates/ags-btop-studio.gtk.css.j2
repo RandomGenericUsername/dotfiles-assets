@@ -1,0 +1,790 @@
+/*
+ * skins/templates/ags-btop-studio.gtk.css.j2 — btop theme studio paint.
+ *
+ * Extracted from ../ags-btop-theme-studio/style.css. The studio is a full
+ * window: the root carries bg-panel, ink, text-size and font-family. Its rails,
+ * cards, tree rows and controls take bg-card/radius-card or radius-cell plus
+ * hairline-w. Ink, accent and title/text sizes are skin knobs. Region widths,
+ * stage geometry, small type, monospace faces and selection tints stay source
+ * literals expressed as palette roles.
+ *
+ * The source's content-stage/terminal hexes are content, not chrome, so they
+ * are expressed with the darkest surface-container role at the same alpha; the
+ * no-hex rule holds and the stage still reads as a neutral well.
+ */
+.btop-theme-studio {
+  background-color: {{SKIN_BG_PANEL}};
+  color: {{SKIN_INK}};
+  font-size: {{SKIN_TEXT_SIZE}};
+  font-family: {{SKIN_FONT_FAMILY}};
+}
+
+.studio-shell {
+  background-color: {{SKIN_BG_PANEL}};
+}
+
+.studio-header {
+  padding: 9px 16px;
+  background-color: alpha(@surface_container, 0.45);
+  border-bottom: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.studio-title {
+  font-size: {{SKIN_TITLE_SIZE}};
+  font-weight: 700;
+}
+
+.studio-subtitle {
+  font-size: 11px;
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.studio-root {
+  background-color: {{SKIN_BG_PANEL}};
+}
+
+.studio-left-scroll {
+  min-width: 280px;
+  background-color: alpha(@surface_container, 0.26);
+  border-right: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.studio-left {
+  background-color: transparent;
+}
+
+.section-header {
+  padding: 12px 14px 6px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: alpha({{SKIN_INK}}, 0.48);
+}
+
+.section-sub {
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.32);
+}
+
+.studio-body {
+  padding: 0 14px 10px;
+}
+
+.field-label {
+  font-size: 11px;
+  color: alpha({{SKIN_INK}}, 0.48);
+}
+
+.hint {
+  color: alpha({{SKIN_INK}}, 0.45);
+  font-size: 11px;
+}
+
+.warn {
+  color: @tertiary;
+  font-size: 11px;
+}
+
+.status {
+  color: {{SKIN_ACCENT}};
+  font-size: 11px;
+}
+
+.studio-status {
+  padding: 0 14px 8px;
+}
+
+.studio-path {
+  background-color: @surface_container;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 5px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  color: {{SKIN_INK}};
+}
+
+.studio-path.rw {
+  border-color: @tertiary;
+}
+
+.studio-cfg {
+  font-family: monospace;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.55);
+}
+
+.stock-note {
+  padding: 0 14px 10px;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.34);
+}
+
+.toggle,
+.btn,
+.pchip,
+.item,
+.titem,
+.named-row,
+.cell {
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.toggle {
+  background-color: @surface_container;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  color: {{SKIN_INK}};
+  border-radius: {{SKIN_RADIUS_CELL}};
+  font-size: 11px;
+  padding: 4px 9px;
+  min-height: 0;
+}
+
+.toggle:hover {
+  border-color: alpha({{SKIN_INK}}, 0.28);
+}
+
+.toggle.on {
+  border-color: {{SKIN_ACCENT}};
+  color: {{SKIN_ACCENT}};
+  background-color: alpha({{SKIN_ACCENT}}, 0.10);
+}
+
+.lib-actions {
+  padding: 4px 14px 8px;
+}
+
+.lib-actions .toggle {
+  font-size: 10px;
+  padding: 3px 6px;
+}
+
+.studio-lib {
+  padding: 0 4px;
+}
+
+.titem {
+  background-color: transparent;
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: {{SKIN_CELL_PAD}};
+  min-height: 0;
+}
+
+.titem:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.titem.active {
+  background-color: alpha(@primary_container, 0.18);
+  border-color: alpha(@primary_container, 0.45);
+}
+
+.star {
+  font-size: 13px;
+  color: alpha({{SKIN_INK}}, 0.24);
+  min-width: 16px;
+}
+
+.star.on {
+  color: @tertiary;
+}
+
+.tname {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+}
+
+.badge.generated {
+  background-color: alpha(@secondary_container, 0.55);
+  color: @on_secondary_container;
+}
+
+.badge.authored {
+  background-color: alpha(@primary_container, 0.55);
+  color: @on_primary_container;
+}
+
+.badge.active {
+  background-color: alpha(@tertiary_container, 0.55);
+  color: @on_tertiary_container;
+}
+
+.tree {
+  padding: 0 6px 14px;
+}
+
+.group {
+  padding: 9px 8px 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: alpha({{SKIN_INK}}, 0.38);
+}
+
+.item {
+  background-color: transparent;
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 3px 8px 3px 12px;
+  min-height: 0;
+}
+
+.item:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.item.active {
+  background-color: alpha(@primary_container, 0.20);
+}
+
+.key-label {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.dot {
+  min-width: 11px;
+  min-height: 11px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha(@outline, 0.5);
+}
+
+.studio-center {
+  background-color: {{SKIN_BG_PANEL}};
+}
+
+.canvas-bar {
+  padding: 8px 14px;
+  background-color: alpha(@surface_container, 0.42);
+  border-bottom: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.slider-label {
+  font-size: 11px;
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.slider-value {
+  font-size: 11px;
+  color: {{SKIN_INK}};
+}
+
+.load-scale {
+  min-width: 110px;
+}
+
+.load-scale trough {
+  min-height: 4px;
+  border-radius: 2px;
+  background-color: alpha({{SKIN_INK}}, 0.15);
+}
+
+.load-scale highlight {
+  background-color: {{SKIN_ACCENT}};
+  border-radius: 2px;
+}
+
+.pbar {
+  padding: 6px 14px;
+  background-color: alpha(@surface_container_lowest, 0.18);
+  border-bottom: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.pbar-label {
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.4);
+}
+
+.pchip {
+  background-color: transparent;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_PILL}};
+  padding: 2px 9px;
+  font-size: 10px;
+  font-family: monospace;
+  color: alpha({{SKIN_INK}}, 0.55);
+  min-height: 0;
+}
+
+.pchip.on {
+  background-color: alpha(@primary_container, 0.60);
+  border-color: {{SKIN_ACCENT}};
+  color: @on_primary_container;
+}
+
+.pdesc {
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.35);
+}
+
+.banner {
+  padding: 7px 14px;
+  background-color: alpha(@tertiary_container, 0.55);
+  border-bottom: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.banner-icon {
+  color: @on_tertiary_container;
+}
+
+.banner-text {
+  font-size: 11px;
+  color: @on_tertiary_container;
+}
+
+.canvas {
+  background-color: @surface_container_lowest;
+  padding: 12px;
+}
+
+.stage {
+}
+
+.stage-cap {
+  font-family: monospace;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.5);
+}
+
+.bgrid {
+  padding: 0;
+}
+
+.bbox {
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 5px 7px;
+  min-width: 100px;
+  background-color: alpha(@surface_container_lowest, 0.12);
+}
+
+.btitle {
+  font-weight: 700;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.75);
+}
+
+.el {
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.62);
+  padding: 1px 0;
+}
+
+.el.hl {
+  outline: 1px solid {{SKIN_ACCENT}};
+  border-radius: 3px;
+  color: {{SKIN_INK}};
+}
+
+.live-bar {
+}
+
+.live-frame {
+  font-family: "JetBrainsMono Nerd Font", "Adwaita Mono", "DejaVu Sans Mono", monospace;
+  font-size: 9px;
+  color: {{SKIN_INK}};
+  background-color: @surface_container_lowest;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 8px;
+}
+
+.diag {
+  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  background-color: alpha(@surface_container_lowest, 0.22);
+  padding: 8px 14px;
+}
+
+.diag-row {
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.diag-row.ok {
+  color: {{SKIN_ACCENT}};
+}
+
+.diag-row.warn {
+  color: @tertiary;
+}
+
+.diag-row.error {
+  color: @error;
+}
+
+.diff {
+  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  background-color: alpha(@surface_container_lowest, 0.22);
+  padding: 8px 14px;
+}
+
+.diff-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: alpha({{SKIN_INK}}, 0.4);
+}
+
+.diff-file {
+  font-family: monospace;
+  font-size: 10px;
+  color: @secondary;
+}
+
+.diff-del {
+  font-family: monospace;
+  font-size: 10px;
+  color: @error;
+}
+
+.diff-add {
+  font-family: monospace;
+  font-size: 10px;
+  color: {{SKIN_ACCENT}};
+}
+
+.diff-ctx {
+  font-family: monospace;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.35);
+}
+
+.studio-right {
+  min-width: 320px;
+  background-color: alpha(@surface_container, 0.26);
+  border-left: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+}
+
+.studio-right-content {
+  background-color: transparent;
+}
+
+.kv {
+  padding: 2px 0;
+}
+
+.kv-label {
+  font-size: 11px;
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.kv-value {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.where-label {
+  font-size: 11px;
+}
+
+.sites {
+  font-family: monospace;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.4);
+}
+
+.grad .stop {
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.grad-note {
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.35);
+}
+
+.picker-title {
+  font-size: 11px;
+}
+
+.picker-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: alpha({{SKIN_INK}}, 0.35);
+}
+
+.cell {
+  padding: 0;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  border: 2px solid transparent;
+}
+
+.cell:hover {
+  border-color: alpha({{SKIN_INK}}, 0.5);
+}
+
+.cell.current {
+  border-color: {{SKIN_INK}};
+}
+
+.named {
+}
+
+.named-row {
+  background-color: transparent;
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: {{SKIN_CELL_PAD}};
+  min-height: 0;
+}
+
+.named-row:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.named-row.current {
+  border-color: {{SKIN_ACCENT}};
+  background-color: alpha({{SKIN_ACCENT}}, 0.10);
+}
+
+.chip {
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha(@outline, 0.4);
+}
+
+.ph {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.tok {
+  font-family: monospace;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.4);
+}
+
+.hexrow {
+  padding-top: 2px;
+}
+
+.hex-entry {
+  background-color: @surface_container;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 4px 7px;
+  font-family: monospace;
+  font-size: 11px;
+  color: {{SKIN_INK}};
+  min-height: 0;
+}
+
+.color-button {
+  background-color: @surface_container;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 0;
+  min-width: 44px;
+  min-height: 28px;
+}
+
+.scope-row {
+}
+
+.footer {
+  background-color: alpha(@surface_container, 0.55);
+  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  padding: 10px 14px;
+}
+
+.btn {
+  background-color: @surface_container;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  color: {{SKIN_INK}};
+  font-size: {{SKIN_TEXT_SIZE}};
+  padding: 7px;
+  min-height: 0;
+}
+
+.btn.primary {
+  background-color: {{SKIN_ACCENT}};
+  border-color: {{SKIN_ACCENT}};
+  color: @on_primary;
+}
+
+.anat {
+  margin-top: 4px;
+  padding: 9px 11px;
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  background-color: {{SKIN_BG_CARD}};
+}
+
+.anat-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.anat-swatch {
+  min-width: 18px;
+  min-height: 18px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha(@outline, 0.4);
+}
+
+.modchip {
+  font-family: monospace;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: {{SKIN_RADIUS_PILL}};
+  background-color: alpha({{SKIN_INK}}, 0.08);
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.modchip.on {
+  background-color: alpha({{SKIN_ACCENT}}, 0.35);
+  color: @on_primary;
+}
+
+.modchip.off {
+  background-color: transparent;
+  border: {{SKIN_HAIRLINE_W}} dashed alpha({{SKIN_INK}}, 0.30);
+  color: alpha({{SKIN_INK}}, 0.35);
+}
+
+.coverage-meter-label {
+  font-size: 9px;
+  color: alpha({{SKIN_INK}}, 0.45);
+}
+
+.coverage-meter {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.btop-frame {
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 8px 10px;
+  font-family: "JetBrainsMono Nerd Font", "Adwaita Mono", "DejaVu Sans Mono", monospace;
+  font-size: 11px;
+}
+
+.btop-topbar-row {
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.btop-column {
+  min-width: 0;
+}
+
+.btop-box {
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 2px 5px 4px;
+  background-color: alpha(@surface_container_lowest, 0.12);
+}
+
+.btop-row {
+  min-height: 0;
+}
+
+.btop-text {
+  font-size: 10.5px;
+}
+
+.btop-title {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.btop-value,
+.btop-lab {
+  font-size: 10.5px;
+}
+
+.btop-graph {
+  font-family: "JetBrainsMono Nerd Font", "Adwaita Mono", "DejaVu Sans Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0;
+}
+
+.btop-meter {
+  font-family: "JetBrainsMono Nerd Font", "Adwaita Mono", "DejaVu Sans Mono", monospace;
+  font-size: 11px;
+}
+
+.btop-meter-bar {
+  min-height: 14px;
+}
+
+.btop-core-name {
+  font-size: 9.5px;
+}
+
+.btop-cores {
+  padding: 1px 0;
+}
+
+.btop-tabs {
+  font-size: 9.5px;
+}
+
+.btop-subbox {
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 2px 4px;
+  background-color: alpha(@surface_container_lowest, 0.10);
+}
+
+.btop-proc-cell {
+  font-size: 9px;
+}
+
+.btop-chip {
+  font-size: 9px;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 0 3px;
+}
+
+.btop-dim {
+  opacity: 0.85;
+}
+
+.leader-line {
+  min-height: 1px;
+  margin-top: 7px;
+}
+
+.key-hit {
+  background-color: transparent;
+  background-image: none;
+  border: {{SKIN_HAIRLINE_W}} solid transparent;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 0 1px;
+  min-height: 0;
+  min-width: 0;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.key-hit:hover {
+  border-color: alpha({{SKIN_INK}}, 0.35);
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.meter-hit,
+.value-hit,
+.title-hit,
+.leader-hit,
+.tab-hit,
+.graph-hit,
+.chip-hit,
+.topbar-battery {
+  padding: 0;
+}

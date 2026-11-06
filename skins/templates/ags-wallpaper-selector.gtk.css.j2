@@ -1,0 +1,208 @@
+/*
+ * skins/templates/ags-wallpaper-selector.gtk.css.j2 — selector dialog paint.
+ *
+ * Extracted from ../ags-wallpaper-selector/style.css. The dialog panel takes
+ * bg-panel/border-w/border/radius-panel/shadow/blur. Cards, the crumb and the
+ * hover bar take bg-card/radius-card + hairline-w; fields and back/quick
+ * controls take radius-cell; the LIVE badge and Apply pill take radius-pill.
+ * Ink, ink-dim, accent and title/text sizes are skin knobs. Thumbnail radii,
+ * margins, dock sizes and small type stay source literals.
+ *
+ * The selected-card ring is the source selection literal (@primary plus a
+ * primary-container tint), not a skin token.
+ */
+window#wallpaper-selector-window {
+  background-color: transparent;
+  color: {{SKIN_INK}};
+  font-family: {{SKIN_FONT_FAMILY}};
+}
+
+.ws-root {
+  min-width: 920px;
+  min-height: 600px;
+}
+
+.ws-panel {
+  background-color: {{SKIN_BG_PANEL}};
+  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border-radius: {{SKIN_RADIUS_PANEL}};
+  padding: 14px 16px 12px;
+  box-shadow: {{SKIN_SHADOW}};
+  backdrop-filter: {{SKIN_BLUR}};
+}
+
+.ws-search {
+  background-color: @surface_container;
+  color: {{SKIN_INK}};
+  border: none;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 4px 8px;
+  min-height: 26px;
+}
+
+.ws-search placeholder {
+  color: alpha({{SKIN_INK}}, 0.55);
+}
+
+.ws-ui-icon {
+  opacity: 0.9;
+}
+
+.ws-crumb {
+  background-color: {{SKIN_BG_CARD}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 10px 14px;
+}
+
+.ws-crumb-thumb {
+  border-radius: 8px;
+}
+
+.ws-crumb-name {
+  font-size: {{SKIN_TITLE_SIZE}};
+  font-weight: 700;
+}
+
+.ws-crumb-sub {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
+
+.ws-back {
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.25);
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 6px 14px;
+}
+
+.ws-back:hover {
+  border-color: {{SKIN_ACCENT}};
+}
+
+.ws-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: {{SKIN_INK_DIM}};
+}
+
+.ws-scroll {
+  border-radius: 8px;
+}
+
+.ws-card {
+  background-color: {{SKIN_BG_CARD}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 0;
+}
+
+.ws-card:hover {
+  border-color: {{SKIN_ACCENT}};
+}
+
+.ws-card.selected {
+  border: 2px solid @primary;
+  background-color: alpha(@primary_container, 0.12);
+}
+
+.ws-thumb {
+  border-radius: 11px 11px 0 0;
+}
+
+.ws-thumb-loading {
+  background-color: alpha({{SKIN_INK}}, 0.07);
+}
+
+.ws-card-name {
+  font-size: {{SKIN_TEXT_SIZE}};
+  margin: 6px 10px 0;
+}
+
+.ws-card-sub {
+  font-size: 11px;
+  color: {{SKIN_INK_DIM}};
+  margin: 0 10px 8px;
+}
+
+.ws-live {
+  font-size: 10px;
+  font-weight: 700;
+  background-color: {{SKIN_ACCENT}};
+  color: @on_primary;
+  border-radius: {{SKIN_RADIUS_PILL}};
+  padding: 1px 7px;
+  margin: 6px 6px 0 0;
+}
+
+.ws-hoverbar {
+  background-color: {{SKIN_BG_CARD}};
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 3px;
+  margin: 0 6px 6px 0;
+  min-height: 0;
+}
+
+.ws-busy .ws-variant-apply,
+.ws-busy .ws-quick {
+  opacity: 0.38;
+}
+
+.ws-quick {
+  background-color: @primary_container;
+  color: @on_primary_container;
+  font-weight: 600;
+  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: 4px 14px;
+  margin: 0;
+  min-height: 0;
+  font-size: {{SKIN_TEXT_SIZE}};
+}
+
+.ws-quick:hover {
+  background-color: @primary;
+  color: @on_primary;
+}
+
+.ws-variant {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.ws-variant .ws-thumb {
+  border-radius: 8px;
+}
+
+.ws-variant-name {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: alpha({{SKIN_INK}}, 0.85);
+  margin-top: 6px;
+}
+
+.ws-variant-apply {
+  font-size: 11px;
+  background-color: alpha({{SKIN_INK}}, 0.14);
+  color: {{SKIN_INK}};
+  border-radius: {{SKIN_RADIUS_PILL}};
+  padding: 2px 14px;
+  margin-top: 4px;
+}
+
+.ws-variant-apply:hover {
+  background-color: @primary;
+  color: @on_primary;
+}
+
+.ws-empty {
+  color: {{SKIN_INK_DIM}};
+  border: {{SKIN_HAIRLINE_W}} dashed alpha({{SKIN_INK}}, 0.25);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 22px;
+}
+
+.ws-status {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: {{SKIN_INK_DIM}};
+}
