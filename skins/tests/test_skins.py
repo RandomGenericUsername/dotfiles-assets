@@ -691,8 +691,14 @@ def test_frozen_glass_values() -> None:
     assert glass["groups"]["layout"]["ags"] == {
         "panel-width": 312,
         "bt-list-spacing": 4,
-        "bar-row-height": 0,
-        "chip-min": 0,
+    }
+    assert glass["groups"]["layout"]["ags-icme"] == {
+        "root-width": 1280,
+        "root-height": 800,
+    }
+    assert glass["groups"]["layout"]["ags-wallpaper-selector"] == {
+        "root-width": 960,
+        "root-height": 640,
     }
     assert "mode" not in glass
 
@@ -706,8 +712,6 @@ def test_frozen_flat_and_paper_values() -> None:
     assert flat["groups"]["surface"]["panel"]["bg"] == "transparent"
     assert flat["groups"]["surface"]["pill"]["radius"] == 999
     assert flat["groups"]["type"]["size-title"] == 15
-    assert flat["groups"]["layout"]["ags"]["bar-row-height"] == 28
-    assert flat["groups"]["layout"]["ags"]["chip-min"] == 48
 
     assert paper["groups"]["surface"]["panel"]["bg"] == "@surface_container_lowest"
     assert paper["groups"]["surface"]["panel"]["border"] == "alpha(@on_surface, 0.22)"
@@ -721,9 +725,33 @@ def test_frozen_flat_and_paper_values() -> None:
     assert paper["groups"]["layout"]["ags"] == {
         "panel-width": 312,
         "bt-list-spacing": 6,
-        "bar-row-height": 30,
-        "chip-min": 52,
     }
+
+
+def test_layout_defaults_preserve_the_apps_pre_v2_window_sizes() -> None:
+    """Every skin keeps the app defaults; only paint/rhythm differs per skin."""
+    for name in ("glass", "flat", "paper"):
+        layout = load_manifest(name)["groups"]["layout"]
+        assert layout["ags-icme"] == {"root-width": 1280, "root-height": 800}, name
+        assert layout["ags-wallpaper-selector"] == {
+            "root-width": 960,
+            "root-height": 640,
+        }, name
+        # Retired v1 knobs: no app source reads them.
+        assert "bar-row-height" not in layout["ags"], name
+        assert "chip-min" not in layout["ags"], name
+        # Real TSX literals and the CSS-derived cleanup candidates stay put.
+        assert layout["ags"] == {
+            "panel-width": 312,
+            "bt-list-spacing": 4 if name != "paper" else 6,
+        }, name
+        assert layout["ags-clipboard"] == {"card-width": 260}, name
+        assert layout["ags-notifications"] == {"card-width": 380}, name
+        assert layout["ags-capture"] == {"panel-width": 560}, name
+        assert layout["ags-btop-studio"] == {
+            "left-width": 280,
+            "right-width": 320,
+        }, name
 
 
 def test_paper_declares_explicit_light_mode_overrides() -> None:

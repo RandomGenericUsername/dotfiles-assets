@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.12.2 — Layout defaults preserve the apps' pre-v2 window sizes
+
+### Fixed
+
+- **The default skin no longer resizes ICME or the wallpaper selector.**
+  `layout.ags-icme.root-width` / `root-height` were `960 × 600` and
+  `layout.ags-wallpaper-selector.root-width` / `root-height` were `920 × 600`:
+  both pairs came from the apps' CSS `min-width`/`min-height`, but the apps use
+  the tokens as default window sizes. Their pre-v2 TSX defaults are
+  `1280 × 800` (`ags-icme@v0.3.0:ui/EditorWindow.tsx:612-613`) and
+  `960 × 640`
+  (`ags-wallpaper-selector@v0.3.0:ui/WallpaperSelectorWindow.tsx:600-601`).
+  `glass`, `flat` and `paper` now carry those values, so a consumer on the
+  default skin keeps the pre-v2 behaviour.
+- **Two dead bar tokens are gone.** `layout.ags.bar-row-height` and
+  `layout.ags.chip-min` are removed from all three manifests; no app source
+  reads them. `layout.ags.panel-width = 312` and
+  `layout.ags.bt-list-spacing = 4` remain because they are real TSX literals
+  (`ags-bar@v0.3.0:settings-panel/SettingsPanel.tsx:22` and
+  `components/bluetooth/BluetoothContent.tsx:750,798`).
+
+### Notes
+
+- **The remaining layout audit.** `layout.ags-clipboard.card-width = 260`
+  (`ags-clipboard@v0.3.0:ui/ItemCard.tsx:179`) and
+  `layout.ags-notifications.card-width = 380`
+  (`ags-notifications@v0.3.0:ui/NotificationsWindow.tsx:60`) are real TSX
+  literals and stay. `layout.ags-capture.panel-width = 560` and
+  `layout.ags-btop-studio.left-width` / `right-width = 280` / `320` came from
+  CSS `min-width` values, not TSX literals; the apps read them today, so they
+  are kept and recorded as **cleanup candidates** in `skins/README.md` and the
+  ticket. A follow-up decides whether they remain skin tokens or move back to
+  TSX literals.
+- **Consumer follow-up.** The migrated app fallbacks still name the old CSS
+  minima (`ags-icme/ui/EditorWindow.tsx:88-89` = 960/600,
+  `ags-wallpaper-selector/ui/WallpaperSelectorWindow.tsx:83-90` = 920/600).
+  The `v0.12.2` default skin supplies the correct values, but the app
+  repositories should align their fallbacks in their own commits.
+- **PATCH, no path or schema change.** No class directory, file path,
+  `schema_major` or template variable changed; `skins/tests/` pins the new
+  layout defaults and the removed bar tokens.
+
 ## v0.12.1 — Hypr autostart leaves always-on AGS to systemd
 
 ### Changed

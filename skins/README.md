@@ -32,12 +32,12 @@ is `1.5` in `glass`; `surface.card`, `surface.control` and `surface.pill` own
 their own `1` hairlines. `surface.cell` is deliberately borderless (`transparent`,
 width `0`) because a transparent border changes allocated height.
 
-**`layout.<app>` is TSX-owned.** `layout.ags.panel-width`,
-`layout.ags.bt-list-spacing`, `layout.ags.bar-row-height` and
-`layout.ags.chip-min` (plus the other apps' observed metrics) stay in the
-manifest and resolved `tokens.json` for `skinValue()`, but a template MUST NOT
-expand them into CSS (`min-width`, `margin`, `min-height`). A layout
-placeholder in a template is a gate failure.
+**`layout.<app>` is TSX-owned.** `layout.ags.panel-width` and
+`layout.ags.bt-list-spacing` (plus the other apps' observed metrics) stay in
+the manifest and resolved `tokens.json` for `skinValue()`, but a template MUST
+NOT expand them into CSS (`min-width`, `margin`, `min-height`). A layout
+placeholder in a template is a gate failure. `bar-row-height` and `chip-min`
+were retired in `v0.12.2`: no app source reads them.
 
 ## Layout
 
@@ -120,7 +120,34 @@ renders.
 | `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` |
 | `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` |
 | `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` |
-| `layout.ags` panel-width / bt-list-spacing / bar-row-height / chip-min | 312 / 4 / 0 / 0 | 312 / 4 / 28 / 48 | 312 / 6 / 30 / 52 |
+| `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 |
+
+### Layout defaults preserve the apps' pre-v2 window sizes
+
+`v0.12.2` corrects two blocks that were extracted from CSS minima instead of
+the apps' default window size. All three skins carry the same values, so the
+default skin keeps the pre-v2 behaviour:
+
+| Block | Value | Source of truth |
+| --- | --- | --- |
+| `layout.ags-icme.root-width` / `root-height` | 1280 / 800 | `ags-icme@v0.3.0:ui/EditorWindow.tsx:612-613` |
+| `layout.ags-wallpaper-selector.root-width` / `root-height` | 960 / 640 | `ags-wallpaper-selector@v0.3.0:ui/WallpaperSelectorWindow.tsx:600-601` |
+
+The rest of the layout audit:
+
+| Block | Value | Verdict |
+| --- | --- | --- |
+| `layout.ags.panel-width` | 312 | keep — real TSX literal (`ags-bar@v0.3.0:settings-panel/SettingsPanel.tsx:22`) |
+| `layout.ags.bt-list-spacing` | 4 (`paper` 6) | keep — real TSX literal (`ags-bar@v0.3.0:components/bluetooth/BluetoothContent.tsx:750,798`) |
+| `layout.ags-clipboard.card-width` | 260 | keep — real TSX literal (`ags-clipboard@v0.3.0:ui/ItemCard.tsx:179`) |
+| `layout.ags-notifications.card-width` | 380 | keep — real TSX literal (`ags-notifications@v0.3.0:ui/NotificationsWindow.tsx:60`) |
+| `layout.ags-capture.panel-width` | 560 | **cleanup candidate** — CSS `min-width` only (`ags-capture-tool@v0.5.0:style.css:793,997`); the app reads the token today, so it is unchanged here |
+| `layout.ags-btop-studio.left-width` / `right-width` | 280 / 320 | **cleanup candidate** — CSS `min-width` only (`ags-btop-theme-studio@v0.3.0:style.css:42,241`); the app reads the tokens today, so they are unchanged here |
+
+The capture panel width and btop rail widths stay skin tokens for now because
+the migrated apps read them (`app.tsx:50` / `SettingsPage.tsx:344`;
+`StudioWindow.tsx:197-198,371,784`). A follow-up decides whether they remain
+authored skin metrics or move back to TSX literals.
 
 `glass` is the value a consumer uses when no skin is selected. Its declarations
 are a **literal extraction** of today's `../ags-bar/style.css`, not a
@@ -133,8 +160,10 @@ roles; it does not add a second variant.
 
 Other namespaces (`layout.ags-capture`, `layout.ags-clipboard`,
 `layout.ags-notifications`, `layout.ags-wallpaper-selector`, `layout.ags-icme`,
-`layout.ags-btop-studio`) carry the app metrics observed in their canonical
-stylesheets and remain TSX-owned.
+`layout.ags-btop-studio`) carry the app metrics from the audit above and remain
+TSX-owned. The two window-size blocks preserve the apps' pre-v2 defaults;
+capture and btop are recorded cleanup candidates, not CSS minima promoted to
+permanent skin semantics.
 
 ## `paper` is mode-aware now
 

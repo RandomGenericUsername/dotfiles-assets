@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.12.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.12.2`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -44,7 +44,10 @@ schemas for provenance. The v2 groups are `surface.{panel,card,cell,control,pill
 `mode.dark`/`mode.light` overrides; numeric lengths are unitless and the expander appends `px`,
 letter-spacing renders as `em`, and font-weight stays unitless. Per-role borders replace the v1
 global `border-w`/hairline split. Layout metrics are TSX-owned: they stay in the manifest and
-resolved `tokens.json` for `skinValue()` but the templates never emit them as CSS. Since `v0.12.0`
+resolved `tokens.json` for `skinValue()` but the templates never emit them as CSS. The default skin
+preserves the apps' pre-v2 window sizes (`ags-icme` 1280×800, `ags-wallpaper-selector` 960×640);
+`ags-capture.panel-width` and the `ags-btop-studio` rail widths stay as CSS-min-derived cleanup
+candidates because the apps read them today. Since `v0.12.0`
 `paper` declares an explicit `mode.light` branch instead of guessing from the palette. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
