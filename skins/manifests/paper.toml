@@ -11,6 +11,7 @@ radius-card = 4
 radius-cell = 3
 radius-pill = 999
 border-w = 1
+hairline-w = 1
 
 [rhythm]
 gap = 9

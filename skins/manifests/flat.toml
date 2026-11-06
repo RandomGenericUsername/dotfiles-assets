@@ -9,6 +9,7 @@ radius-card = 0
 radius-cell = 0
 radius-pill = 999
 border-w = 0
+hairline-w = 0
 
 [rhythm]
 gap = 8

@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.9.1
+tag: v0.10.0
 
 classes:
   icons:
@@ -78,4 +78,4 @@ classes:
       - tests
     schema: skins/schema.json
     schema_major: 1
-    contents: 3 frozen v1 TOML manifests (glass default/fallback parity with today's ags-bar look, flat, paper) with unitless numeric tokens, one GTK settings/Bluetooth template named ags.gtk.css.j2 (target configDir ags; the expander renders ags.css), the vendored canonical contracts set (token, manifest, resolved skin.json) pinned by tag v0.5.2 and sha256, the local schema envelope delegating token types to it and naming the resolved-document schema, and the pytest fixture set including template-name, glass-vs-source parity/deviation and numeric-string rejection fixtures; no structure/variant tokens, no literal hex, no transitions
+    contents: 3 frozen v1 TOML manifests (glass default/fallback parity with today's ags-bar look, flat, paper) with 24 unitless numeric/string tokens including the shape split border-w (panel/frame) and hairline-w (card/control/badge), one GTK settings/Bluetooth template named ags.gtk.css.j2 (target configDir ags; the expander renders ags.css; layout tokens are TSX-owned and never emitted as CSS), the vendored canonical contracts set (token, manifest, resolved skin.json) pinned by tag v0.6.0 and sha256, the local schema envelope delegating token types to it and naming the resolved-document schema, and the pytest fixture set including template-name, glass-vs-source hairline/layout parity and numeric-string rejection fixtures; no structure/variant tokens, no literal hex, no transitions

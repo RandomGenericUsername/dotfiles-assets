@@ -95,9 +95,8 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         ["background-color: alpha(@surface, 0.01)"],
     ),
     ".settings-surface": (
-        "style.css:161-166 + token extras (panel width, shadow/blur none)",
+        "style.css:161-166 + token extras (shadow/blur none)",
         [
-            "min-width: 312px",
             "background-color: alpha(@surface, 0.94)",
             "border: 1.5px solid @primary",
             "border-radius: 12px",
@@ -123,19 +122,19 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         ],
     ),
     ".settings-card": (
-        "style.css:181-186 (border width deviation: 1px → 1.5px)",
+        "style.css:181-186 (hairline-w = 1px)",
         [
             "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1.5px solid alpha(@on_surface, 0.10)",
+            "border: 1px solid alpha(@on_surface, 0.10)",
             "border-radius: 9px",
             "padding: 10px 11px",
         ],
     ),
     ".settings-password": (
-        "style.css:556-561 (same paint as the card)",
+        "style.css:556-561 (same paint as the card, hairline-w = 1px)",
         [
             "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1.5px solid alpha(@on_surface, 0.10)",
+            "border: 1px solid alpha(@on_surface, 0.10)",
             "border-radius: 9px",
             "padding: 10px 11px",
         ],
@@ -148,7 +147,7 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         "style.css:194-199 (asymmetric tile padding preserved)",
         [
             "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1.5px solid alpha(@on_surface, 0.10)",
+            "border: 1px solid alpha(@on_surface, 0.10)",
             "border-radius: 9px",
             "padding: 8px 11px 8px 10px",
         ],
@@ -172,7 +171,7 @@ PARITY: dict[str, tuple[str, list[str]]] = {
             "padding: 10px",
             "background-color: alpha(@surface_container_high, 0.18)",
             "background-image: none",
-            "border: 1.5px solid alpha(@on_surface, 0.10)",
+            "border: 1px solid alpha(@on_surface, 0.10)",
             "border-radius: 9px",
             "color: @on_surface",
             "box-shadow: none",
@@ -184,11 +183,9 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         ["font-size: 12px", "font-weight: 600"],
     ),
     ".settings-net": (
-        "style.css:378-387 + cell-pad/radius-cell + bt-list-spacing margin",
+        "style.css:378-387 + cell-pad/radius-cell (row height/spacing are TSX-owned)",
         [
-            "min-height: 0px",
             "padding: 8px 9px",
-            "margin-bottom: 4px",
             "background-color: transparent",
             "background-image: none",
             "border: none",
@@ -219,33 +216,31 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         ["color: alpha(@on_primary_container, 0.85)"],
     ),
     ".settings-badge": (
-        "style.css:422-429 (border width deviation: 1px → 1.5px)",
+        "style.css:422-429 (hairline-w = 1px)",
         [
             "font-size: 9.5px",
             "letter-spacing: 0.05em",
             "padding: 2px 6px",
             "border-radius: 20px",
             "background-color: alpha(@on_surface, 0.12)",
-            "border: 1.5px solid alpha(@on_surface, 0.14)",
+            "border: 1px solid alpha(@on_surface, 0.14)",
         ],
     ),
     ".settings-badge.conn": (
-        "style.css:431-435 (border width deviation: 1px → 1.5px)",
+        "style.css:431-435 (hairline-w = 1px)",
         [
             "background-color: alpha(@primary, 0.18)",
-            "border: 1.5px solid alpha(@primary, 0.45)",
+            "border: 1px solid alpha(@primary, 0.45)",
             "color: @on_surface",
         ],
     ),
     ".settings-rowact": (
-        "style.css:437-448 (border width deviation: 1px → 1.5px)",
+        "style.css:437-448 (hairline-w = 1px; width/height are TSX-owned)",
         [
-            "min-width: 0px",
-            "min-height: 0px",
             "padding: 4px 8px",
             "font-size: 11px",
             "font-weight: 600",
-            "border: 1.5px solid alpha(@on_surface, 0.26)",
+            "border: 1px solid alpha(@on_surface, 0.26)",
             "border-radius: 7px",
             "background-color: transparent",
             "background-image: none",
@@ -326,10 +321,10 @@ PARITY: dict[str, tuple[str, list[str]]] = {
         ],
     ),
     ".settings-wifi-settings-row": (
-        "style.css:759-762 (border width deviation: 1px → 1.5px)",
+        "style.css:759-762 (hairline-w = 1px)",
         [
             "padding: 10px 16px",
-            "border-top: 1.5px solid alpha(@on_surface, 0.06)",
+            "border-top: 1px solid alpha(@on_surface, 0.06)",
         ],
     ),
     ".settings-wifi-settings-row:hover": (
@@ -416,13 +411,15 @@ def test_glass_expansion_keeps_unit_suffixed_lengths() -> None:
     css = render("glass")
     assert glass["shape"]["radius-panel"] == 12
     assert glass["shape"]["border-w"] == 1.5
+    assert glass["shape"]["hairline-w"] == 1
     assert glass["rhythm"]["cell-pad"] == "8px 9px"
     assert "border-radius: 12px;" in css
     assert "border: 1.5px solid @primary;" in css
+    assert "border: 1px solid alpha(@on_surface, 0.10);" in css
     assert "padding: 8px 9px;" in css
     assert "border-radius: 20px;" in css
     assert "font-size: 12.5px;" in css
-    assert "min-width: 312px;" in css
+    assert "min-width: 312px;" not in css
 
 
 def test_glass_matches_today_source_declarations() -> None:
@@ -455,59 +452,106 @@ def test_no_shadow_transition_animation_or_hex() -> None:
                 )
 
 
-def test_documented_deviations_are_explicit() -> None:
+def test_border_ownership_is_documented_and_split() -> None:
     template = TEMPLATE.read_text()
     assert "FIDELITY POLICY" in template
-    assert "DOCUMENTED DEVIATIONS" in template
+    assert "BORDER OWNERSHIP" in template
+    assert "LAYOUT IS TSX-OWNED" in template
     assert "1.5px" in template and "1px" in template
     assert "gap` is not consumed" in template
 
     data = json.loads(DEVIATIONS.read_text())
-    assert data["deviations"], "the deviation fixture must not be empty"
+    assert data["deviations"] == [], (
+        "with hairline-w the glass expansion has no visual border deviation"
+    )
+    assert data["policy"]
+    assert any("hairline-w" in item for item in data["nonvisual"])
+
+
+def test_hairline_widths_match_source() -> None:
+    rules = parse_rules(render("glass"))
+    # The panel keeps the source's 1.5px frame; every source 1px hairline is 1px.
+    assert "border: 1.5px solid @primary" in rules[".settings-surface"]
+    for selector in (
+        ".settings-card",
+        ".settings-password",
+        ".settings-tile",
+        ".settings-mini",
+        ".settings-rowact",
+        ".settings-badge",
+    ):
+        assert any(
+            declaration.startswith("border: 1px solid alpha(")
+            for declaration in rules[selector]
+        ), selector
+    assert "border: 1px solid alpha(@primary, 0.45)" in rules[".settings-badge.conn"]
+    assert "border-top: 1px solid alpha(@on_surface, 0.06)" in rules[
+        ".settings-wifi-settings-row"
+    ]
+    assert not any(
+        declaration.startswith("border: 1.5px solid alpha(")
+        for selector, declarations in rules.items()
+        if selector != ".settings-surface"
+        for declaration in declarations
+    ), "only the panel/frame may use the 1.5px border-w"
+
+
+def test_layout_tokens_are_not_emitted_as_css() -> None:
+    template = TEMPLATE.read_text()
+    for token in (
+        "SKIN_PANEL_WIDTH",
+        "SKIN_BT_LIST_SPACING",
+        "SKIN_BAR_ROW_HEIGHT",
+        "SKIN_CHIP_MIN",
+    ):
+        assert "{{" + token + "}}" not in template, token
+
+    rules = parse_rules(render("glass"))
+    assert "min-width: 312px" not in rules[".settings-surface"]
+    for selector in (".settings-net", ".settings-rowact"):
+        assert not any(
+            declaration.startswith(("min-width:", "min-height:"))
+            for declaration in rules[selector]
+        ), selector
+    assert not any(
+        declaration.startswith("margin-bottom:") for declaration in rules[".settings-net"]
+    )
+
+
+def test_settings_net_height_matches_source_no_border() -> None:
     rules = parse_rules(render("glass"))
     source = source_style()
-    for deviation in data["deviations"]:
-        assert deviation["template"] in rules[deviation["selector"]], deviation
-        assert "1.5px" in deviation["template"]
-        assert "1px" in deviation["source"]
-        if source is not None:
-            ref = deviation["source_ref"]
-            path, lineno = ref.rsplit(":", 1)
-            assert path.endswith("ags-bar/style.css")
-            line = source.read_text().splitlines()[int(lineno) - 1].strip()
-            assert line == deviation["source"], (
-                f"{ref}: expected {deviation['source']!r}, got {line!r}"
-            )
+    net = rules[".settings-net"]
 
+    assert "border: none" in net
+    assert not any(declaration.startswith("border:") and "transparent" in declaration for declaration in net)
+    assert not any(declaration.startswith("margin-bottom:") for declaration in net)
+    assert not any(declaration.startswith("min-height:") for declaration in net)
 
-def test_card_border_deviation_is_the_only_visual_border_delta() -> None:
-    data = json.loads(DEVIATIONS.read_text())
-    by_selector = {item["selector"]: item for item in data["deviations"]}
-    card = by_selector[".settings-card"]
-    assert card["template"] == "border: 1.5px solid alpha(@on_surface, 0.10)"
-    assert card["source"] == "border: 1px solid alpha(@on_surface, 0.10);"
-    assert card["source_ref"].endswith("style.css:183")
-    assert "border-w" in card["reason"]
-    assert all(item["delta"] == "+0.5px (1.5px vs 1px)" for item in data["deviations"])
-
-    rules = parse_rules(render("glass"))
-    # The panel keeps the source's 1.5px; every source 1px hairline is 1.5px here.
-    assert "border: 1.5px solid @primary" in rules[".settings-surface"]
-    for selector in (".settings-card", ".settings-rowact", ".settings-badge"):
-        assert any(
-            declaration.startswith("border: 1.5px solid alpha(")
-            for declaration in rules[selector]
+    if source is not None:
+        block = re.search(
+            r"\.settings-net\s*\{(.*?)\}", source.read_text(), re.DOTALL
         )
+        assert block is not None
+        declarations = {
+            line.strip()
+            for line in block.group(1).splitlines()
+            if line.strip()
+        }
+        assert "border: none;" in declarations
+        assert "min-height: 0;" in declarations
+        assert not any(line.startswith("margin") for line in declarations)
 
 
 def test_gap_is_metadata_not_a_rewritten_padding() -> None:
     css = render("glass")
-    # glass gap is 8px, but the template keeps the source's 11px panel padding,
-    # 10px 11px card padding and 4px list spacing instead of substituting gap.
+    # glass gap is 8px, but the template keeps the source's 11px panel padding
+    # and 10px 11px card padding instead of substituting gap.
     assert "padding: 11px;" in css
     assert "padding: 10px 11px;" in css
-    assert "margin-bottom: 4px;" in css
     assert "padding: 8px;" not in css
+    # Row spacing is widget-level, not a template margin.
+    assert "margin-bottom: 4px;" not in css
 
 
 def test_window_root_has_no_font_size() -> None:

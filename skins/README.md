@@ -6,16 +6,27 @@ variant a host selects, belong to the app. The frozen v1 token groups are:
 
 | Group | Tokens |
 | --- | --- |
-| `shape` | `radius-panel`, `radius-card`, `radius-cell`, `radius-pill`, `border-w` |
+| `shape` | `radius-panel`, `radius-card`, `radius-cell`, `radius-pill`, `border-w`, `hairline-w` |
 | `rhythm` | `gap`, `cell-pad` |
 | `surface` | `bg-panel`, `bg-card`, `border`, `shadow`, `blur` |
 | `ink` | `ink`, `ink-dim`, `accent`, `ink-over` (always `auto`) |
 | `type` | `font-family`, `title-size`, `text-size` |
 | `layout` | `panel-width`, `bt-list-spacing`, `bar-row-height`, `chip-min` |
 
+`border-w` is the outer panel/frame border; `hairline-w` is the card, tile,
+mini, password, row-action and badge hairline (and the Wi-Fi settings top rule).
+The row/cell itself has no border.
+
 There are no `structure`, `variant`, `state`, `density` or `paint` keys. A key
 outside the six groups fails `make validate-skins`; the app owns everything the
 tokens do not describe.
+
+**The four `layout` tokens are TSX-owned.** `panel-width`, `bt-list-spacing`,
+`bar-row-height` and `chip-min` stay in the manifest and in the resolved
+`skin.json` because widgets read them through `skinValue()`, but a template
+MUST NOT expand them into CSS (`min-width`, `margin`, `min-height`). The
+widgets set the panel width, list spacing and row/chip geometry; a declaration
+in both places is a second owner and breaks parity when either side changes.
 
 ## Layout
 
@@ -32,7 +43,7 @@ skins/
   templates/ags.gtk.css.j2          settings + Bluetooth paint rules (target configDir: ags)
   tests/                            pytest fixtures mirroring the validator
   tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string, template name)
-  tests/fixtures/parity/            the explicit glass-vs-source deviation record
+  tests/fixtures/parity/            the glass-vs-source ownership/parity record (no border-width deviation)
 ```
 
 ## Template set: `<configDir>.gtk.css.j2` → `<configDir>.css`
@@ -50,8 +61,9 @@ bar's `configDir` is `ags`. `scripts/validate-skins.py` enforces
 
 ## Value convention: numbers are unitless, `px` is added at render time
 
-The canonical contract types radii, `border-w`, `gap`, `title-size`, `text-size`
-and the four layout tokens as JSON **numbers**, not `"12px"` strings. A manifest
+The canonical contract types radii, `border-w`, `hairline-w`, `gap`,
+`title-size`, `text-size` and the four layout tokens as JSON **numbers**, not
+`"12px"` strings. A manifest
 stores `radius-panel = 12`; the GTK template expands that token as
 `border-radius: 12px`. `cell-pad` is the only length-valued **string** token
 (`"Npx Npx"`) and is emitted verbatim, which is why it keeps its `px` units in
@@ -70,7 +82,8 @@ renders.
 | Token | `glass` (default/fallback) | `flat` | `paper` |
 | --- | --- | --- | --- |
 | `radius-panel/card/cell/pill` | 12 / 9 / 7 / 20 | 0 / 0 / 0 / 999 | 6 / 4 / 3 / 999 |
-| `border-w` | 1.5 | 0 | 1 |
+| `border-w` (panel/frame) | 1.5 | 0 | 1 |
+| `hairline-w` (card/control/badge) | 1 | 0 | 1 |
 | `gap` / `cell-pad` | 8 / `8px 9px` | 8 / `7px 8px` | 9 / `8px 10px` |
 | `bg-panel` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` |
 | `bg-card` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` |
@@ -94,12 +107,13 @@ rhythm and surface roles; it does not add a second variant.
 ## What the GTK template does and does not control (v1 limitations)
 
 `templates/ags.gtk.css.j2` uses a `SKIN_*` placeholder **only** where the
-frozen token is a genuine global knob: panel background/border/border-width/
-radius/shadow/blur, card background/radius, cell radius/padding, control radius,
-pill radius, ink/ink-dim/accent, `title-size`/`text-size`, and layout metrics.
+frozen token is a genuine global knob: panel background/frame border/
+`border-w`/`hairline-w`/radius/shadow/blur, card background/radius, cell
+radius/padding, control radius, pill radius, ink/ink-dim/accent,
+`title-size`/`text-size`. It does **not** consume the layout tokens.
 
 Everything else is a component literal copied from today's `style.css`, because
-the frozen 23-token contract has no token for it. A second token would be a
+the frozen 24-token contract has no token for it. A second token would be a
 contract change, and a "density"/"structure" token is explicitly forbidden.
 The literals are:
 
@@ -114,25 +128,26 @@ The literals are:
 | scrollbar | `5px` (`:175-176`) | fixed widget detail |
 | level-slider pill/thumb | `99px`, `50%`, `15px` (`:350-371`) | fixed control geometry; the native switch is app-owned |
 | back button/nav header | `26px`, `8px`, `18px`, `13.5px`, `7px` (`:287-325`) | header measurements have no matching token |
-| signal cell | `30px` (`:711-715`) | row content size, not `bar-row-height = 0px` |
+| signal cell | `30px` (`:711-715`) | row content size; `bar-row-height` is TSX-owned/not a template knob |
 
-`gap` is manifest metadata in v1: every gap-looking declaration is a component
-padding or the separate `bt-list-spacing` metric, so rewriting it to `gap`
-would make glass *less* faithful. The window root gets
+`gap` and the four layout tokens are manifest metadata: every gap-looking
+declaration is a component padding, and row height/list spacing/panel width are
+set by the widgets. Rewriting them into the template would make glass *less*
+faithful and double-own the geometry. The window root gets
 `font-family: {{SKIN_FONT_FAMILY}}` only — today it inherits `font-size`, so the
 template deliberately emits no root `font-size`.
 
-**One visual deviation is unavoidable.** The contract has a single `border-w`.
-Today the panel is `1.5px` (`:163`) while cards (`:183`), row actions (`:442`),
-badges (`:428`/`:433`) and the Wi-Fi settings top rule (`:761`) are `1px`.
-`glass` keeps the panel's `1.5px`, so those hairlines render **`1.5px` instead
-of `1px` (+0.5px)**. `tests/fixtures/parity/deviations.json` records each case
-with its source line; `tests/test_parity.py` asserts the rendered declaration
-and, when the read-only `../ags-bar` tree is present, the exact source line.
-Template-only declarations with no visual change (`min-width: 312px`,
-`margin-bottom: 4px` from widget spacing `4`, `min-height/min-width: 0px`,
-`box-shadow: none`, `backdrop-filter: none`, `font-family: inherit`) are listed
-in that fixture too.
+**There is no border-width deviation.** `border-w` is the outer panel/frame
+border: `1.5px` in glass (`style.css:163`). `hairline-w` is the card,
+row-action, badge and password hairline and the Wi-Fi settings top rule: `1px`
+in the source (`:183`, `:442`, `:428`/`:433`, `:559`, `:761`). The expanded
+glass therefore matches the source widths exactly. `.settings-net` keeps
+`border: none`; it has no `margin-bottom` and no layout `min-height`, so its
+allocated row height matches the source's 50px rather than the 54px produced by
+the former template overlay. `tests/fixtures/parity/deviations.json` records
+the split and the nonvisual rules (shadow/blur `none`, `font-family: inherit`);
+`tests/test_parity.py` asserts the rendered declarations and, when the read-only
+`../ags-bar` tree is present, the exact source lines.
 
 ## `paper` is a palette-mode axis, not a baked light theme
 
@@ -175,12 +190,13 @@ validates the same types a consumer will parse.
   types, the unit-rule expansion, the template naming rule, and that a resolved
   glass `skin.json` validates against the vendored `skin-json` schema.
 
-At `v0.9.1` the vendored set is pinned at `contracts=v0.5.2`, the artifact-
-interface release that names `<configDir>.gtk.css.j2` and freezes
-`schemas/skin-json.schema.json`. The token/manifest pair is byte-identical to
-`v0.5.1` (the unit-convention patch), so the recorded hashes are unchanged;
-re-vendoring is a tag/hash update, not a schema rewrite. Do not claim a tag whose
-bytes are not present.
+At `v0.10.0` the vendored set is pinned at `contracts=v0.6.0`, the
+hairline/layout-ownership release. It adds the numeric `hairline-w` shape token
+(24 tokens total), keeps the `v0.5.1` unit convention, and declares the four
+layout tokens TSX-owned: they remain in the manifest/`skin.json` for
+`skinValue()` but templates MUST NOT expand them into CSS. Do not claim a tag
+whose bytes are not present; re-vendor from the tag and update the PIN hashes in
+the same change.
 
 ## Template rules
 
@@ -219,5 +235,6 @@ numeric-string rejection, and a resolved glass `skin.json` against the vendored
 `skin-json` schema.
 `skins/tests/test_parity.py` expands `glass` through `validate-skins`' own
 unit-rule expander and compares the result with the source declarations (with
-line references), the explicit deviation fixture, and the no-shadow/no-transition/
-no-hex rules.
+line references): the `1.5px` panel vs `1px` hairlines, `.settings-net` with
+`border: none` and no layout margin/height, no emitted layout placeholder, the
+empty deviation fixture, and the no-shadow/no-transition/no-hex rules.

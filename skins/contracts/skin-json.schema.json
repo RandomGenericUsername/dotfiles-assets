@@ -34,7 +34,8 @@
         "radius-card",
         "radius-cell",
         "radius-pill",
-        "border-w"
+        "border-w",
+        "hairline-w"
       ],
       "properties": {
         "radius-panel": {
@@ -50,6 +51,9 @@
           "$ref": "#/definitions/nonNegativeNumber"
         },
         "border-w": {
+          "$ref": "#/definitions/number"
+        },
+        "hairline-w": {
           "$ref": "#/definitions/number"
         }
       }

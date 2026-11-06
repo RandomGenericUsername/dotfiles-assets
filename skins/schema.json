@@ -1,11 +1,11 @@
 {
-  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata; the vendored skin-json schema validates the resolved runtime document (version 1 + the same six groups) and the template set is named <configDir>.gtk.css.j2. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
+  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/hairline-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata; the vendored skin-json schema validates the resolved runtime document (version 1 + the same six groups) and the template set is named <configDir>.gtk.css.j2. border-w is the outer panel/frame border; hairline-w is the card/control/badge hairline. The layout tokens are TSX-owned and templates MUST NOT emit them as CSS. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "skins/schema.json",
   "title": "dotfiles-assets skin manifest v1",
   "schema_major": 1,
   "contract": "skins",
-  "status": "populated (v0.9.1)",
+  "status": "populated (v0.10.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
@@ -13,7 +13,7 @@
       "schemas/skin-manifest.schema.json",
       "schemas/skin-json.schema.json"
     ],
-    "tag": "v0.5.2",
+    "tag": "v0.6.0",
     "vendored": true,
     "pin": "skins/contracts/PIN",
     "vendored_paths": [
@@ -29,7 +29,7 @@
       "path": "skins/contracts/skin-json.schema.json",
       "note": "The runtime emits one shared current/skin.json: version 1 plus the six frozen token groups, with numeric tokens as raw JSON numbers. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
     },
-    "note": "Byte-for-byte copies of the canonical token, manifest and resolved-document schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.5.2, the artifact-interface release: templates are named <configDir>.gtk.css.j2 (the expander renders <configDir>.css), the runtime document is skin.json, and the v0.5.1 unit convention still holds (numeric tokens are unitless JSON numbers; the CSS expander adds px; cell-pad is the only literal length-pair string). Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
+    "note": "Byte-for-byte copies of the canonical token, manifest and resolved-document schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.6.0, the hairline/layout-ownership release: the vocabulary is 24 tokens with the numeric shape split border-w (outer panel/frame) and hairline-w (card, row-action and badge hairlines), templates are named <configDir>.gtk.css.j2 (the expander renders <configDir>.css), the runtime document is skin.json, and the v0.5.1 unit convention still holds (numeric tokens are unitless JSON numbers; the CSS expander adds px; cell-pad is the only literal length-pair string). The layout tokens (panel-width, bt-list-spacing, bar-row-height, chip-min) stay in the manifest and skin.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS. Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
   },
   "palette": {
     "vocabulary": "palette.v1",
@@ -103,7 +103,8 @@
         "radius-card",
         "radius-cell",
         "radius-pill",
-        "border-w"
+        "border-w",
+        "hairline-w"
       ],
       "rhythm": [
         "gap",
@@ -184,7 +185,8 @@
         "radius-card",
         "radius-cell",
         "radius-pill",
-        "border-w"
+        "border-w",
+        "hairline-w"
       ],
       "properties": {
         "radius-panel": {
@@ -200,6 +202,9 @@
           "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
         },
         "border-w": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "hairline-w": {
           "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
         }
       }

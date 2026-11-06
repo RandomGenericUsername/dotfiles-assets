@@ -1,34 +1,37 @@
 /*
- * skins/templates/ags-bar.gtk.css.j2 — settings + Bluetooth paint rules.
+ * skins/templates/ags.gtk.css.j2 — settings + Bluetooth paint rules.
  *
  * FIDELITY POLICY (skin spec v1)
  * -----------------------------
  * `glass` is a faithful extraction of today's ../ags-bar/style.css, not a
  * design-system re-expression of it. A SKIN_* placeholder is used ONLY
- * where the frozen token is a genuine global knob: panel background / border /
- * border-width / radius / shadow / blur, card background / radius, cell radius
- * / padding, control radius, pill radius, ink / ink-dim / accent, title-size /
- * text-size, and layout metrics. Everything else is a component literal copied
- * from style.css, expressed with palette roles only (never a hex colour).
+ * where the frozen token is a genuine global knob: panel background / frame
+ * border / border-width / radius / shadow / blur, hairline width, card
+ * background / radius, cell radius / padding, control radius, pill radius,
+ * ink / ink-dim / accent, and title-size / text-size. Everything else is a
+ * component literal copied from style.css, expressed with palette roles only
+ * (never a hex colour).
  *
- * DOCUMENTED DEVIATIONS (glass, with numbers)
- * -------------------------------------------
- * 1. One `border-w` cannot split the panel from the hairlines. style.css uses
- *    1.5px on .settings-surface (:163) but 1px on cards (:183), row actions
- *    (:442), badges (:428) and the Wi-Fi settings top rule (:760). The frozen
- *    23-token contract has a single border-w, and glass keeps the panel's
- *    1.5px, so those hairlines render at 1.5px (0.5px thicker than today).
- *    2. Template-only declarations with no visual change: min-width: 312px on
- *    .settings-surface (the width is set by SettingsPanel.tsx:22),
- *    margin-bottom: 4px on .settings-net (the list spacing is widget-level 4
- *    in BluetoothContent.tsx:750/:798), min-height/min-width: 0px from the
- *    layout tokens, box-shadow: none / backdrop-filter: none from the
- *    shadow/blur tokens, and font-family: inherit on the window root where
- *    today inherits without a declaration. The window root deliberately has no
- *    font-size (today inherits it).
- * 3. `gap` is not consumed here: every gap-looking source declaration is a
- *    component padding or the separate bt-list-spacing metric. It remains
- *    manifest metadata in v1.
+ * BORDER OWNERSHIP (v2)
+ * ---------------------
+ * `border-w` is the outer panel/frame border: 1.5px on .settings-surface
+ * (:163). `hairline-w` is the card tile, row action and badge hairline: 1px
+ * on cards (:183), row actions (:442), badges (:428/:433) and the Wi-Fi
+ * settings top rule (:761). The row/cell itself has NO border (border: none,
+ * :378-387); a transparent border would change its allocated height
+ * (measured 54px instead of 50px).
+ *
+ * LAYOUT IS TSX-OWNED. `panel-width`, `bt-list-spacing`, `bar-row-height` and
+ * `chip-min` remain in the manifest and resolved skin.json for `skinValue()`,
+ * but this template MUST NOT expand them into CSS. The widgets set the panel
+ * width (SettingsPanel.tsx), list spacing (BluetoothContent.tsx) and row/chip
+ * geometry; emitting min-width, margin or min-height here would be a second
+ * owner and break parity when either side changes. The template uses the
+ * source's literal component measurements instead (for example the 30px
+ * signal glyph).
+ *
+ * `gap` is not consumed here: every gap-looking source declaration is a
+ * component padding. It remains manifest metadata in v1.
  *
  * The app owns this selector vocabulary and the widget structure. There are no
  * structure or variant tokens, no literal hex colours and no CSS transition
@@ -60,7 +63,6 @@ window.settings-catcher {
 
 /* style.css:161-166 — no box-shadow and no backdrop-filter in the source. */
 .settings-surface {
-  min-width: {{SKIN_PANEL_WIDTH}};
   background-color: {{SKIN_BG_PANEL}};
   border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
   border-radius: {{SKIN_RADIUS_PANEL}};
@@ -84,11 +86,11 @@ window.settings-catcher {
 
 /* Cards. .settings-password shares the card paint (style.css:556-561);
    .settings-tile and .settings-mini have their own padding (:194-199, :260-268).
-   The card border is 1px in the source and 1.5px here — see deviation 1. */
+   The card hairline is 1px in the source (`:183`, `:559`). */
 .settings-card,
 .settings-password {
   background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.10);
   border-radius: {{SKIN_RADIUS_CARD}};
   padding: 10px 11px;
 }
@@ -101,7 +103,7 @@ window.settings-catcher {
 /* style.css:194-199 — capability tile has asymmetric padding. */
 .settings-tile {
   background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.10);
   border-radius: {{SKIN_RADIUS_CARD}};
   padding: 8px 11px 8px 10px;
 }
@@ -129,7 +131,7 @@ window.settings-catcher {
   padding: 10px;
   background-color: {{SKIN_BG_CARD}};
   background-image: none;
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.10);
   border-radius: {{SKIN_RADIUS_CARD}};
   color: {{SKIN_INK}};
   box-shadow: none;
@@ -145,11 +147,10 @@ window.settings-catcher {
 }
 
 /* Wi-Fi / Bluetooth rows (style.css:378-387). The row is transparent and has no
-   border; cell-pad and radius-cell are genuine density knobs. */
+   border; cell-pad and radius-cell are genuine density knobs. Row height and
+   list spacing are TSX-owned, so this rule emits neither. */
 .settings-net {
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
   padding: {{SKIN_CELL_PAD}};
-  margin-bottom: {{SKIN_BT_LIST_SPACING}};
   background-color: transparent;
   background-image: none;
   border: none;
@@ -190,31 +191,30 @@ window.settings-catcher {
 }
 
 /* style.css:422-429 — badge type/padding are component details; only the pill
-   radius is a skin knob. The border is 1px in the source and 1.5px here. */
+   radius is a skin knob. The badge hairline is 1px in the source. */
 .settings-badge {
   font-size: 9.5px;
   letter-spacing: 0.05em;
   padding: 2px 6px;
   border-radius: {{SKIN_RADIUS_PILL}};
   background-color: alpha({{SKIN_INK}}, 0.12);
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.14);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.14);
 }
 
 .settings-badge.conn {
   background-color: alpha({{SKIN_ACCENT}}, 0.18);
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
   color: {{SKIN_INK}};
 }
 
-/* Row actions: Connect, Pair, Unpair (style.css:437-448). The border is 1px in
-   the source and 1.5px here; padding/font are component details. */
+/* Row actions: Connect, Pair, Unpair (style.css:437-448). The hairline is 1px in
+   the source; padding/font/geometry are component details, and width/height are
+   TSX-owned. */
 .settings-rowact {
-  min-width: {{SKIN_CHIP_MIN}};
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
   padding: 4px 8px;
   font-size: 11px;
   font-weight: 600;
-  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.26);
+  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.26);
   border-radius: {{SKIN_RADIUS_CELL}};
   background-color: transparent;
   background-image: none;
@@ -316,11 +316,11 @@ window.settings-catcher {
   box-shadow: none;
 }
 
-/* Wi-Fi settings footer row (style.css:759-794). The 1px top rule is 1.5px
-   here — see deviation 1. The note/arrow are fixed small literals. */
+/* Wi-Fi settings footer row (style.css:759-794). The top rule is the 1px
+   hairline. The note/arrow are fixed small literals. */
 .settings-wifi-settings-row {
   padding: 10px 16px;
-  border-top: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.06);
+  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.06);
 }
 
 .settings-wifi-settings-row:hover {

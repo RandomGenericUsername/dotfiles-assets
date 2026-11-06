@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.9.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.10.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -36,7 +36,10 @@ binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback par
 look, `flat`, `paper`), the `ags.gtk.css.j2` settings/Bluetooth template (target `configDir` `ags`,
 rendered as `ags.css`), and the pinned byte copies of the canonical `contracts` schemas under
 `skins/contracts/` — the token/manifest pair plus the resolved-document
-`skin-json.schema.json` (numeric tokens are unitless numbers; the expander adds `px`). Each class
+`skin-json.schema.json` (numeric tokens are unitless numbers; the expander adds `px`). Since
+`v0.10.0` the shape group splits `border-w` (outer panel/frame) from `hairline-w` (card/control/
+badge), and the four layout tokens are TSX-owned: they stay in `skin.json` for `skinValue()` but
+the template never emits them as CSS. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
@@ -94,12 +97,15 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   (`shape`, `rhythm`, `surface`, `ink`, `type`, `layout`), the 51-role `palette.v1` list, and the
   delegation to the canonical `contracts` token/manifest pair now vendored at
   `skins/contracts/{skin-token,skin-manifest}.schema.json`. No cross-repo runtime import: the
-  vendored bytes are pinned by tag and sha256 in `skins/contracts/PIN` (`contracts=v0.5.2`,
-  the artifact-interface release), every token value type is an external `$ref` to the canonical
-  manifest schema, and `skins/schema.json` has no divergent local `px` grammar. The same pin
-  vendors `skins/contracts/skin-json.schema.json`, the schema for the runtime-emitted resolved
-  `current/skin.json` (`version: 1` plus the six groups, numeric tokens as raw JSON numbers).
-  `make validate-skins` enforces the PIN hashes, template naming
+  vendored bytes are pinned by tag and sha256 in `skins/contracts/PIN` (`contracts=v0.6.0`,
+  the hairline/layout-ownership release), every token value type is an external `$ref` to the
+  canonical manifest schema, and `skins/schema.json` has no divergent local `px` grammar. The
+  same pin vendors `skins/contracts/skin-json.schema.json`, the schema for the runtime-emitted
+  resolved `current/skin.json` (`version: 1` plus the six groups, numeric tokens as raw JSON
+  numbers). The 24-token vocabulary splits `border-w` (outer panel/frame) from `hairline-w`
+  (card, row-action and badge hairlines), and the layout tokens are declared TSX-owned: they
+  remain in the manifest/`skin.json` for `skinValue()` but templates MUST NOT expand them into
+  CSS. `make validate-skins` enforces the PIN hashes, template naming
   (`<configDir>.gtk.css.j2` → target `ags`, reported in the summary), canonical numeric types
   (a `"12px"` string fails), the exact manifest token set, role-only values, no literal hex, no
   transitions, two-way template placeholder coverage, and the unit-rule expansion (number →

@@ -1,5 +1,58 @@
 # Changelog
 
+## v0.10.0 — skins hairline token and TSX-owned layout
+
+### Added
+
+- **`hairline-w` is the 24th skin token, in `[shape]`.** It is a unitless
+  numeric token like `border-w`: `glass = 1`, `flat = 0`, `paper = 1` (the
+  expander renders `<n>px`). `border-w` is now only the outer panel/frame
+  border (`1.5px` in glass); `hairline-w` is the card, tile, mini, password,
+  row-action and badge hairline (`1px` in glass/paper), and the Wi-Fi settings
+  top rule. This removes the `v0.9.1` deviation where a single `border-w`
+  forced every source `1px` hairline to `1.5px`.
+- **The template never emits a layout token.** `.settings-surface` no longer
+  emits `min-width` from `panel-width`; `.settings-net` no longer emits
+  `margin-bottom` from `bt-list-spacing` or `min-height` from `bar-row-height`;
+  `.settings-rowact` no longer emits `min-width` from `chip-min` or
+  `min-height` from `bar-row-height`. Those metrics stay in the manifest and
+  resolved `skin.json` for `skinValue()` and are owned by the TSX widgets
+  (panel width, list spacing, row/chip geometry). The template keeps the
+  source's component literals (for example the `30px` signal glyph).
+- **Row parity is restored.** `.settings-net` keeps `border: none` (no
+  transparent border), no `margin-bottom` and no layout `min-height`, so its
+  allocated height matches the source's 50px instead of the 54px the template
+  overlay produced.
+
+### Changed
+
+- **The canonical set is re-vendored at `contracts=v0.6.0`.** `skins/contracts/`
+  holds byte copies of `skin-token.schema.json`,
+  `skin-manifest.schema.json` and `skin-json.schema.json` from the
+  hairline/layout-ownership release. `skins/contracts/PIN` records
+  `contracts=v0.6.0`, source commit `e512f5c` and the three sha256 values;
+  `skins/schema.json` names `canonical.tag: v0.6.0`, requires `hairline-w` in
+  the local envelope, and states the ownership split and the layout rule.
+- **`make validate-skins` reports 24 tokens.** The gate still validates the
+  PIN hashes, canonical `$ref` delegation, numeric-string rejection,
+  placeholder coverage and unit-rule expansion; it now also accepts
+  `hairline-w` and reports the layout tokens as declared-but-not-templated.
+- **Parity tests assert the split.** Expanded glass has a `1.5px` panel border
+  and `1px` hairlines, `.settings-net` has `border: none` with no
+  `margin-bottom`/`min-height`, no layout placeholder is emitted, and there is
+  no literal hex or transition. The parity deviation fixture is now empty: the
+  border widths match the source.
+- **README, `skins/README.md`, `catalog.yaml` and the ticket** record the new
+  token, the TSX-owned layout rule, the `v0.6.0` pin and the `v0.10.0`
+  inventory.
+
+### Notes
+
+- **MINOR, additive vocabulary.** `hairline-w` is a new shape token; no other
+  token changes, no class path moves, and `schema_major` stays `1`. The four
+  layout tokens are unchanged in the data plane and still appear in
+  `skin.json`; only the template stops consuming them.
+
 ## v0.9.1 — skins template naming and the resolved skin.json schema
 
 ### Fixed

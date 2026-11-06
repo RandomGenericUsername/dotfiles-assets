@@ -40,6 +40,7 @@ NUMERIC_TOKENS = {
     "radius-cell",
     "radius-pill",
     "border-w",
+    "hairline-w",
     "gap",
     "title-size",
     "text-size",
@@ -131,7 +132,7 @@ def test_corpus_passes_the_gate() -> None:
         "manifests": 3,
         "templates": 1,
         "targets": ["ags"],
-        "tokens": 23,
+        "tokens": 24,
         "roles": 51,
     }
     assert any("palette roles ==" in note for note in notes)
@@ -171,7 +172,7 @@ def test_schema_vendors_the_pinned_contracts_pair() -> None:
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.5.2"
+    assert canonical["tag"] == "v0.6.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "token": "skins/contracts/skin-token.schema.json",
@@ -183,7 +184,7 @@ def test_schema_vendors_the_pinned_contracts_pair() -> None:
     assert "version 1" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "320ad69105456500693eb938e3d1d51ef287a455"
+    assert metadata["source-commit"] == "e512f5c3dc6bec6023dc9ca1552213220001b07d"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -209,6 +210,7 @@ def test_vendored_canonical_schemas_type_numeric_tokens_as_numbers() -> None:
         "radius-cell",
         "radius-pill",
         "border-w",
+        "hairline-w",
         "gap",
         "title-size",
         "text-size",
@@ -344,6 +346,33 @@ def test_template_placeholders_are_schema_tokens() -> None:
     assert not {token for token in used if not token.startswith("SKIN_")}
 
 
+def test_template_does_not_expand_layout_tokens() -> None:
+    """Layout metrics are TSX-owned; the template must not emit them as CSS."""
+    text = TEMPLATE.read_text()
+    for token in (
+        "SKIN_PANEL_WIDTH",
+        "SKIN_BT_LIST_SPACING",
+        "SKIN_BAR_ROW_HEIGHT",
+        "SKIN_CHIP_MIN",
+    ):
+        assert "{{" + token + "}}" not in text, token
+
+    css = render(TEMPLATE.read_text(), load_manifest("glass"))
+    assert "min-width: 312px" not in css
+    assert "margin-bottom: 4px" not in css
+
+    flat = render(TEMPLATE.read_text(), load_manifest("flat"))
+    paper = render(TEMPLATE.read_text(), load_manifest("paper"))
+    # The layout values that used to leak into CSS must not appear as a whole
+    # declaration. (48px/30px are legal source literals elsewhere in the
+    # template, so only the unique leaked values are asserted here; the parity
+    # suite checks the owning selector's declaration list.)
+    assert "min-height: 28px" not in flat  # flat bar-row-height
+    assert "margin-bottom: 4px" not in flat  # flat bt-list-spacing
+    assert "margin-bottom: 6px" not in paper  # paper bt-list-spacing
+    assert "min-width: 52px" not in paper  # paper chip-min
+
+
 @pytest.mark.parametrize("name", ["glass", "flat", "paper"])
 def test_no_literal_hex_or_transition_in_manifest(name: str) -> None:
     text = (MANIFESTS / f"{name}.toml").read_text()
@@ -377,6 +406,7 @@ def test_frozen_manifest_values() -> None:
         20,
     ]
     assert glass["shape"]["border-w"] == 1.5
+    assert glass["shape"]["hairline-w"] == 1
     assert glass["rhythm"] == {"gap": 8, "cell-pad": "8px 9px"}
     assert glass["surface"] == {
         "bg-panel": "alpha(@surface, 0.94)",
@@ -404,6 +434,7 @@ def test_frozen_manifest_values() -> None:
         0,
     ]
     assert flat["shape"]["border-w"] == 0
+    assert flat["shape"]["hairline-w"] == 0
     assert flat["rhythm"] == {"gap": 8, "cell-pad": "7px 8px"}
     assert flat["surface"]["bg-panel"] == "transparent"
     assert flat["surface"]["shadow"] == "none"
@@ -417,6 +448,8 @@ def test_frozen_manifest_values() -> None:
     ]
     assert paper["surface"]["bg-panel"] == "@surface_container_lowest"
     assert paper["surface"]["bg-card"] == "@surface_container_low"
+    assert paper["shape"]["border-w"] == 1
+    assert paper["shape"]["hairline-w"] == 1
     assert paper["surface"]["border"] == "alpha(@on_surface, 0.22)"
     assert paper["surface"]["shadow"] == "0 10px 28px rgba(0,0,0,0.22)"
     assert paper["layout"] == {
@@ -432,6 +465,9 @@ def test_glass_expands_to_the_frozen_values() -> None:
     assert "background-color: alpha(@surface, 0.94);" in css
     assert "background-color: alpha(@surface_container_high, 0.18);" in css
     assert "border: 1.5px solid @primary;" in css
+    assert "border: 1px solid alpha(@on_surface, 0.10);" in css
+    assert "border: 1px solid alpha(@on_surface, 0.26);" in css
+    assert "border: 1px solid alpha(@on_surface, 0.14);" in css
     assert "box-shadow: none;" in css
     assert "backdrop-filter: none;" in css
     assert "border-radius: 12px;" in css
@@ -441,7 +477,7 @@ def test_glass_expands_to_the_frozen_values() -> None:
     assert "border-radius: 9px;" in css
     assert "border-radius: 7px;" in css
     assert "border-radius: 20px;" in css
-    assert "min-width: 312px;" in css
+    assert "min-width: 312px;" not in css
     assert "font-size: 12.5px;" in css
     assert "font-size: 13px;" in css
 

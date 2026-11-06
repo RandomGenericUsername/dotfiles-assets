@@ -20,8 +20,8 @@ WHAT THIS GATE PROVES (frozen skin spec v1):
   3. TOKEN VALUE TYPES COME FROM THE CANONICAL SCHEMA, NOT A LOOKALIKE.
      `skins/schema.json` delegates every token property by external `$ref` to
      the vendored `skin-manifest.schema.json` definitions. Numeric tokens
-     (`radius-*`, `border-w`, `gap`, `title-size`, `text-size` and all layout
-     tokens) are unitless JSON numbers; a string such as `"12px"` is rejected
+     (`radius-*`, `border-w`, `hairline-w`, `gap`, `title-size`, `text-size`
+     and all layout tokens) are unitless JSON numbers; a string such as `"12px"` is rejected
      because AGS's parser rejects it. `cell-pad` is the literal `"Npx Npx"`
      string. Every `@role` must be in `palette.v1`. No hex literal, no CSS
      transition, no animation.
