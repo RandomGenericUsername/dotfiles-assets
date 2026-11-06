@@ -28,6 +28,7 @@
 - [req-015-appearance-v2](./req-015-appearance-v2/ticket.md) — Skins v2: Appearance token model, `v0.7.0` contract pin, `v0.12.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-015/`, branch `ticket/req-015-appearance-v2` | commits `e074840` + `bea3ede`, gates green (`71 passed`), fast-forward merged to `master`, tag `v0.12.0` (object `8036fe9`, commit `bea3ede`)
 - [req-016-autostart-supervision](./req-016-autostart-supervision/ticket.md) — Hypr autostart must not launch the systemd-owned always-on AGS apps, `v0.12.1` | `done` | lane 2 — bounded correction | worktree `.worktrees/req-016/`, branch `ticket/req-016-autostart-supervision` | commits `070bc41` + `df906b5`, negative gate check proven, gates green, fast-forward merged to `master`, tag `v0.12.1`
 - [req-017-layout-defaults](./req-017-layout-defaults/ticket.md) — Skins layout defaults preserve each app's pre-v2 window size, `v0.12.2` | `done` | lane 2 — bounded correction | worktree `.worktrees/req-017/`, branch `ticket/req-017-layout-defaults` | commits `ad3f39d` + `53daa8b` + close, gates green (`72 passed`), fast-forward merged to `master`, tag `v0.12.2`
+- [req-018-terminal-skin](./req-018-terminal-skin/ticket.md) — Skins terminal: fourth v2 built-in (dense monospace, square/hairline) + cleanup-candidate layout removal, `v0.13.0` | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-018/`, branch `ticket/req-018-terminal-skin`
 
 ## Bugs
 
