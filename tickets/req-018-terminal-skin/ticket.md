@@ -2,7 +2,7 @@
 id: req-018
 title: "Skins terminal: fourth v2 built-in (dense monospace, square/hairline)"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -78,21 +78,21 @@ three manifests.
 
 ## Acceptance
 
-- [ ] `skins/manifests/terminal.toml` is `schemaVersion = 2`, uses only
+- [x] `skins/manifests/terminal.toml` is `schemaVersion = 2`, uses only
       palette role expressions and matches every value above; it has no `mode`
       block.
-- [ ] `glass`, `flat` and `paper` otherwise keep their values; the
+- [x] `glass`, `flat` and `paper` otherwise keep their values; the
       `ags-capture` and `ags-btop-studio` layout blocks are gone from all four
       manifests.
-- [ ] `skins/schema.json` requires `terminal`; `make validate-skins` expands
+- [x] `skins/schema.json` requires `terminal`; `make validate-skins` expands
       all 7 templates × 4 manifests × 2 modes and validates every resolved
       token document against `appearance-json`.
-- [ ] `make test-skins` covers terminal's frozen values, both-mode expansion,
+- [x] `make test-skins` covers terminal's frozen values, both-mode expansion,
       no-hex/no-transition/role vocabulary, the removed layout tokens and a
       positive terminal fixture.
-- [ ] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
+- [x] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
       `make validate` pass.
-- [ ] `v0.13.0` is an annotated tag on the fast-forward-merged commit; `master`
+- [x] `v0.13.0` is an annotated tag on the fast-forward-merged commit; `master`
       and the tag are pushed.
 
 ## Evidence / Verify
@@ -118,3 +118,55 @@ three manifests.
   **`layout.ags-notifications.card-width = 380`** stay: both are real pre-v2 TSX
   literals. **`layout.ags.panel-width = 312`** and
   **`layout.ags.bt-list-spacing = 4`/`6`** stay for the same reason.
+
+## Outcome (2026-11-06)
+
+**Worktree:** `.worktrees/req-018/`
+**Branch:** `ticket/req-018-terminal-skin`
+**Commits:** `0da25a9` (ticket + INDEX plan), `7afea72` (terminal
+manifest, cleanup layout removal, validator/tests, docs), this closing commit
+(ticket outcome + INDEX done).
+**Merge:** fast-forward into `master`.
+**Tag:** `v0.13.0` (annotated) on this closing commit; `master` and the tag
+pushed.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/manifests/terminal.toml` | new `schemaVersion = 2` dense-monospace, square/hairline skin; palette-role expressions only; no mode overrides |
+| `skins/manifests/{glass,flat,paper}.toml` | `[groups.layout.ags-capture]` and `[groups.layout.ags-btop-studio]` removed; all other values untouched |
+| `skins/schema.json` | `frozen.required_files` adds `terminal`; status `populated (v0.13.0)` |
+| `scripts/validate-skins.py` | required-manifest note names the four manifests; all v2 checks run unchanged per manifest |
+| `skins/tests/test_skins.py` | 4-manifest stats, terminal frozen values, both-mode expansion, removed layout blocks, terminal positive fixture |
+| `skins/tests/fixtures/positive/terminal.toml` | positive fixture the validator must accept; pinned equal to the corpus manifest |
+| `skins/tests/fixtures/parity/deviations.json` | nonvisual note records the v0.13.0 layout removal |
+| `skins/README.md`, `README.md`, `CHANGELOG.md`, `catalog.yaml` | four-manifest inventory, terminal values/section, cleanup handoff, `v0.13.0` |
+
+### Deviations / judgment log
+
+- **Capture and btop layout blocks are not copied into `terminal`.** The
+  requirement's layout sentence says to copy `glass`'s groups including
+  `ags-capture` and `ags-btop-studio`; step 2 removes those two blocks from
+  every manifest in the same slice. The final four manifests therefore carry
+  the remaining `glass` groups only (bar `312`/`4`, clipboard `260`,
+  notifications `380`, wallpaper `960 × 640`, icme `1280 × 800`).
+- **Unspecified state fields follow the existing skin convention.** Hover ink
+  `@on_surface` / ring `@primary`; focus fill `transparent` / ink
+  `@on_surface` / ring `@primary`; disabled ink `alpha(@on_surface, 0.38)` /
+  ring `transparent`. The specified hover fill, selected triple, focus ring and
+  disabled fill are exact.
+- **The positive fixture duplicates the terminal manifest.** The test asserts
+  byte-equivalent TOML data, so the fixture cannot drift from the shipped
+  manifest while still proving the validator accepts the shape from a
+  fixture root.
+
+### Evidence — commands and exact results
+
+| Command | Result |
+| --- | --- |
+| `make validate-skins` | **PASS** — `manifests=4 templates=7 targets=… tokens=57 roles=51 modes=2 expansions=8`; vendored `v0.7.0` hashes agree; every target expanded for `terminal:dark` and `terminal:light` |
+| `make test-skins PYTHON=$PWD/.venv/bin/python` | **PASS** — `76 passed` |
+| `make validate` | **PASS** — `tag=v0.13.0`, six classes, 415 files scanned |
+| `git cat-file -t v0.13.0` | `tag` |
+| `git merge-base --is-ancestor ticket/req-018-terminal-skin master` | exit `0` after the fast-forward merge |
