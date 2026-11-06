@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.12.1 — Hypr autostart leaves always-on AGS to systemd
+
+### Changed
+
+- **The AGS bar and notification apps are launched only by systemd user units.**
+  Provisioning `v0.1.37` owns them as `dotfiles-ags-bar.service` and
+  `dotfiles-ags-notifications.service`; `configs/hypr/autostart.lua` no longer
+  starts `ags` or `notifications` through `ags-run-locked`. The wrapper's
+  already-running pre-check made the old lines no-ops, but the second launch
+  path is gone. The `capture` and `clipboard` overlays still start from
+  autostart under the shared launch lock.
+- **`make validate-configs` protects the boundary.** A re-added autostart line
+  for the `ags` or `notifications` instance fails the gate, naming the systemd
+  unit that owns it.
+- **Ownership docs follow the change.** `configs/README.md` marks the bar and
+  notifications as systemd-owned, and `templates/display-manager/hypr-session.j2`
+  no longer claims the bar starts from the Hyprland config.
+
+### Notes
+
+- **PATCH, no path or contract change.** No class directory, file path,
+  `schema_major` or template variable changed; consumers can pin `v0.12.1`
+  without touching data. The systemd units themselves live in the provisioning
+  repository and are not part of this corpus.
+
 ## v0.12.0 — Appearance plane v2 (schema_major 2)
 
 ### Changed

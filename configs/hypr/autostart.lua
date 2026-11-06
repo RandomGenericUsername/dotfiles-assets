@@ -15,17 +15,19 @@ hl.on("hyprland.start", function()
     -- bash -lc like the staggers below (hl.exec_cmd has no shell semantics).
     hl.exec_cmd("bash -lc '(for i in $(seq 1 60); do [ -S \"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.hyprpaper.sock\" ] && break; sleep 1; done; PATH=\"$HOME/.local/bin:$PATH\" dotfiles-runtime reconcile >>\"$HOME/.local/state/dotfiles/login-reconcile.log\" 2>&1 || true) &'")
 
-    -- AGS (Aylur's GTK Shell) - status bar (instance `ags`)
-    -- Every AGS cold start goes through the shared per-user launch lock
+    -- Always-on AGS apps are systemd user units owned by provisioning:
+    -- dotfiles-ags-bar.service (instance `ags`) and
+    -- dotfiles-ags-notifications.service (instance `notifications`, which owns
+    -- org.freedesktop.Notifications for the session). Autostart must not launch
+    -- them. The remaining AGS cold starts below are the launch-on-login
+    -- overlays, ordered through the shared per-user launch lock
     -- (ags-run-locked, AD-28): AGS 3.1.0 bundles into one
     -- $XDG_RUNTIME_DIR/ags.js, so concurrent `ags run` invocations race each
-    -- other and the runtime's restart lane. The wrapper takes
-    -- $XDG_RUNTIME_DIR/ags-launch.lock and releases it once `--expect-instance`
-    -- registers on the AGS bus — not for the process lifetime — so the
-    -- staggers below still order launches without deadlocking login.
-    -- ags-run-locked is provisioned into ~/.local/bin by cli_tools; the
+    -- other. The wrapper takes $XDG_RUNTIME_DIR/ags-launch.lock and releases it
+    -- once `--expect-instance` registers on the AGS bus — not for the process
+    -- lifetime — so the staggers below still order launches without deadlocking
+    -- login. ags-run-locked is provisioned into ~/.local/bin by cli_tools; the
     -- explicit path keeps startup independent of a login-shell PATH.
-    hl.exec_cmd("bash -lc '$HOME/.local/bin/ags-run-locked --expect-instance ags'")
 
     -- AGS capture tool (standalone instance `capture`, staggered: two
     -- concurrent `ags run` invocations collide on /run/user/$UID/ags.js).
@@ -34,14 +36,6 @@ hl.on("hyprland.start", function()
     -- (~/.local/state/ags) is ensured by the gui_tools role — directory
     -- setup is provisioning's responsibility, this line only starts processes.
     hl.exec_cmd("bash -lc 'sleep 2 && $HOME/.local/bin/ags-run-locked --expect-instance capture -d $HOME/.config/ags-capture --log-file $HOME/.local/state/ags/capture.log'")
-
-    -- Notification overlay (standalone AGS instance `notifications`,
-    -- staggered: concurrent `ags run` invocations collide on
-    -- /run/user/$UID/ags.js). Owns org.freedesktop.Notifications for the
-    -- session (replaces dunst, which stays installed as a manual fallback
-    -- but is no longer autostarted). Same stagger/log discipline as the
-    -- sibling instances; the log dir is ensured by the gui_tools role.
-    hl.exec_cmd("bash -lc 'sleep 4 && $HOME/.local/bin/ags-run-locked --expect-instance notifications -d $HOME/.config/ags-notifications --log-file $HOME/.local/state/ags/notifications.log'")
 
     -- Polkit authentication agent (hyprpolkitagent)
     hl.exec_cmd("systemctl --user start hyprpolkitagent")

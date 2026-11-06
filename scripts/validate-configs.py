@@ -27,6 +27,13 @@ WHAT THIS GATE PROVES (spine AD-11, R-05/R-06):
      exit as an auth error and skipped the greeter restart (a black VT). This
      assertion makes a silent revert a gate failure (BUG-001 / SDDM #1908).
 
+  6. ALWAYS-ON AGS IS SYSTEMD-OWNED. `hypr/autostart.lua` may launch the
+     launch-on-login overlays (`capture`, `clipboard`) but must not launch the
+     `ags` bar or `notifications` instance: provisioning owns those as the
+     `dotfiles-ags-bar.service` and `dotfiles-ags-notifications.service`
+     systemd user units. A second launch path is a no-op today but a gate
+     failure here keeps ownership single.
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. This is the same rule as the other class validators.
 
@@ -40,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -65,6 +73,10 @@ EXPECTED_TOKEN = "{{ compositor_configs_xdg_config_home }}"
 #: scope that carries the SDDM helper; this is the action that avoids it (BUG-001).
 WLOGOUT_LAYOUT = Path(CONFIGS_DIR) / "wlogout" / "layout"
 WLOGOUT_LOGOUT_ACTION = "uwsm stop"
+#: The autostart module and the two AGS instances provisioning owns as systemd
+#: user units. Everything else it launches is an overlay under the launch lock.
+AUTOSTART = Path(CONFIGS_DIR) / "hypr" / "autostart.lua"
+SYSTEMD_AGS_INSTANCES = ("ags", "notifications")
 
 
 class ConfigError(Exception):
@@ -181,12 +193,38 @@ def _check_wlogout_logout(root: Path) -> None:
         )
 
 
+def _check_autostart_ags(root: Path) -> None:
+    path = root / AUTOSTART
+    if not path.is_file():
+        raise ConfigError(f"{AUTOSTART}: the autostart module is missing")
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        code = line.strip()
+        if code.startswith("--"):
+            continue
+        if "ags-run-locked" not in code and not re.search(r"\bags\s+run\b", code):
+            continue
+        match = re.search(r"--expect-instance\s+['\"]?([A-Za-z0-9_-]+)", code)
+        instance = match.group(1) if match else "ags"
+        if instance in SYSTEMD_AGS_INSTANCES or "ags-notifications" in code:
+            service = (
+                "dotfiles-ags-bar.service"
+                if instance == "ags"
+                else "dotfiles-ags-notifications.service"
+            )
+            raise ConfigError(
+                f"{AUTOSTART}:{lineno}: autostart launches always-on AGS instance "
+                f"{instance!r}; provisioning owns it as {service}. Hypr autostart "
+                "must launch only the overlay instances (capture, clipboard)"
+            )
+
+
 def validate(root: Path) -> tuple[str, int]:
     files = _files(root)
     _check_names(files, root)
     token_at = _check_tokens(files, root)
     _check_nonempty(files, root)
     _check_wlogout_logout(root)
+    _check_autostart_ags(root)
     return token_at
 
 
@@ -202,7 +240,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         "validate-configs: PASS -- no template/mutable/rendered files; exactly one "
         f"render token at {token_file}:{token_line}; wlogout Logout action is "
-        f"{WLOGOUT_LOGOUT_ACTION!r}"
+        f"{WLOGOUT_LOGOUT_ACTION!r}; autostart leaves the systemd-owned AGS "
+        "instances to provisioning"
     )
     return 0
 

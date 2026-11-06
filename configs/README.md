@@ -106,12 +106,17 @@ A template source arriving here fails the first check; a mutable preference fail
 a rendered file fails `make validate` as well as the third; a second render-time token shows up
 as an extra line in the fourth and must either move to `templates/` or be documented here.
 
-## AGS startup: one launch lock, one identity per app
+## AGS startup: systemd owns always-on, autostart owns the overlays
 
 `hypr/autostart.lua` and `hypr/keybindings.lua` are the assets-owned AGS surfaces: the
-provisioner reads them (and fails a deploy when an autostart line bypasses the lock) but never
-writes them. Since `v0.6.2` every AGS cold start goes through the shared per-user wrapper
-`ags-run-locked` (AD-28), installed by the consumer's `cli_tools` role into `~/.local/bin`:
+provisioner reads them but never writes them. Since `v0.12.1` the always-on AGS apps are
+systemd **user** units owned by provisioning — `dotfiles-ags-bar.service` (instance `ags`) and
+`dotfiles-ags-notifications.service` (instance `notifications`, which owns
+`org.freedesktop.Notifications` for the session). `hypr/autostart.lua` must not launch either;
+`make validate-configs` fails if a line does, so the ownership cannot acquire a second path.
+The remaining AGS cold starts (the `capture` and `clipboard` overlays) still go through the
+shared per-user wrapper `ags-run-locked` (AD-28), installed by the consumer's `cli_tools` role
+into `~/.local/bin`:
 
 ```lua
 bash -lc '$HOME/.local/bin/ags-run-locked --expect-instance <instance> ...'
@@ -123,12 +128,12 @@ instance registers on the AGS bus — not for the app's lifetime — so the exis
 mandatory here: an already-running instance is a no-op, and a name that never registers fails
 the wrapper instead of leaving a silent half-start.
 
-| Surface | Config dir | Instance | Launcher / log |
+| Surface | Config dir | Instance | Owner / log |
 | --- | --- | --- | --- |
-| status bar | `~/.config/ags` (default) | `ags` | autostart only |
-| capture | `~/.config/ags-capture` | `capture` | `capture-ui` / `capture.log` |
-| notifications | `~/.config/ags-notifications` | `notifications` | autostart / `notifications.log` |
-| clipboard | `~/.config/ags-clipboard` | `clipboard` | `clipboard-ui` / `clipboard.log` |
+| status bar | `~/.config/ags` (default) | `ags` | systemd user unit `dotfiles-ags-bar.service` |
+| capture | `~/.config/ags-capture` | `capture` | autostart / `capture.log` |
+| notifications | `~/.config/ags-notifications` | `notifications` | systemd user unit `dotfiles-ags-notifications.service` / `notifications.log` |
+| clipboard | `~/.config/ags-clipboard` | `clipboard` | autostart / `clipboard.log` |
 
 The clipboard overlay was renamed to `clipboard` in `v0.6.2` (AD-35): config dir
 `ags-clipboard`, instance `clipboard`, window `clipboard-window`, launcher `clipboard-ui` and
