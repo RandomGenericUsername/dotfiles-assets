@@ -59,22 +59,22 @@ tree):
 
 ## Acceptance
 
-- [ ] `skins/manifests/glass.toml` carries the corrected parity values
+- [x] `skins/manifests/glass.toml` carries the corrected parity values
       (`radius-panel/card/cell/pill = 12/9/7/20px`, `border-w 1.5px`, `gap 8px`,
       `cell-pad 8px 9px`, panel/card/border/shadow/blur/ink values as specified,
       `title-size 12.5px`, `text-size 13px`, `bt-list-spacing 4px`,
       `bar-row-height 0px`, `chip-min 0px`); `flat`/`paper` stay valid and remain
       transparent/borderless or role-based where their own tokens say so.
-- [ ] `skins/templates/ags-bar.gtk.css.j2` is a literal extraction of today's
+- [x] `skins/templates/ags-bar.gtk.css.j2` is a literal extraction of today's
       settings/Bluetooth declarations, uses tokens only for genuine knobs, and
       documents the fidelity policy plus every remaining deviation in its header.
-- [ ] `skins/tests/test_parity.py` expands glass through the validator's own
+- [x] `skins/tests/test_parity.py` expands glass through the validator's own
       placeholder map and asserts the expected declaration strings (with source
       line references), no non-`none` shadow, no transition and no hex; a fixture
       encodes the card-border deviation.
-- [ ] `skins/README.md` lists the component details that are not skin-controlled
+- [x] `skins/README.md` lists the component details that are not skin-controlled
       in v1, with the reason, and the CHANGELOG records the correction.
-- [ ] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
+- [x] `make validate-skins`, `make test-skins PYTHON=$PWD/.venv/bin/python` and
       `make validate` pass; the ticket branch is fast-forward merged to `master`
       (no unmerged ticket branch) and `v0.8.0` is an annotated tag on the merged
       commit. Existing tags are not moved.
@@ -119,3 +119,48 @@ tree):
   `backdrop-filter: none` from the `shadow`/`blur` tokens where today has no
   declaration, and `font-family: inherit` (glass) on the window root where today
   inherits without a declaration.
+
+## Outcome (2026-11-05)
+
+**Worktree:** `.worktrees/req-010/`
+**Branch:** `ticket/req-010-skins-parity`
+**Commits:** `62f5d5f` (ticket + INDEX plan), `c63108d` (manifests, template,
+schema ink grammar, parity tests, README/CHANGELOG/version updates).
+**Merge:** fast-forward into `master` after the gates; the ticket branch is not
+left unmerged.
+**Tag:** `v0.8.0`, annotated on the merged commit after the merge; the tag
+object hash is recorded in the follow-up index commit (a tag cannot contain its
+own hash).
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/manifests/glass.toml` | corrected parity values: 12/9/7/20px radii, 1.5px border, 8px gap, `8px 9px` cell pad, panel/card/ink values from `style.css`, 12.5px/13px type, 312/4/0/0 layout |
+| `skins/templates/ags-bar.gtk.css.j2` | literal extraction; tokens only for genuine knobs; component literals for panel/card/tile/row-action/badge/small-type/scrollbar/slider/nav measurements; header states the policy and deviations |
+| `skins/schema.json` | `ink`/`ink-dim`/`accent` accept the canonical role-or-role-expression grammar; 23-token set unchanged |
+| `skins/tests/test_parity.py` + `fixtures/parity/deviations.json` | glass expansion equals the cited source declarations; no non-`none` shadow / transition / animation / hex; five hairline deviations explicit |
+| `skins/tests/test_skins.py` | frozen glass values and flat/paper expansion assertions updated |
+| `skins/README.md`, `CHANGELOG.md`, `README.md`, `catalog.yaml` | limitations, release notes, and `v0.8.0` inventory |
+
+### Evidence — commands and exact results (in `.worktrees/req-010/`)
+
+| Command | Result |
+| --- | --- |
+| `make validate-skins` | **PASS** — `manifests=3 templates=1 tokens=23 roles=51`; note: `SKIN_GAP` is declared but not consumed (documented) |
+| `make test-skins PYTHON=/home/inumaki/Development/dotfiles/dotfiles-assets/.venv/bin/python` | **PASS** — `27 passed` (21 existing + 6 parity) |
+| `make validate` | **PASS** — 6 classes, 26 directories, 387 files scanned, tag `v0.8.0` |
+
+### Residual deviations (with numbers)
+
+1. **Hairline border width.** The single `border-w` token is `1.5px` for the
+   panel. Cards (`style.css:183`), row actions (`:442`), badges (`:428`/`:433`)
+   and the Wi-Fi settings top rule (`:761`) are `1px` in the source and render
+   `1.5px` here: **+0.5px** each. A second border-width token would break the
+   frozen 23-token contract.
+2. **No visual delta from template-only declarations.** `min-width: 312px`
+   (source sets width in `SettingsPanel.tsx:22`), `margin-bottom: 4px` (source
+   uses widget spacing `4` in `BluetoothContent.tsx:750/:798`), layout-token
+   `min-height/min-width: 0px`, `box-shadow: none`, `backdrop-filter: none`,
+   and `font-family: inherit` (glass) have no source declaration but do not
+   change the rendered look.
