@@ -2,17 +2,17 @@
  * skins/templates/ags-notifications.gtk.css.j2 — notification stack paint.
  *
  * Extracted from ../ags-notifications/style.css. Notifications are cards, not
- * windows: the card takes bg-card/radius-card/hairline-w/shadow, while the
+ * windows: the card takes surface.card.bg/surface.card.radius/surface.*.border-width/shadow, while the
  * stack keeps its source width. The icon tile, chip and progress cards keep
- * their accent/critical plates as palette-role literals; radius-card and
- * radius-cell are the only shape knobs used on them. Ink, ink-dim, accent and
- * title/text sizes are skin knobs. Small labels and the fixed progress-card
+ * their accent/critical plates as palette-role literals; surface.card.radius and
+ * surface.control.radius are the only shape knobs used on them. Ink, ink-dim, accent and
+ * type.size-title/type.size-body are skin knobs. Small labels and the fixed progress-card
  * geometry stay source literals.
  */
 window#notifications-window {
-  background-color: transparent;
-  color: {{SKIN_INK}};
-  font-family: {{SKIN_FONT_FAMILY}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
 .notif-stack {
@@ -20,20 +20,20 @@ window#notifications-window {
 }
 
 .notif-card {
-  padding: 13px;
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  box-shadow: {{SKIN_SHADOW}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
 }
 
 .notif-tile {
   min-width: 56px;
   min-height: 56px;
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.18);
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
-  color: {{SKIN_ACCENT}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid alpha({{SKIN_INK_ACCENT}}, 0.45);
+  color: {{SKIN_INK_ACCENT}};
 }
 
 .notif-tile.critical {
@@ -48,14 +48,14 @@ window#notifications-window {
 }
 
 .notif-title {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
   font-weight: 700;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .notif-body {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .notif-actions {
@@ -66,17 +66,17 @@ window#notifications-window {
   min-height: 28px;
   padding-left: 13px;
   padding-right: 13px;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.35);
-  background-color: alpha({{SKIN_ACCENT}}, 0.14);
-  color: {{SKIN_INK}};
-  font-size: 11px;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_ACCENT}}, 0.35);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.14);
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_TYPE_SIZE_META}};
   font-weight: 600;
 }
 
 .notif-chip:hover {
-  background-color: alpha({{SKIN_ACCENT}}, 0.26);
-  border-color: alpha({{SKIN_ACCENT}}, 0.6);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.26);
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.6);
 }
 
 .notif-card.critical .notif-chip {
@@ -90,15 +90,15 @@ window#notifications-window {
 }
 
 .wallpaper-progress-card {
-  padding: 18px;
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
 }
 
 .wallpaper-progress-icon {
   min-width: 34px;
   min-height: 34px;
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.18);
-  color: {{SKIN_ACCENT}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  color: {{SKIN_INK_ACCENT}};
   font-size: 19px;
 }
 
@@ -108,37 +108,37 @@ window#notifications-window {
   padding: 0;
   border: none;
   background: transparent;
-  color: {{SKIN_INK_DIM}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .wallpaper-progress-steps {
   padding-top: 11px;
-  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-top: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .wallpaper-progress-step-label {
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.58);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.58);
 }
 
 .wallpaper-progress-marker {
   min-width: 18px;
   min-height: 18px;
   border: none;
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .wallpaper-progress-step.active .wallpaper-progress-step-label {
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .wallpaper-progress-step.active .wallpaper-progress-marker,
 .wallpaper-progress-step.done .wallpaper-progress-marker {
-  color: {{SKIN_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
 }
 
 .wallpaper-progress-step.done .wallpaper-progress-step-label {
-  color: alpha({{SKIN_INK}}, 0.82);
+  color: alpha({{SKIN_INK_INK}}, 0.82);
 }
 
 .wallpaper-progress-step.failed .wallpaper-progress-marker,
@@ -150,33 +150,33 @@ window#notifications-window {
 .wallpaper-progress-footer {
   margin-top: 3px;
   font-size: 10px;
-  color: alpha({{SKIN_INK}}, 0.48);
+  color: alpha({{SKIN_INK_INK}}, 0.48);
 }
 
 .wallpaper-progress-bar trough {
   min-height: 4px;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .wallpaper-progress-bar progress {
   min-height: 4px;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: {{SKIN_ACCENT}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT}};
 }
 
 .speedtest-progress-tile {
   min-width: 44px;
   min-height: 44px;
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.18);
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
-  color: {{SKIN_ACCENT}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid alpha({{SKIN_INK_ACCENT}}, 0.45);
+  color: {{SKIN_INK_ACCENT}};
   font-size: 19px;
 }
 
 .speedtest-progress-tile.busy {
-  background-color: alpha({{SKIN_ACCENT}}, 0.18);
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
 }
 
 .speedtest-progress-tile.failed {
@@ -187,32 +187,32 @@ window#notifications-window {
 
 .speedtest-progress-steps {
   padding-top: 11px;
-  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-top: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .speedtest-progress-step-label {
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.58);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.58);
 }
 
 .speedtest-progress-marker {
   min-width: 18px;
   min-height: 18px;
   border: none;
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .speedtest-progress-step.active .speedtest-progress-step-label {
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .speedtest-progress-step.active .speedtest-progress-marker,
 .speedtest-progress-step.done .speedtest-progress-marker {
-  color: {{SKIN_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
 }
 
 .speedtest-progress-step.done .speedtest-progress-step-label {
-  color: alpha({{SKIN_INK}}, 0.82);
+  color: alpha({{SKIN_INK_INK}}, 0.82);
 }
 
 .speedtest-progress-step.failed .speedtest-progress-marker,
@@ -224,19 +224,19 @@ window#notifications-window {
 .speedtest-progress-footer {
   margin-top: 3px;
   font-size: 10px;
-  color: alpha({{SKIN_INK}}, 0.48);
+  color: alpha({{SKIN_INK_INK}}, 0.48);
 }
 
 .speedtest-progress-bar trough {
   min-height: 4px;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .speedtest-progress-bar progress {
   min-height: 4px;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: {{SKIN_ACCENT}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT}};
 }
 
 .speedtest-progress-grid {
@@ -244,24 +244,24 @@ window#notifications-window {
 }
 
 .speedtest-progress-cell {
-  padding: {{SKIN_CELL_PAD}};
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: alpha({{SKIN_INK}}, 0.05);
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.08);
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.05);
+  border: {{SKIN_SURFACE_CELL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.08);
 }
 
 .speedtest-progress-cell.highlight {
-  background-color: alpha({{SKIN_ACCENT}}, 0.12);
-  border-color: alpha({{SKIN_ACCENT}}, 0.3);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.12);
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.3);
 }
 
 .speedtest-progress-cell-key {
   font-size: 9.5px;
-  color: alpha({{SKIN_INK}}, 0.42);
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .speedtest-progress-cell-value {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
   font-weight: 700;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }

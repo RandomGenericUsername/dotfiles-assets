@@ -1,41 +1,56 @@
 {
-  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/hairline-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata; the vendored skin-json schema validates the resolved runtime document (version 1 + the same six groups) and the template set is named <configDir>.gtk.css.j2. border-w is the outer panel/frame border; hairline-w is the card/control/badge hairline. The layout tokens are TSX-owned and templates MUST NOT emit them as CSS. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
+  "$comment": "The skins contract's LOCAL validation target (Appearance token model v2). Token value types are NOT defined here: every manifest/resolved document is validated against the vendored canonical set under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type every length as a unitless JSON number rendered as CSS px, font-weight as unitless, and letter-spacing as a unitless ratio rendered as em; a numeric string such as \"12px\" is rejected. This file adds only the frozen local envelope (schema_major + the five v2 groups + optional mode overrides) and the palette/forbidden metadata. The vendored appearance-json schema validates the resolved runtime tokens.json (version 2 + the five fully resolved groups); the vendored appearance-artifact schema validates appearance.json. Templates are named <configDir>.gtk.css.j2 and expand flattened v2 placeholder paths. Layout tokens are TSX-owned and templates MUST NOT emit them as CSS. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "skins/schema.json",
-  "title": "dotfiles-assets skin manifest v1",
-  "schema_major": 1,
+  "title": "dotfiles-assets appearance manifest v2",
+  "schema_major": 2,
   "contract": "skins",
-  "status": "populated (v0.11.0)",
+  "status": "populated (v0.12.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
+      "schemas/appearance-manifest.schema.json",
+      "schemas/appearance-json.schema.json",
+      "schemas/appearance-artifact.schema.json",
       "schemas/skin-token.schema.json",
       "schemas/skin-manifest.schema.json",
       "schemas/skin-json.schema.json"
     ],
-    "tag": "v0.6.0",
+    "tag": "v0.7.0",
     "vendored": true,
     "pin": "skins/contracts/PIN",
     "vendored_paths": [
+      "skins/contracts/appearance-manifest.schema.json",
+      "skins/contracts/appearance-json.schema.json",
+      "skins/contracts/appearance-artifact.schema.json",
       "skins/contracts/skin-token.schema.json",
       "skins/contracts/skin-manifest.schema.json",
       "skins/contracts/skin-json.schema.json"
     ],
     "delegates": {
-      "token": "skins/contracts/skin-token.schema.json",
-      "manifest": "skins/contracts/skin-manifest.schema.json"
+      "manifest": "skins/contracts/appearance-manifest.schema.json",
+      "json": "skins/contracts/appearance-json.schema.json",
+      "artifact": "skins/contracts/appearance-artifact.schema.json"
+    },
+    "legacy": {
+      "frozen_v1": [
+        "skins/contracts/skin-token.schema.json",
+        "skins/contracts/skin-manifest.schema.json",
+        "skins/contracts/skin-json.schema.json"
+      ],
+      "note": "The v1 skin schemas are vendored at v0.7.0 for provenance only. This class emits v2 manifests and resolved tokens.json; it never mixes a v1 token map with a v2 artifact."
     },
     "resolved_document": {
-      "path": "skins/contracts/skin-json.schema.json",
-      "note": "The runtime emits one shared current/skin.json: version 1 plus the six frozen token groups, with numeric tokens as raw JSON numbers. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
+      "path": "skins/contracts/appearance-json.schema.json",
+      "note": "The runtime emits one generation tokens.json: version 2 plus the five fully resolved groups, with mode overrides already applied. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
     },
-    "note": "Byte-for-byte copies of the canonical token, manifest and resolved-document schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.6.0, the hairline/layout-ownership release: the vocabulary is 24 tokens with the numeric shape split border-w (outer panel/frame) and hairline-w (card, row-action and badge hairlines), templates are named <configDir>.gtk.css.j2 (the expander renders <configDir>.css), the runtime document is skin.json, and the v0.5.1 unit convention still holds (numeric tokens are unitless JSON numbers; the CSS expander adds px; cell-pad is the only literal length-pair string). The layout tokens (panel-width, bt-list-spacing, bar-row-height, chip-min) stay in the manifest and skin.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS. Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
+    "note": "Byte-for-byte copies of the canonical appearance and frozen v1 skin schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.7.0, the Appearance plane v2 release: the vocabulary is surface.{panel,card,cell,control,pill}, state.{hover,selected,focus,disabled}, type, ink, layout.<app> and optional mode.dark/mode.light overrides, templates are named <configDir>.gtk.css.j2 (the expander renders <configDir>.css), and the runtime document is tokens.json. Layout tokens stay in the manifest and tokens.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS."
   },
   "palette": {
     "vocabulary": "palette.v1",
     "role_count": 51,
     "source": "icons/mappings/vocabulary.json (the declared role vocabulary of record in this repository; 50 theme-producer Material roles + on_backdrop, REQ-022)",
-    "note": "A surface/ink expression may name only one of these roles. Producer aliases (foreground, accent, accent-muted, warning) and colorN carrier indices are not roles; the validator rejects them.",
+    "note": "A surface/state/ink expression may name only one of these roles. Producer aliases (foreground, accent, accent-muted, warning) and colorN carrier indices are not roles; the validator rejects them.",
     "roles": [
       "background",
       "error",
@@ -98,48 +113,103 @@
       "paper"
     ],
     "token_groups": {
-      "shape": [
-        "radius-panel",
-        "radius-card",
-        "radius-cell",
-        "radius-pill",
-        "border-w",
-        "hairline-w"
-      ],
-      "rhythm": [
-        "gap",
-        "cell-pad"
-      ],
       "surface": [
-        "bg-panel",
-        "bg-card",
-        "border",
-        "shadow",
-        "blur"
+        "panel",
+        "card",
+        "cell",
+        "control",
+        "pill"
+      ],
+      "state": [
+        "hover",
+        "selected",
+        "focus",
+        "disabled"
+      ],
+      "type": [
+        "font-family",
+        "font-weight",
+        "letter-spacing",
+        "size-caption",
+        "size-meta",
+        "size-body",
+        "size-title",
+        "size-display"
       ],
       "ink": [
         "ink",
         "ink-dim",
         "accent",
+        "accent-muted",
         "ink-over"
       ],
-      "type": [
-        "font-family",
-        "title-size",
-        "text-size"
-      ],
       "layout": [
-        "panel-width",
-        "bt-list-spacing",
-        "bar-row-height",
-        "chip-min"
+        "<app>"
       ]
     },
+    "css_token_paths": [
+      "surface.panel.bg",
+      "surface.panel.border",
+      "surface.panel.border-width",
+      "surface.panel.radius",
+      "surface.panel.padding",
+      "surface.panel.shadow",
+      "surface.panel.blur",
+      "surface.card.bg",
+      "surface.card.border",
+      "surface.card.border-width",
+      "surface.card.radius",
+      "surface.card.padding",
+      "surface.cell.bg",
+      "surface.cell.border",
+      "surface.cell.border-width",
+      "surface.cell.radius",
+      "surface.cell.padding",
+      "surface.cell.hover-bg",
+      "surface.control.bg",
+      "surface.control.border",
+      "surface.control.border-width",
+      "surface.control.radius",
+      "surface.control.padding",
+      "surface.control.font-size",
+      "surface.control.font-weight",
+      "surface.pill.bg",
+      "surface.pill.border",
+      "surface.pill.border-width",
+      "surface.pill.radius",
+      "surface.pill.padding",
+      "surface.pill.font-size",
+      "surface.pill.letter-spacing",
+      "state.hover.fill",
+      "state.hover.ink",
+      "state.hover.ring",
+      "state.selected.fill",
+      "state.selected.ink",
+      "state.selected.ring",
+      "state.focus.fill",
+      "state.focus.ink",
+      "state.focus.ring",
+      "state.disabled.fill",
+      "state.disabled.ink",
+      "state.disabled.ring",
+      "type.font-family",
+      "type.font-weight",
+      "type.letter-spacing",
+      "type.size-caption",
+      "type.size-meta",
+      "type.size-body",
+      "type.size-title",
+      "type.size-display",
+      "ink.ink",
+      "ink.ink-dim",
+      "ink.accent",
+      "ink.accent-muted",
+      "ink.ink-over"
+    ],
     "forbidden_keys": [
       "structure",
       "variant",
       "variants",
-      "state",
       "transition",
       "animation",
       "density",
@@ -151,10 +221,11 @@
       "\\banimation\\s*:"
     ],
     "notes": [
-      "A skin is palette/ink mapping + paint + rhythm/density. Structure (which widget sits where) and variant names belong to the app.",
-      "Surface, border and shadow values are palette-role expressions or transparent; a literal hex colour is never a skin value.",
+      "A skin is appearance: surface paint/geometry, interaction state, type, ink and mode overrides. Structure (which widget sits where) and variant names belong to the app.",
+      "surface/state/ink values are palette-role expressions or transparent; a literal hex colour is never a skin value.",
       "GTK 4.24 ignores transitions, so the format forbids them rather than shipping dead declarations.",
-      "blur is `none` or `blur(Npx)` with an optional `saturate(N)`; backdrop-filter blur is proven to paint in GTK 4.24."
+      "layout.<app> is a metric namespace consumed by skinValue(); templates MUST NOT expand it into CSS.",
+      "An override group replaces the base group as a whole; there is no deep merge."
     ]
   },
   "type": "object",
@@ -162,164 +233,30 @@
   "required": [
     "schema_major",
     "name",
-    "shape",
-    "rhythm",
-    "surface",
-    "ink",
-    "type",
-    "layout"
+    "groups"
   ],
   "properties": {
     "schema_major": {
-      "const": 1
+      "const": 2
     },
     "name": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]*$"
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
-    "shape": {
+    "groups": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "radius-panel",
-        "radius-card",
-        "radius-cell",
-        "radius-pill",
-        "border-w",
-        "hairline-w"
-      ],
-      "properties": {
-        "radius-panel": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
-        },
-        "radius-card": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
-        },
-        "radius-cell": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
-        },
-        "radius-pill": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
-        },
-        "border-w": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "hairline-w": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        }
-      }
-    },
-    "rhythm": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "gap",
-        "cell-pad"
-      ],
-      "properties": {
-        "gap": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "cell-pad": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/cellPad"
-        }
-      }
-    },
-    "surface": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bg-panel",
-        "bg-card",
-        "border",
-        "shadow",
-        "blur"
-      ],
-      "properties": {
-        "bg-panel": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
-        },
-        "bg-card": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
-        },
-        "border": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
-        },
-        "shadow": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
-        },
-        "blur": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/blurValue"
-        }
-      }
-    },
-    "ink": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
+        "surface",
+        "state",
+        "type",
         "ink",
-        "ink-dim",
-        "accent",
-        "ink-over"
-      ],
-      "properties": {
-        "ink": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
-        },
-        "ink-dim": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
-        },
-        "accent": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
-        },
-        "ink-over": {
-          "$ref": "contracts/skin-manifest.schema.json#/properties/groups/properties/ink/properties/ink-over"
-        }
-      }
+        "layout"
+      ]
     },
-    "type": {
+    "mode": {
       "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "font-family",
-        "title-size",
-        "text-size"
-      ],
-      "properties": {
-        "font-family": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/fontFamily"
-        },
-        "title-size": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "text-size": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        }
-      }
-    },
-    "layout": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "panel-width",
-        "bt-list-spacing",
-        "bar-row-height",
-        "chip-min"
-      ],
-      "properties": {
-        "panel-width": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "bt-list-spacing": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "bar-row-height": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        },
-        "chip-min": {
-          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
-        }
-      }
+      "additionalProperties": false
     }
   }
 }

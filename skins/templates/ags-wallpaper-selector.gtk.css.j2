@@ -2,19 +2,19 @@
  * skins/templates/ags-wallpaper-selector.gtk.css.j2 — selector dialog paint.
  *
  * Extracted from ../ags-wallpaper-selector/style.css. The dialog panel takes
- * bg-panel/border-w/border/radius-panel/shadow/blur. Cards, the crumb and the
- * hover bar take bg-card/radius-card + hairline-w; fields and back/quick
- * controls take radius-cell; the LIVE badge and Apply pill take radius-pill.
- * Ink, ink-dim, accent and title/text sizes are skin knobs. Thumbnail radii,
+ * surface.panel.bg/surface.panel.border-width/border/radius/shadow/blur. Cards, the crumb and the
+ * hover bar take surface.card.bg/surface.card.radius + surface.*.border-width; fields and back/quick
+ * controls take surface.control.radius; the LIVE badge and Apply pill take surface.pill.radius.
+ * Ink, ink-dim, accent and type.size-title/type.size-body are skin knobs. Thumbnail radii,
  * margins, dock sizes and small type stay source literals.
  *
  * The selected-card ring is the source selection literal (@primary plus a
  * primary-container tint), not a skin token.
  */
 window#wallpaper-selector-window {
-  background-color: transparent;
-  color: {{SKIN_INK}};
-  font-family: {{SKIN_FONT_FAMILY}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
 .ws-root {
@@ -23,25 +23,25 @@ window#wallpaper-selector-window {
 }
 
 .ws-panel {
-  background-color: {{SKIN_BG_PANEL}};
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
-  border-radius: {{SKIN_RADIUS_PANEL}};
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
   padding: 14px 16px 12px;
-  box-shadow: {{SKIN_SHADOW}};
-  backdrop-filter: {{SKIN_BLUR}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
 .ws-search {
   background-color: @surface_container;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
   border: none;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  padding: 4px 8px;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 8px;
   min-height: 26px;
 }
 
 .ws-search placeholder {
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .ws-ui-icon {
@@ -49,10 +49,10 @@ window#wallpaper-selector-window {
 }
 
 .ws-crumb {
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
-  padding: 10px 14px;
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}} 14px;
 }
 
 .ws-crumb-thumb {
@@ -60,30 +60,30 @@ window#wallpaper-selector-window {
 }
 
 .ws-crumb-name {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
   font-weight: 700;
 }
 
 .ws-crumb-sub {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .ws-back {
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.25);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  padding: 6px 14px;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.25);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
 }
 
 .ws-back:hover {
-  border-color: {{SKIN_ACCENT}};
+  border-color: {{SKIN_STATE_HOVER_RING}};
 }
 
 .ws-title {
-  font-size: 11px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: {{SKIN_INK_DIM}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .ws-scroll {
@@ -91,14 +91,14 @@ window#wallpaper-selector-window {
 }
 
 .ws-card {
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   padding: 0;
 }
 
 .ws-card:hover {
-  border-color: {{SKIN_ACCENT}};
+  border-color: {{SKIN_STATE_HOVER_RING}};
 }
 
 .ws-card.selected {
@@ -111,35 +111,35 @@ window#wallpaper-selector-window {
 }
 
 .ws-thumb-loading {
-  background-color: alpha({{SKIN_INK}}, 0.07);
+  background-color: alpha({{SKIN_INK_INK}}, 0.07);
 }
 
 .ws-card-name {
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
   margin: 6px 10px 0;
 }
 
 .ws-card-sub {
-  font-size: 11px;
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK_DIM}};
   margin: 0 10px 8px;
 }
 
 .ws-live {
   font-size: 10px;
   font-weight: 700;
-  background-color: {{SKIN_ACCENT}};
+  background-color: {{SKIN_INK_ACCENT}};
   color: @on_primary;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  padding: 1px 7px;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 7px;
   margin: 6px 6px 0 0;
 }
 
 .ws-hoverbar {
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
-  padding: 3px;
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
   margin: 0 6px 6px 0;
   min-height: 0;
 }
@@ -152,12 +152,12 @@ window#wallpaper-selector-window {
 .ws-quick {
   background-color: @primary_container;
   color: @on_primary_container;
-  font-weight: 600;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  padding: 4px 14px;
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
   margin: 0;
   min-height: 0;
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
 }
 
 .ws-quick:hover {
@@ -176,17 +176,17 @@ window#wallpaper-selector-window {
 }
 
 .ws-variant-name {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: alpha({{SKIN_INK}}, 0.85);
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: alpha({{SKIN_INK_INK}}, 0.85);
   margin-top: 6px;
 }
 
 .ws-variant-apply {
-  font-size: 11px;
-  background-color: alpha({{SKIN_INK}}, 0.14);
-  color: {{SKIN_INK}};
-  border-radius: {{SKIN_RADIUS_PILL}};
-  padding: 2px 14px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.14);
+  color: {{SKIN_INK_INK}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
   margin-top: 4px;
 }
 
@@ -196,13 +196,13 @@ window#wallpaper-selector-window {
 }
 
 .ws-empty {
-  color: {{SKIN_INK_DIM}};
-  border: {{SKIN_HAIRLINE_W}} dashed alpha({{SKIN_INK}}, 0.25);
-  border-radius: {{SKIN_RADIUS_CARD}};
-  padding: 22px;
+  color: {{SKIN_INK_INK_DIM}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} dashed alpha({{SKIN_INK_INK}}, 0.25);
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
 }
 
 .ws-status {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK_DIM}};
 }

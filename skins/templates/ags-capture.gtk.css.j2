@@ -3,10 +3,10 @@
  * recording cluster paint.
  *
  * Extracted from ../ags-capture-tool/style.css. The bar/panel/view are global
- * panels (bg-panel, border-w, border, radius-panel, shadow, blur); cards and
- * popovers take bg-card/radius-card/hairline-w; fields, buttons and segmented
- * controls take radius-cell; full-round handles/toggles take radius-pill.
- * Ink, ink-dim, accent and title/text sizes are skin knobs. Every component
+ * panels (surface.panel.bg, surface.panel.border-width, border, radius, shadow, blur); cards and
+ * popovers take surface.card.bg/surface.card.radius/surface.*.border-width; fields, buttons and segmented
+ * controls take surface.control.radius; full-round handles/toggles take surface.pill.radius.
+ * Ink, ink-dim, accent and type.size-title/type.size-body are skin knobs. Every component
  * literal is copied from the source: overlay geometry, field padding, small
  * type, selection rings and the recording red.
  *
@@ -24,13 +24,13 @@ window#capture-window,
 window#capture-overlay,
 window.capture-cluster-window {
   background-color: transparent;
-  color: {{SKIN_INK}};
-  font-family: {{SKIN_FONT_FAMILY}};
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
 .overlay-root,
 .overlay-canvas {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
 }
 
 .overlay-dim {
@@ -48,7 +48,7 @@ window.capture-cluster-window {
   min-width: 9px;
   min-height: 9px;
   border: 2px solid @surface;
-  border-radius: {{SKIN_RADIUS_PILL}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: @primary;
 }
 
@@ -59,14 +59,14 @@ window.capture-cluster-window {
 }
 
 .mon-outline {
-  border: 2px solid alpha({{SKIN_INK}}, 0.35);
-  border-radius: {{SKIN_RADIUS_CARD}};
+  border: 2px solid alpha({{SKIN_INK_INK}}, 0.35);
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   background-color: transparent;
 }
 
 .mon-outline.selected {
-  border-color: {{SKIN_ACCENT}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.08);
+  border-color: {{SKIN_STATE_SELECTED_RING}};
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.08);
 }
 
 .overlay-root.recording .selrect {
@@ -95,12 +95,12 @@ window.capture-cluster-window {
 }
 
 .selbadge {
-  padding: 3px 9px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.22);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: {{SKIN_BG_CARD}};
-  color: alpha({{SKIN_INK}}, 0.86);
-  font-size: 11px;
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 9px;
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.22);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  color: alpha({{SKIN_INK_INK}}, 0.86);
+  font-size: {{SKIN_TYPE_SIZE_META}};
   font-weight: 600;
 }
 
@@ -108,12 +108,12 @@ window.capture-cluster-window {
 }
 
 .capture-bar {
-  background-color: {{SKIN_BG_PANEL}};
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
-  border-radius: {{SKIN_RADIUS_PANEL}};
-  padding: 6px;
-  box-shadow: {{SKIN_SHADOW}};
-  backdrop-filter: {{SKIN_BLUR}};
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
 .capture-bar.rail {
@@ -124,70 +124,70 @@ window.capture-cluster-window {
   min-width: 38px;
   min-height: 38px;
   padding: 0;
-  border: {{SKIN_HAIRLINE_W}} solid transparent;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
-  color: alpha({{SKIN_INK}}, 0.72);
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid transparent;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: alpha({{SKIN_INK_INK}}, 0.72);
 }
 
 .railicon:hover {
-  background-color: alpha({{SKIN_INK}}, 0.1);
-  color: {{SKIN_INK}};
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
 }
 
 .railicon.active {
-  background-color: @primary;
-  color: @on_primary;
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .bar-back {
   min-width: 34px;
   min-height: 34px;
   padding: 0;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: transparent;
-  color: alpha({{SKIN_INK}}, 0.72);
-  font-size: 16px;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: alpha({{SKIN_INK_INK}}, 0.72);
+  font-size: {{SKIN_TYPE_SIZE_DISPLAY}};
   font-weight: 700;
 }
 
 .bar-back:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
-  color: {{SKIN_INK}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
+  color: {{SKIN_INK_INK}};
 }
 
 .bar-group {
-  padding: 2px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.1);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.1);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
 }
 
 .bar-pill {
   min-height: 30px;
   padding: 0 10px;
-  border: {{SKIN_HAIRLINE_W}} solid transparent;
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid transparent;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: transparent;
-  color: alpha({{SKIN_INK}}, 0.62);
+  color: alpha({{SKIN_INK_INK}}, 0.62);
   font-size: 12px;
   font-weight: 600;
 }
 
 .bar-pill:hover {
-  color: {{SKIN_INK}};
-  background-color: alpha({{SKIN_INK}}, 0.1);
+  color: {{SKIN_INK_INK}};
+  background-color: {{SKIN_STATE_HOVER_FILL}};
 }
 
 .bar-pill.selected {
-  background-color: @primary;
-  color: @on_primary;
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .bar-divider {
   min-width: 1px;
-  background-color: alpha({{SKIN_INK}}, 0.12);
+  background-color: alpha({{SKIN_INK_INK}}, 0.12);
   margin: 3px 2px;
 }
 
@@ -195,7 +195,7 @@ window.capture-cluster-window {
   min-height: 36px;
   padding: 0 14px;
   border: none;
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: @primary;
   color: @on_primary;
   font-size: 12px;
@@ -222,175 +222,177 @@ window.capture-cluster-window {
 }
 
 .bar-kbd {
-  padding: 1px 4px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.35);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  color: alpha({{SKIN_INK}}, 0.82);
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 4px;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.35);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: alpha({{SKIN_INK_INK}}, 0.82);
   font-size: 10px;
   font-weight: 700;
 }
 
 .field {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
 }
 
 button.field-trigger {
   min-height: 40px;
-  padding: 4px;
-  border: {{SKIN_HAIRLINE_W}} solid transparent;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid transparent;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   background-image: none;
   box-shadow: none;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 button.field-trigger:hover {
-  background-color: alpha({{SKIN_INK}}, 0.06);
-  border-color: alpha({{SKIN_INK}}, 0.12);
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 button.field-trigger:focus-visible {
-  background-color: alpha({{SKIN_INK}}, 0.04);
-  box-shadow: 0 0 0 1px {{SKIN_ACCENT}}, 0 0 0 3px alpha({{SKIN_ACCENT}}, 0.22);
+  background-color: {{SKIN_STATE_FOCUS_FILL}};
+  color: {{SKIN_STATE_FOCUS_INK}};
+  box-shadow: 0 0 0 1px {{SKIN_STATE_FOCUS_RING}}, 0 0 0 3px alpha({{SKIN_STATE_FOCUS_RING}}, 0.22);
 }
 
 .field-key {
   font-size: 8.5px;
   font-weight: 800;
   letter-spacing: 0.09em;
-  color: alpha({{SKIN_INK}}, 0.42);
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .field-value {
-  font-size: {{SKIN_TITLE_SIZE}};
-  font-weight: 600;
-  color: {{SKIN_INK}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+  color: {{SKIN_INK_INK}};
 }
 
 .field-lead {
   min-width: 15px;
   min-height: 15px;
-  color: alpha({{SKIN_INK}}, 0.72);
+  color: alpha({{SKIN_INK_INK}}, 0.72);
 }
 
 .field-chevron {
   min-width: 8px;
   min-height: 8px;
-  color: alpha({{SKIN_INK}}, 0.45);
+  color: alpha({{SKIN_INK_INK}}, 0.45);
 }
 
 .field-open button.field-trigger {
-  background-color: alpha({{SKIN_ACCENT}}, 0.12);
-  border-color: alpha({{SKIN_ACCENT}}, 0.45);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.12);
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.45);
 }
 
 .field-open .field-key,
 .field-open .field-chevron {
-  color: {{SKIN_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
 }
 
 popover.field-popover,
 popover.field-popover > contents,
 popover.field-popover > arrow {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   background-image: none;
   border: none;
   box-shadow: none;
 }
 
 popover.field-popover > contents {
-  padding: 6px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.22);
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: {{SKIN_BG_CARD}};
-  color: {{SKIN_INK}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.22);
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  color: {{SKIN_INK_INK}};
 }
 
 list.field-list,
 list.field-list > row {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   background-image: none;
   border: none;
   box-shadow: none;
 }
 
 list.field-list > row:selected {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   outline: none;
 }
 
 .field-pop-header {
   padding: 6px 9px 7px;
   margin-bottom: 4px;
-  border-bottom: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-bottom: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .field-pop-title {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .field-pop-desc {
   margin-top: 2px;
-  font-size: 10.5px;
-  color: alpha({{SKIN_INK}}, 0.55);
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 row.field-option {
-  padding: {{SKIN_CELL_PAD}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
   border: none;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CELL_BG}};
   background-image: none;
   box-shadow: none;
 }
 
 row.field-option:hover {
-  background-color: alpha({{SKIN_INK}}, 0.06);
+  background-color: {{SKIN_STATE_HOVER_FILL}};
 }
 
 row.field-option:focus-visible {
-  box-shadow: inset 0 0 0 1px {{SKIN_ACCENT}};
+  background-color: {{SKIN_STATE_FOCUS_FILL}};
+  box-shadow: inset 0 0 0 1px {{SKIN_STATE_FOCUS_RING}};
 }
 
 row.field-option.field-selected {
-  background-color: alpha({{SKIN_ACCENT}}, 0.12);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.12);
   border: none;
 }
 
 .field-option-icon {
   min-width: 16px;
   min-height: 16px;
-  color: alpha({{SKIN_INK}}, 0.62);
+  color: alpha({{SKIN_INK_INK}}, 0.62);
 }
 
 row.field-option.field-selected .field-option-icon {
-  color: {{SKIN_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
 }
 
 .field-option-text {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CELL_BG}};
 }
 
 .field-option-label {
   font-size: 12px;
   font-weight: 600;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .field-option-desc {
   font-size: 10px;
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .field-radio {
   min-width: 15px;
   min-height: 15px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.22);
-  border-radius: {{SKIN_RADIUS_PILL}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.22);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   color: transparent;
 }
 
@@ -400,12 +402,12 @@ row.field-option.field-selected .field-option-icon {
 }
 
 row.field-option.field-selected .field-radio {
-  background-color: {{SKIN_ACCENT}};
-  border-color: {{SKIN_ACCENT}};
+  background-color: {{SKIN_INK_ACCENT}};
+  border-color: {{SKIN_INK_ACCENT}};
 }
 
 row.field-option.field-selected .field-radio label {
-  color: @on_primary;
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .field-custom-editor {
@@ -417,37 +419,37 @@ row.field-option.field-selected .field-radio label {
   min-width: 72px;
   padding-left: 8px;
   padding-right: 8px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.22);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.22);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .field-custom-spin:focus-within {
-  border-color: {{SKIN_ACCENT}};
-  box-shadow: 0 0 0 2px alpha({{SKIN_ACCENT}}, 0.2);
+  border-color: {{SKIN_STATE_FOCUS_RING}};
+  box-shadow: 0 0 0 2px alpha({{SKIN_STATE_FOCUS_RING}}, 0.2);
 }
 
 .field-custom-unit {
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.55);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .field-custom-set {
   min-height: 30px;
   padding: 0 10px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.12);
-  color: {{SKIN_ACCENT}};
-  font-size: 11px;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_ACCENT}}, 0.45);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.12);
+  color: {{SKIN_INK_ACCENT}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: 700;
 }
 
 .field-custom-hint {
   padding: 6px 4px 2px;
   font-size: 9.5px;
-  color: alpha({{SKIN_INK}}, 0.55);
+  color: alpha({{SKIN_INK_INK}}, 0.55);
 }
 
 .field-recording.field-open button.field-trigger {
@@ -494,48 +496,48 @@ row.field-option.field-selected .field-radio label {
 }
 
 .inline-field {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
 }
 
 .inline-key {
   font-size: 8.5px;
   font-weight: 800;
   letter-spacing: 0.09em;
-  color: alpha({{SKIN_INK}}, 0.42);
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .inline-group {
-  padding: 2px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: alpha({{SKIN_INK}}, 0.04);
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.04);
 }
 
 button.inline-pill {
   min-height: 30px;
   padding: 0 9px;
-  border: {{SKIN_HAIRLINE_W}} solid transparent;
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid transparent;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: transparent;
   background-image: none;
   box-shadow: none;
-  color: alpha({{SKIN_INK}}, 0.72);
+  color: alpha({{SKIN_INK_INK}}, 0.72);
   font-size: 11.5px;
   font-weight: 600;
 }
 
 button.inline-pill:hover {
-  background-color: alpha({{SKIN_INK}}, 0.06);
-  color: {{SKIN_INK}};
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_INK_INK}};
 }
 
 button.inline-pill:focus-visible {
-  box-shadow: inset 0 0 0 1px {{SKIN_ACCENT}};
+  box-shadow: inset 0 0 0 1px {{SKIN_STATE_FOCUS_RING}};
 }
 
 button.inline-pill.selected {
-  background-color: @primary;
-  color: @on_primary;
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .capture-shell.recording button.inline-pill:focus-visible {
@@ -559,9 +561,9 @@ button.inline-pill.selected {
 .rec-cluster {
   min-width: 109px;
   min-height: 44px;
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   padding: 4px 8px 4px 10px;
   margin-right: 4px;
 }
@@ -577,7 +579,7 @@ button.inline-pill.selected {
 .rec-dot {
   min-width: 9px;
   min-height: 9px;
-  border-radius: {{SKIN_RADIUS_PILL}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: @error;
 }
 
@@ -587,40 +589,40 @@ button.inline-pill.selected {
 }
 
 .rec-status {
-  background-color: transparent;
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   background-image: none;
   border: none;
   box-shadow: none;
   padding: 0 2px;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .rec-timer {
   padding: 0 6px;
-  font-size: 13px;
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
   font-weight: bold;
   font-variant-numeric: tabular-nums;
   min-width: 46px;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .rec-btn {
   min-width: 26px;
   min-height: 26px;
   padding: 0;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   background-image: none;
   border: none;
   box-shadow: none;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .rec-btn:hover,
 .rec-btn:active,
 .rec-btn:checked,
 .rec-btn:focus {
-  background-color: alpha({{SKIN_INK}}, 0.1);
+  background-color: alpha({{SKIN_INK_INK}}, 0.1);
   background-image: none;
   border: none;
   box-shadow: none;
@@ -631,12 +633,18 @@ button.inline-pill.selected {
   color: @tertiary;
 }
 
+.rec-btn:disabled {
+  background-color: {{SKIN_STATE_DISABLED_FILL}};
+  border-color: {{SKIN_STATE_DISABLED_RING}};
+  color: {{SKIN_STATE_DISABLED_INK}};
+}
+
 .rec-popup {
   min-width: 216px;
-  padding: 14px 16px;
-  border-radius: {{SKIN_RADIUS_CARD}};
-  background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  padding: {{SKIN_SURFACE_CARD_PADDING}} 16px;
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
 }
 
 .rec-popup.paused {
@@ -644,9 +652,9 @@ button.inline-pill.selected {
 }
 
 .rec-popup-row {
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
   font-weight: 600;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .rec-popup-actions {
@@ -656,18 +664,18 @@ button.inline-pill.selected {
 .rec-popup-action {
   min-height: 38px;
   padding: 0 8px;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
   background-color: alpha(@surface, 0.45);
   background-image: none;
   box-shadow: none;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
   font-size: 12px;
   font-weight: 600;
 }
 
 .rec-popup-action:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
 }
 
 .rec-popup-action.danger:hover {
@@ -680,69 +688,69 @@ button.inline-pill.selected {
   min-height: 30px;
   padding-left: 8px;
   padding-right: 8px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .capture-panel {
   min-width: 560px;
-  padding: 22px;
-  background-color: {{SKIN_BG_PANEL}};
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
-  border-radius: {{SKIN_RADIUS_PANEL}};
-  box-shadow: {{SKIN_SHADOW}};
-  backdrop-filter: {{SKIN_BLUR}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
 .mode-switch {
   background-color: alpha(@surface, 0.45);
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
-  padding: 5px;
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_PILL_PADDING}};
   margin-bottom: 20px;
 }
 
 .mode-switch button {
   min-height: 46px;
-  border: {{SKIN_HAIRLINE_W}} solid transparent;
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
-  color: alpha({{SKIN_INK}}, 0.62);
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid transparent;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: alpha({{SKIN_INK_INK}}, 0.62);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
 }
 
 .mode-switch button:hover {
-  color: {{SKIN_INK}};
-  background-color: alpha({{SKIN_INK}}, 0.1);
+  color: {{SKIN_INK_INK}};
+  background-color: {{SKIN_STATE_HOVER_FILL}};
 }
 
 .mode-switch button.active {
-  background-color: @primary;
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
   border-color: transparent;
-  color: @on_primary;
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .capture-view {
-  background-color: {{SKIN_BG_PANEL}};
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
-  border-radius: {{SKIN_RADIUS_PANEL}};
-  padding: 18px;
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
   min-height: 130px;
-  box-shadow: {{SKIN_SHADOW}};
-  backdrop-filter: {{SKIN_BLUR}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
 .setting-row {
 }
 
 .setting-label {
-  font-size: 11px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: 700;
   letter-spacing: 0.8px;
-  color: alpha({{SKIN_INK}}, 0.42);
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .setting-block > .setting-label {
@@ -754,23 +762,23 @@ button.inline-pill.selected {
 
 .target {
   min-height: 78px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CARD}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  color: alpha({{SKIN_INK}}, 0.62);
+  color: alpha({{SKIN_INK_INK}}, 0.62);
   font-size: 12px;
   font-weight: 600;
 }
 
 .target:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
-  color: {{SKIN_INK}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
+  color: {{SKIN_INK_INK}};
 }
 
 .target.selected {
-  background-color: alpha({{SKIN_ACCENT}}, 0.12);
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.12);
   border: 2px solid @primary;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .segments {
@@ -780,30 +788,30 @@ button.inline-pill.selected {
   min-height: 36px;
   padding-left: 13px;
   padding-right: 13px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  color: alpha({{SKIN_INK}}, 0.62);
+  color: alpha({{SKIN_INK_INK}}, 0.62);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
 }
 
 .segment:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
-  color: {{SKIN_INK}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
+  color: {{SKIN_INK_INK}};
 }
 
 .segment.selected {
-  background-color: @primary;
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
   border-color: transparent;
-  color: @on_primary;
+  color: {{SKIN_STATE_SELECTED_INK}};
 }
 
 .primary {
   min-height: 50px;
   margin-top: 5px;
   border: none;
-  border-radius: {{SKIN_RADIUS_CARD}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   background-color: @primary;
   color: @on_primary;
   font-size: 14px;
@@ -820,29 +828,29 @@ button.inline-pill.selected {
 .record-dot {
   min-width: 11px;
   min-height: 11px;
-  border-radius: {{SKIN_RADIUS_PILL}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: @on_error;
 }
 
 .panel-footer {
   margin-top: 15px;
   padding-top: 13px;
-  border-top: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
+  border-top: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
 }
 
 .footer-note {
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.42);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .kbd {
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.22);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.22);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  padding: 2px 6px;
-  font-size: 11px;
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 6px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: 700;
-  color: alpha({{SKIN_INK}}, 0.62);
+  color: alpha({{SKIN_INK_INK}}, 0.62);
 }
 
 .settings-page {
@@ -850,62 +858,62 @@ button.inline-pill.selected {
 }
 
 .settings-title {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
   font-weight: 700;
-  color: {{SKIN_INK}};
+  color: {{SKIN_INK_INK}};
 }
 
 .settings-subtitle {
-  font-size: 11px;
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .settings-save-chip {
-  padding: 3px 8px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_ACCENT}}, 0.28);
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: alpha({{SKIN_ACCENT}}, 0.07);
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 8px;
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_ACCENT}}, 0.28);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.07);
   font-size: 10px;
   font-weight: 600;
-  color: {{SKIN_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
 }
 
 .settings-group-title {
-  font-size: 11px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: 700;
   letter-spacing: 0.8px;
-  color: alpha({{SKIN_INK}}, 0.42);
+  color: alpha({{SKIN_INK_INK}}, 0.42);
   margin-top: 8px;
   margin-bottom: 4px;
 }
 
 .settings-item {
-  padding: {{SKIN_CELL_PAD}};
-  border-radius: {{SKIN_RADIUS_CELL}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
 }
 
 .settings-item:hover {
-  background-color: alpha({{SKIN_INK}}, 0.06);
+  background-color: {{SKIN_STATE_HOVER_FILL}};
 }
 
 .settings-name {
-  font-size: {{SKIN_TEXT_SIZE}};
-  font-weight: 600;
-  color: {{SKIN_INK}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+  color: {{SKIN_INK_INK}};
 }
 
 .settings-desc {
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.42);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.42);
 }
 
 .settings-readout {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .settings-error {
-  font-size: 11px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   color: @error;
 }
 
@@ -913,66 +921,66 @@ button.inline-pill.selected {
   min-height: 30px;
   padding-left: 11px;
   padding-right: 11px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  font-size: 11px;
-  color: alpha({{SKIN_INK}}, 0.62);
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: alpha({{SKIN_INK_INK}}, 0.62);
 }
 
 .path-chip:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
-  color: {{SKIN_INK}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
+  color: {{SKIN_INK_INK}};
 }
 
 .path-entry {
   min-height: 30px;
   padding-left: 9px;
   padding-right: 9px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha(@outline_variant, 0.62);
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha(@outline_variant, 0.62);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
   background-color: alpha(@surface, 0.45);
-  color: {{SKIN_INK}};
-  font-size: 11px;
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
 }
 
 .segment.compact {
   min-height: 30px;
   padding-left: 11px;
   padding-right: 11px;
-  font-size: 11px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
 }
 
 .ghost {
   min-height: 32px;
   padding-left: 13px;
   padding-right: 13px;
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.12);
-  border-radius: {{SKIN_RADIUS_CELL}};
-  background-color: transparent;
-  color: alpha({{SKIN_INK}}, 0.62);
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.12);
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  color: alpha({{SKIN_INK_INK}}, 0.62);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
 }
 
 .ghost:hover {
-  border-color: alpha({{SKIN_INK}}, 0.22);
-  color: {{SKIN_INK}};
+  border-color: alpha({{SKIN_INK_INK}}, 0.22);
+  color: {{SKIN_INK_INK}};
 }
 
 switch.palette-switch {
   min-width: 46px;
   min-height: 24px;
   padding: 0;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: alpha({{SKIN_INK}}, 0.14);
-  border: {{SKIN_HAIRLINE_W}} solid alpha({{SKIN_INK}}, 0.3);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.14);
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.3);
   box-shadow: none;
 }
 
 switch.palette-switch:checked {
-  background-color: {{SKIN_ACCENT}};
-  border-color: {{SKIN_ACCENT}};
+  background-color: {{SKIN_INK_ACCENT}};
+  border-color: {{SKIN_INK_ACCENT}};
 }
 
 switch.palette-switch > slider {
@@ -980,12 +988,12 @@ switch.palette-switch > slider {
   min-height: 16px;
   margin: 3px;
   border: none;
-  border-radius: {{SKIN_RADIUS_PILL}};
-  background-color: alpha({{SKIN_INK}}, 0.85);
-  box-shadow: 0 1px 2px alpha({{SKIN_INK}}, 0.45);
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.85);
+  box-shadow: 0 1px 2px alpha({{SKIN_INK_INK}}, 0.45);
 }
 
 switch.palette-switch:checked > slider {
-  background-color: {{SKIN_INK}};
+  background-color: {{SKIN_INK_INK}};
   box-shadow: none;
 }

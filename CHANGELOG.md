@@ -1,5 +1,51 @@
 # Changelog
 
+## v0.12.0 — Appearance plane v2 (schema_major 2)
+
+### Changed
+
+- **The skin class is now the v2 Appearance token model.** `glass`, `flat` and
+  `paper` are `schemaVersion = 2` manifests with nested
+  `surface.{panel,card,cell,control,pill}`, `state.{hover,selected,focus,disabled}`,
+  `type`, `ink` and namespaced `layout.<app>` metrics. Per-role borders replace
+  the v1 global `border-w`/`hairline-w` split; hover/selected/focus/disabled,
+  the type scale and role paddings are first-class tokens.
+- **`paper` declares explicit `mode.light` overrides.** The base groups remain
+  the v1-equivalent dark-paper branch; the light branch is authored, so a light
+  palette + `paper` reads light without guessing the palette mode.
+- **All seven templates use flattened v2 placeholders.** `surface.panel.bg`
+  renders through `{{SKIN_SURFACE_PANEL_BG}}`, `state.hover.fill` through
+  `{{SKIN_STATE_HOVER_FILL}}`, and so on. Role borders/paddings, card/control/
+  pill type and padding, state paint, small type and ink are tokenized; only
+  component geometry with no token remains a literal. No template emits a
+  `layout.<app>` token into CSS.
+- **The canonical set is vendored at `contracts=v0.7.0`.** `skins/contracts/`
+  now holds the appearance manifest/json/artifact schemas pinned by sha256 in
+  `skins/contracts/PIN` (source commit `3ea6d83`); the frozen v1 skin schemas
+  are kept at the same tag for provenance.
+- **`make validate-skins` validates manifests, modes and tokens.json.**
+  Each manifest validates against `appearance-manifest`, resolves under both
+  `dark` and `light`, and the resolved document validates against
+  `appearance-json`. The gate expands all seven templates for every manifest ×
+  mode, enforces flattened placeholder coverage, rejects literal
+  hex/transition/structure and layout placeholders, and keeps the unit rule
+  (length → `<n>px`, letter-spacing → `<n>em`, font-weight unitless).
+- **Parity is still the glass acceptance oracle.** The expanded bar keeps
+  today's `1.5px` panel, `1px` card/control/pill hairlines, `8px 9px` cell padding, `9.5px`
+  badge type and `0.05em` tracking. `skins/tests/` adds paper light/dark mode
+  expansion, state/role coverage and new negative fixtures
+  (unknown-surface-role, incomplete-mode, layout-placeholder).
+
+### Notes
+
+- **`schema_major` 1 → 2 is a breaking contract change.** The task fixes the
+  corpus tag at `v0.12.0`; the repository is pre-1.0, so this 0.x minor is the
+  breaking lane. Consumers must select by `schemaVersion`/`version: 2` and read
+  `tokens.json`; v1 manifests are never reinterpreted as v2.
+- **Asymmetric padding is partially literal.** The contract stores one numeric
+  `padding` per surface role, so a pair such as card `10px 11px` keeps its
+  second value in the template; the token carries the first/vertical value.
+
 ## v0.11.0 — skins templates for every non-bar AGS app
 
 ### Added

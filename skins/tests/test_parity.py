@@ -1,16 +1,14 @@
 """Parity tests: the glass expansion is today's ags-bar settings/Bluetooth look.
 
-The frozen v1 token set is not changed here. This suite proves the correction
-that `v0.7.0` missed: the GTK template is a *literal extraction* of
-``../ags-bar/style.css`` for the settings and Bluetooth surfaces, with
-``{{SKIN_*}}`` used only where the token is a genuine global knob.
+The v2 Appearance token set replaces the v1 flat knobs without changing the
+glass declarations that the tokenized set covers. This suite proves the parity
+contract from RFC 105 R-11: converting the template to flattened v2
+placeholders (`surface.panel.bg`, `state.hover.fill`, ...) must expand to the
+same measured declarations as today's `../ags-bar/style.css`.
 
-The expansion reuses ``scripts/validate-skins.py``'s own placeholder map, so the
-rendered CSS is the same substitution the gate validates. Expected declarations
-carry the source line references; the only visual deviations are the documented
-1px → 1.5px hairlines encoded in
-``fixtures/parity/deviations.json`` (the single frozen ``border-w`` token cannot
-split the 1.5px panel from the 1px controls).
+The expansion reuses ``scripts/validate-skins.py``'s own v2 resolver and
+placeholder expander, so the rendered CSS is the same substitution the gate
+validates. Expected declarations carry the source line references.
 """
 
 from __future__ import annotations
@@ -47,12 +45,10 @@ def load_manifest(name: str) -> dict:
         return tomllib.load(handle)
 
 
-def render(name: str) -> str:
-    """Expand a manifest through validate-skins' own unit-rule expander."""
-    manifest = load_manifest(name)
-    template = validate_skins.expand_template(
-        TEMPLATE.read_text(), manifest, schema()["frozen"]["token_groups"]
-    )
+def render(name: str = "glass", mode: str = "dark") -> str:
+    """Expand a manifest through validate-skins' own v2 expander."""
+    tokens = validate_skins._resolve_manifest(load_manifest(name), mode)
+    template = validate_skins.expand_template(TEMPLATE.read_text(), tokens)
     assert "{{" not in template, "unexpanded placeholder in template"
     return template
 
@@ -72,7 +68,6 @@ def parse_rules(css: str) -> dict[str, list[str]]:
     return rules
 
 
-# selector → (source lines, expected declarations in the glass expansion)
 PARITY: dict[str, tuple[str, list[str]]] = {
     "window.settings-panel": (
         "style.css:147-151 + policy: font-family only, no font-size",
@@ -408,17 +403,19 @@ def source_style() -> Path | None:
 
 def test_glass_expansion_keeps_unit_suffixed_lengths() -> None:
     glass = load_manifest("glass")
+    panel = glass["groups"]["surface"]["panel"]
+    card = glass["groups"]["surface"]["card"]
     css = render("glass")
-    assert glass["shape"]["radius-panel"] == 12
-    assert glass["shape"]["border-w"] == 1.5
-    assert glass["shape"]["hairline-w"] == 1
-    assert glass["rhythm"]["cell-pad"] == "8px 9px"
+    assert panel["radius"] == 12
+    assert panel["border-width"] == 1.5
+    assert card["border-width"] == 1
     assert "border-radius: 12px;" in css
     assert "border: 1.5px solid @primary;" in css
     assert "border: 1px solid alpha(@on_surface, 0.10);" in css
     assert "padding: 8px 9px;" in css
     assert "border-radius: 20px;" in css
     assert "font-size: 12.5px;" in css
+    assert "letter-spacing: 0.05em;" in css
     assert "min-width: 312px;" not in css
 
 
@@ -461,14 +458,12 @@ def test_border_ownership_is_documented_and_split() -> None:
     assert "gap` is not consumed" in template
 
     data = json.loads(DEVIATIONS.read_text())
-    assert data["deviations"] == [], (
-        "with hairline-w the glass expansion has no visual border deviation"
-    )
+    assert data["deviations"] == []
     assert data["policy"]
-    assert any("hairline-w" in item for item in data["nonvisual"])
+    assert any("per-role" in item for item in data["nonvisual"])
 
 
-def test_hairline_widths_match_source() -> None:
+def test_per_role_border_widths_match_source() -> None:
     rules = parse_rules(render("glass"))
     # The panel keeps the source's 1.5px frame; every source 1px hairline is 1px.
     assert "border: 1.5px solid @primary" in rules[".settings-surface"]
@@ -493,16 +488,16 @@ def test_hairline_widths_match_source() -> None:
         for selector, declarations in rules.items()
         if selector != ".settings-surface"
         for declaration in declarations
-    ), "only the panel/frame may use the 1.5px border-w"
+    ), "only the panel/frame may use the 1.5px border-width"
 
 
 def test_layout_tokens_are_not_emitted_as_css() -> None:
     template = TEMPLATE.read_text()
     for token in (
-        "SKIN_PANEL_WIDTH",
-        "SKIN_BT_LIST_SPACING",
-        "SKIN_BAR_ROW_HEIGHT",
-        "SKIN_CHIP_MIN",
+        "SKIN_LAYOUT_AGS_PANEL_WIDTH",
+        "SKIN_LAYOUT_AGS_BT_LIST_SPACING",
+        "SKIN_LAYOUT_AGS_BAR_ROW_HEIGHT",
+        "SKIN_LAYOUT_AGS_CHIP_MIN",
     ):
         assert "{{" + token + "}}" not in template, token
 
@@ -524,7 +519,10 @@ def test_settings_net_height_matches_source_no_border() -> None:
     net = rules[".settings-net"]
 
     assert "border: none" in net
-    assert not any(declaration.startswith("border:") and "transparent" in declaration for declaration in net)
+    assert not any(
+        declaration.startswith("border:") and "transparent" in declaration
+        for declaration in net
+    )
     assert not any(declaration.startswith("margin-bottom:") for declaration in net)
     assert not any(declaration.startswith("min-height:") for declaration in net)
 
@@ -545,12 +543,9 @@ def test_settings_net_height_matches_source_no_border() -> None:
 
 def test_gap_is_metadata_not_a_rewritten_padding() -> None:
     css = render("glass")
-    # glass gap is 8px, but the template keeps the source's 11px panel padding
-    # and 10px 11px card padding instead of substituting gap.
     assert "padding: 11px;" in css
     assert "padding: 10px 11px;" in css
     assert "padding: 8px;" not in css
-    # Row spacing is widget-level, not a template margin.
     assert "margin-bottom: 4px;" not in css
 
 
@@ -561,3 +556,12 @@ def test_window_root_has_no_font_size() -> None:
             declaration.startswith("font-size:") for declaration in rules[selector]
         )
         assert "font-family: inherit" in rules[selector]
+
+
+def test_paper_dark_and_light_expansions_differ_only_by_mode() -> None:
+    dark = render("paper", "dark")
+    light = render("paper", "light")
+    assert "border: 1px solid alpha(@on_surface, 0.22);" in dark
+    assert "border: 1px solid alpha(@on_surface, 0.16);" in light
+    assert "box-shadow: 0 10px 28px rgba(0,0,0,0.22);" in dark
+    assert "box-shadow: 0 8px 22px alpha(@shadow, 0.16);" in light

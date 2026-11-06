@@ -28,8 +28,9 @@ Evidence: `contracts@appearance.md` §"Token model v2"; the vendored pair in
 
 ## Requirement
 
-1. Convert `skins/manifests/{glass,flat,paper}.toml` to
-   `schema_major = 2` with the nested v2 groups:
+1. Convert `skins/manifests/{glass,flat,paper}.toml` to the v2 manifest
+   envelope (`schemaVersion = 2`; the local schema's `schema_major` is 2) with
+   the nested v2 groups:
    `surface.{panel,card,cell,control,pill}`, `state.{hover,selected,focus,disabled}`,
    `type`, `ink`, `layout.<app>`, and `mode.light`/`mode.dark` overrides where
    needed. `glass` is a faithful conversion of the real bar stylesheet;
@@ -57,17 +58,17 @@ Evidence: `contracts@appearance.md` §"Token model v2"; the vendored pair in
 
 ## Acceptance
 
-- [ ] The three manifests are `schema_major = 2`, use only the frozen v2
+- [x] The three manifests are `schemaVersion = 2`, use only the frozen v2
       vocabulary, and validate against the vendored `appearance-manifest`
       schema; `paper` has explicit light-mode overrides.
-- [ ] All seven templates use flattened v2 placeholders, contain no literal
+- [x] All seven templates use flattened v2 placeholders, contain no literal
       hex/transition/structure, and emit no layout token into CSS.
-- [ ] `make validate-skins` expands all 7 templates × 3 manifests × 2 modes,
+- [x] `make validate-skins` expands all 7 templates × 3 manifests × 2 modes,
       validates each resolved token document against `appearance-json`, and
       reports the vendored `v0.7.0` hashes.
-- [ ] `make test-skins` covers glass parity for the tokenized set, paper
+- [x] `make test-skins` covers glass parity for the tokenized set, paper
       light/dark mode expansion, state/role coverage and the negative fixtures.
-- [ ] `make validate-skins`, `make test-skins` and `make validate` pass.
+- [x] `make validate-skins`, `make test-skins` and `make validate` pass.
 - [ ] `v0.12.0` is an annotated tag on the fast-forward-merged commit; the
       branch is not left unmerged; nothing is pushed.
 
@@ -83,7 +84,12 @@ Evidence: `contracts@appearance.md` §"Token model v2"; the vendored pair in
 
 ## Discrepancy / judgment log
 
-- Asymmetric component paddings (`10px 11px`, `8px 9px`, `4px 8px`,
+- **Manifest envelope spelling.** The task says `schema_major = 2`; the frozen
+  `appearance-manifest` schema requires `schemaVersion = 2` and closes the
+  object with `additionalProperties: false`. The manifests therefore use
+  `schemaVersion = 2`, while `skins/schema.json` carries `schema_major: 2`.
+  The canonical contract wins; adding `schema_major` would be rejected.
+- **Asymmetric component paddings (`10px 11px`, `8px 9px`, `4px 8px`,
   `2px 6px`) cannot be represented by the contract's single numeric `padding`
   token. The token carries the first/vertical value and the template keeps the
   expressive second value as a literal, so the glass expansion is unchanged.

@@ -6,7 +6,8 @@ Run with the repository's development dependencies:
 
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
-that prove the gate actually bites.
+that prove the gate actually bites. The model is the v2 Appearance token set
+from ``contracts`` v0.7.0, not the frozen v1 skin vocabulary.
 """
 
 from __future__ import annotations
@@ -28,14 +29,22 @@ MANIFESTS = ROOT / "skins" / "manifests"
 TEMPLATES = ROOT / "skins" / "templates"
 TEMPLATE = TEMPLATES / "ags.gtk.css.j2"
 CONTRACTS = ROOT / "skins" / "contracts"
-LAYOUT_PLACEHOLDERS = {
-    "SKIN_PANEL_WIDTH",
-    "SKIN_BT_LIST_SPACING",
-    "SKIN_BAR_ROW_HEIGHT",
-    "SKIN_CHIP_MIN",
+FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
+
+VENDORED = {
+    "appearance-manifest.schema.json": "skins/contracts/appearance-manifest.schema.json",
+    "appearance-json.schema.json": "skins/contracts/appearance-json.schema.json",
+    "appearance-artifact.schema.json": "skins/contracts/appearance-artifact.schema.json",
+    "skin-token.schema.json": "skins/contracts/skin-token.schema.json",
+    "skin-manifest.schema.json": "skins/contracts/skin-manifest.schema.json",
+    "skin-json.schema.json": "skins/contracts/skin-json.schema.json",
 }
+LAYOUT_PLACEHOLDER = re.compile(r"SKIN_LAYOUT_[A-Z0-9_]+")
+PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
+HEX = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
+
 #: target configDir -> (top-level selectors the app really applies, genuine
-#: skin placeholders the extraction must use).
+#: v2 token placeholders the extraction must use).
 APP_TEMPLATES = {
     "ags": {
         "selectors": [
@@ -47,24 +56,50 @@ APP_TEMPLATES = {
             ".settings-rowact",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BORDER",
-            "SKIN_BORDER_W",
-            "SKIN_RADIUS_PANEL",
-            "SKIN_SHADOW",
-            "SKIN_BLUR",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_CELL_PAD",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_PANEL_BORDER",
+            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
+            "SKIN_SURFACE_PANEL_RADIUS",
+            "SKIN_SURFACE_PANEL_PADDING",
+            "SKIN_SURFACE_PANEL_SHADOW",
+            "SKIN_SURFACE_PANEL_BLUR",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_BORDER_WIDTH",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CARD_PADDING",
+            "SKIN_SURFACE_CELL_BG",
+            "SKIN_SURFACE_CELL_HOVER_BG",
+            "SKIN_SURFACE_CELL_RADIUS",
+            "SKIN_SURFACE_CELL_PADDING",
+            "SKIN_SURFACE_CONTROL_BG",
+            "SKIN_SURFACE_CONTROL_BORDER",
+            "SKIN_SURFACE_CONTROL_BORDER_WIDTH",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_CONTROL_PADDING",
+            "SKIN_SURFACE_CONTROL_FONT_SIZE",
+            "SKIN_SURFACE_CONTROL_FONT_WEIGHT",
+            "SKIN_SURFACE_PILL_BG",
+            "SKIN_SURFACE_PILL_BORDER",
+            "SKIN_SURFACE_PILL_BORDER_WIDTH",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_SURFACE_PILL_PADDING",
+            "SKIN_SURFACE_PILL_FONT_SIZE",
+            "SKIN_SURFACE_PILL_LETTER_SPACING",
+            "SKIN_STATE_HOVER_RING",
+            "SKIN_STATE_SELECTED_FILL",
+            "SKIN_STATE_SELECTED_INK",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_INK_ACCENT_MUTED",
+            "SKIN_INK_INK_OVER",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_CAPTION",
+            "SKIN_TYPE_SIZE_META",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_DISPLAY",
         },
     },
     "ags-clipboard": {
@@ -77,22 +112,22 @@ APP_TEMPLATES = {
             ".clipboard-empty",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BORDER",
-            "SKIN_BORDER_W",
-            "SKIN_RADIUS_PANEL",
-            "SKIN_SHADOW",
-            "SKIN_BLUR",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_PANEL_BORDER",
+            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
+            "SKIN_SURFACE_PANEL_RADIUS",
+            "SKIN_SURFACE_PANEL_SHADOW",
+            "SKIN_SURFACE_PANEL_BLUR",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
         },
     },
     "ags-notifications": {
@@ -105,19 +140,21 @@ APP_TEMPLATES = {
             ".speedtest-progress-cell",
         ],
         "tokens": {
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_CELL_PAD",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_SHADOW",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CARD_PADDING",
+            "SKIN_SURFACE_CELL_PADDING",
+            "SKIN_SURFACE_CELL_RADIUS",
+            "SKIN_SURFACE_PANEL_SHADOW",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_META",
         },
     },
     "ags-wallpaper-selector": {
@@ -130,23 +167,26 @@ APP_TEMPLATES = {
             ".ws-live",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BORDER",
-            "SKIN_BORDER_W",
-            "SKIN_RADIUS_PANEL",
-            "SKIN_SHADOW",
-            "SKIN_BLUR",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_PANEL_BORDER",
+            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
+            "SKIN_SURFACE_PANEL_RADIUS",
+            "SKIN_SURFACE_PANEL_SHADOW",
+            "SKIN_SURFACE_PANEL_BLUR",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CARD_PADDING",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_SURFACE_PILL_PADDING",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_META",
         },
     },
     "ags-capture": {
@@ -160,24 +200,33 @@ APP_TEMPLATES = {
             "switch.palette-switch",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BORDER",
-            "SKIN_BORDER_W",
-            "SKIN_RADIUS_PANEL",
-            "SKIN_SHADOW",
-            "SKIN_BLUR",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_CELL_PAD",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_PANEL_BORDER",
+            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
+            "SKIN_SURFACE_PANEL_RADIUS",
+            "SKIN_SURFACE_PANEL_SHADOW",
+            "SKIN_SURFACE_PANEL_BLUR",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CARD_PADDING",
+            "SKIN_SURFACE_CELL_RADIUS",
+            "SKIN_SURFACE_CELL_PADDING",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_CONTROL_PADDING",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_STATE_HOVER_FILL",
+            "SKIN_STATE_SELECTED_FILL",
+            "SKIN_STATE_SELECTED_INK",
+            "SKIN_STATE_FOCUS_RING",
+            "SKIN_STATE_DISABLED_INK",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_META",
         },
     },
     "ags-icme": {
@@ -190,19 +239,25 @@ APP_TEMPLATES = {
             ".inspector-nav",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_CELL_PAD",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_INK_DIM",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CELL_BG",
+            "SKIN_SURFACE_CELL_RADIUS",
+            "SKIN_SURFACE_CELL_PADDING",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_STATE_HOVER_FILL",
+            "SKIN_STATE_SELECTED_FILL",
+            "SKIN_STATE_SELECTED_INK",
+            "SKIN_INK_INK",
+            "SKIN_INK_INK_DIM",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_META",
         },
     },
     "ags-btop-studio": {
@@ -215,45 +270,31 @@ APP_TEMPLATES = {
             ".key-hit",
         ],
         "tokens": {
-            "SKIN_BG_PANEL",
-            "SKIN_BG_CARD",
-            "SKIN_RADIUS_CARD",
-            "SKIN_HAIRLINE_W",
-            "SKIN_RADIUS_CELL",
-            "SKIN_CELL_PAD",
-            "SKIN_RADIUS_PILL",
-            "SKIN_INK",
-            "SKIN_ACCENT",
-            "SKIN_TITLE_SIZE",
-            "SKIN_TEXT_SIZE",
-            "SKIN_FONT_FAMILY",
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CARD_PADDING",
+            "SKIN_SURFACE_CELL_BG",
+            "SKIN_SURFACE_CELL_BORDER",
+            "SKIN_SURFACE_CELL_RADIUS",
+            "SKIN_SURFACE_CELL_PADDING",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_STATE_HOVER_FILL",
+            "SKIN_INK_INK",
+            "SKIN_INK_ACCENT",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_FONT_WEIGHT",
+            "SKIN_TYPE_LETTER_SPACING",
+            "SKIN_TYPE_SIZE_TITLE",
+            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_META",
         },
     },
 }
+
 PIN = CONTRACTS / "PIN"
-FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
-VENDORED = {
-    "skin-token.schema.json": "skins/contracts/skin-token.schema.json",
-    "skin-manifest.schema.json": "skins/contracts/skin-manifest.schema.json",
-    "skin-json.schema.json": "skins/contracts/skin-json.schema.json",
-}
-NUMERIC_TOKENS = {
-    "radius-panel",
-    "radius-card",
-    "radius-cell",
-    "radius-pill",
-    "border-w",
-    "hairline-w",
-    "gap",
-    "title-size",
-    "text-size",
-    "panel-width",
-    "bt-list-spacing",
-    "bar-row-height",
-    "chip-min",
-}
-PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
-HEX = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 
 _SPEC = importlib.util.spec_from_file_location(
     "validate_skins", ROOT / "scripts" / "validate-skins.py"
@@ -273,19 +314,16 @@ def schema() -> dict:
     return json.loads(SCHEMA.read_text())
 
 
-def token_value_map(manifest: dict) -> dict[str, str]:
-    groups = schema()["frozen"]["token_groups"]
-    return {
-        f"SKIN_{token.upper().replace('-', '_')}": manifest[group][token]
-        for group, tokens in groups.items()
-        for token in tokens
-    }
+def css_token_paths() -> list[str]:
+    return list(schema()["frozen"]["css_token_paths"])
 
 
-def render(template: str, manifest: dict) -> str:
-    rendered = validate_skins.expand_template(
-        template, manifest, schema()["frozen"]["token_groups"]
-    )
+def resolved(name: str, mode: str = "dark") -> dict:
+    return validate_skins._resolve_manifest(load_manifest(name), mode)
+
+
+def render(template: str, name: str = "glass", mode: str = "dark") -> str:
+    rendered = validate_skins.expand_template(template, resolved(name, mode))
     assert "{{" not in rendered, "unexpanded placeholder in template"
     return rendered
 
@@ -335,8 +373,9 @@ def test_corpus_passes_the_gate() -> None:
         "manifests": 3,
         "templates": 7,
         "targets": sorted(APP_TEMPLATES),
-        "tokens": 24,
+        "tokens": 57,
         "roles": 51,
+        "expansions": 6,
     }
     assert any("palette roles ==" in note for note in notes)
     for target in APP_TEMPLATES:
@@ -346,7 +385,8 @@ def test_corpus_passes_the_gate() -> None:
         )
         assert note, target
         for manifest_name in ("glass", "flat", "paper"):
-            assert manifest_name in note, f"{target}: {note}"
+            for mode in ("dark", "light"):
+                assert f"{manifest_name}:{mode}" in note, f"{target}: {note}"
 
 
 def test_template_target_is_the_filename_prefix() -> None:
@@ -360,22 +400,24 @@ def test_template_target_is_the_filename_prefix() -> None:
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
-def test_app_template_expands_for_every_manifest(target: str) -> None:
+def test_app_template_expands_for_every_manifest_and_mode(target: str) -> None:
     path = TEMPLATES / f"{target}.gtk.css.j2"
     text = path.read_text()
     for manifest_name in ("glass", "flat", "paper"):
-        css = render(text, load_manifest(manifest_name))
-        assert "{{" not in css, f"{path.name}: {manifest_name}"
-        for selector in APP_TEMPLATES[target]["selectors"]:
-            assert re.search(
-                rf"(?m)^\s*{re.escape(selector)}\s*(?:,|\{{)", text
-            ), f"{path.name}: missing selector {selector}"
+        for mode in ("dark", "light"):
+            css = render(text, manifest_name, mode)
+            assert "{{" not in css, f"{path.name}: {manifest_name}:{mode}"
+    for selector in APP_TEMPLATES[target]["selectors"]:
+        assert re.search(
+            rf"(?m)^\s*{re.escape(selector)}\s*(?:,|\{{)", text
+        ), f"{path.name}: missing selector {selector}"
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
 def test_app_template_placeholder_coverage(target: str) -> None:
     text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
-    expected = set(token_value_map(load_manifest("glass")))
+    expected_paths = set(css_token_paths())
+    expected = {validate_skins._flatten(path) for path in expected_paths}
     used = {match.strip() for match in PLACEHOLDER.findall(text)}
     assert used
     assert used <= expected, f"{target}: unknown placeholders {sorted(used - expected)}"
@@ -385,23 +427,24 @@ def test_app_template_placeholder_coverage(target: str) -> None:
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
-def test_app_template_has_no_literal_hex_or_transition(target: str) -> None:
+def test_app_template_has_no_literal_hex_transition_or_structure(target: str) -> None:
     text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
     assert not HEX.search(text), f"{target}: literal hex colour"
     assert not re.search(r"\btransition\s*:", text), f"{target}: transition"
     assert not re.search(r"\banimation\s*:", text), f"{target}: animation"
     assert "@keyframes" not in text, f"{target}: keyframes"
+    for key in ("structure", "variant"):
+        assert not re.search(rf"\b{key}\s*:", text), f"{target}: {key} property"
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
 def test_app_template_does_not_expand_layout_tokens(target: str) -> None:
     text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
-    for placeholder in LAYOUT_PLACEHOLDERS:
-        assert "{{" + placeholder + "}}" not in text, f"{target}: {placeholder}"
+    assert not LAYOUT_PLACEHOLDER.search(text), f"{target}: layout placeholder"
     for manifest_name in ("glass", "flat", "paper"):
-        css = render(text, load_manifest(manifest_name))
-        for placeholder in LAYOUT_PLACEHOLDERS:
-            assert placeholder not in css, f"{target}: {manifest_name} {placeholder}"
+        for mode in ("dark", "light"):
+            css = render(text, manifest_name, mode)
+            assert not LAYOUT_PLACEHOLDER.search(css), f"{target}: {manifest_name}:{mode}"
 
 
 def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
@@ -420,30 +463,39 @@ def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
     return metadata, hashes
 
 
-def test_schema_vendors_the_pinned_contracts_pair() -> None:
+def test_schema_vendors_the_pinned_contracts_set() -> None:
     data = schema()
-    assert data["schema_major"] == 1
+    assert data["schema_major"] == 2
     canonical = data["canonical"]
     assert canonical["repository"] == "contracts"
     assert set(canonical["paths"]) == {
+        "schemas/appearance-manifest.schema.json",
+        "schemas/appearance-json.schema.json",
+        "schemas/appearance-artifact.schema.json",
         "schemas/skin-token.schema.json",
         "schemas/skin-manifest.schema.json",
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.6.0"
+    assert canonical["tag"] == "v0.7.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
-        "token": "skins/contracts/skin-token.schema.json",
-        "manifest": "skins/contracts/skin-manifest.schema.json",
+        "manifest": "skins/contracts/appearance-manifest.schema.json",
+        "json": "skins/contracts/appearance-json.schema.json",
+        "artifact": "skins/contracts/appearance-artifact.schema.json",
+    }
+    assert set(canonical["legacy"]["frozen_v1"]) == {
+        "skins/contracts/skin-token.schema.json",
+        "skins/contracts/skin-manifest.schema.json",
+        "skins/contracts/skin-json.schema.json",
     }
     assert canonical["resolved_document"]["path"] == (
-        "skins/contracts/skin-json.schema.json"
+        "skins/contracts/appearance-json.schema.json"
     )
-    assert "version 1" in canonical["resolved_document"]["note"]
+    assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "e512f5c3dc6bec6023dc9ca1552213220001b07d"
+    assert metadata["source-commit"] == "3ea6d8354f23d0b9239e06392897e53496f25144"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -456,72 +508,13 @@ def test_vendored_files_match_the_pin_hashes() -> None:
         assert hashlib.sha256(path.read_bytes()).hexdigest() == hashes[name]
 
 
-def test_vendored_canonical_schemas_type_numeric_tokens_as_numbers() -> None:
-    token_schema = json.loads(
-        (ROOT / VENDORED["skin-token.schema.json"]).read_text()
-    )
-    manifest_schema = json.loads(
-        (ROOT / VENDORED["skin-manifest.schema.json"]).read_text()
-    )
-    numeric = {
-        "radius-panel",
-        "radius-card",
-        "radius-cell",
-        "radius-pill",
-        "border-w",
-        "hairline-w",
-        "gap",
-        "title-size",
-        "text-size",
-        "panel-width",
-        "bt-list-spacing",
-        "bar-row-height",
-        "chip-min",
-    }
-    for token in numeric:
-        ref = token_schema["properties"][token]["$ref"]
-        assert ref in {
-            "#/definitions/number",
-            "#/definitions/nonNegativeNumber",
-        }
-    assert manifest_schema["definitions"]["number"]["type"] == "number"
-    assert manifest_schema["definitions"]["nonNegativeNumber"]["type"] == "number"
-    assert manifest_schema["definitions"]["cellPad"]["type"] == "string"
-
-
-def test_local_schema_delegates_to_the_vendored_pair_not_a_lookalike() -> None:
-    data = schema()
-    assert "$defs" not in data
-    groups = data["frozen"]["token_groups"]
-    for group, tokens in groups.items():
-        props = data["properties"][group]["properties"]
-        for token in tokens:
-            spec = props[token]
-            assert set(spec) == {"$ref"}, f"{group}.{token}: {spec}"
-            assert spec["$ref"].startswith(
-                "contracts/skin-manifest.schema.json#"
-            ), f"{group}.{token}: {spec['$ref']}"
-
-
-def test_palette_roles_equal_the_repository_vocabulary() -> None:
-    vocabulary = json.loads((ROOT / "icons" / "mappings" / "vocabulary.json").read_text())
-    assert schema()["palette"]["roles"] == vocabulary["roles"]
-    assert len(schema()["palette"]["roles"]) == 51
-
-
-def test_manifest_documents_validate_against_the_local_schema() -> None:
+def test_manifest_documents_validate_against_the_vendored_manifest_schema() -> None:
     jsonschema = pytest.importorskip("jsonschema")
-    from referencing import Registry, Resource
-
-    schema_data = schema()
-    jsonschema.Draft202012Validator.check_schema(schema_data)
-    registry = Registry().with_resources(
-        [
-            (rel, Resource.from_contents(json.loads((ROOT / rel).read_text())))
-            for rel in VENDORED.values()
-        ]
+    manifest_schema = json.loads(
+        (CONTRACTS / "appearance-manifest.schema.json").read_text()
     )
-    validator = jsonschema.Draft202012Validator(schema_data, registry=registry)
+    jsonschema.Draft7Validator.check_schema(manifest_schema)
+    validator = jsonschema.Draft7Validator(manifest_schema)
     for path in MANIFESTS.glob("*.toml"):
         with path.open("rb") as handle:
             manifest = tomllib.load(handle)
@@ -529,107 +522,96 @@ def test_manifest_documents_validate_against_the_local_schema() -> None:
         assert errors == [], [error.message for error in errors]
 
 
-def test_resolved_glass_document_matches_the_vendored_skin_json_schema() -> None:
-    """The runtime emits this document; the platform parses it with this schema."""
+def test_resolved_tokens_validate_for_every_manifest_and_mode() -> None:
     jsonschema = pytest.importorskip("jsonschema")
-    skin_json_schema = json.loads((CONTRACTS / "skin-json.schema.json").read_text())
-    jsonschema.Draft7Validator.check_schema(skin_json_schema)
+    token_schema = json.loads((CONTRACTS / "appearance-json.schema.json").read_text())
+    jsonschema.Draft7Validator.check_schema(token_schema)
+    validator = jsonschema.Draft7Validator(token_schema)
+    for name in ("glass", "flat", "paper"):
+        for mode in ("dark", "light"):
+            tokens = resolved(name, mode)
+            assert tokens["version"] == 2
+            assert set(tokens) == {"version", *validate_skins.GROUPS}
+            errors = sorted(
+                validator.iter_errors(tokens), key=lambda error: list(error.path)
+            )
+            assert errors == [], f"{name}:{mode}: {[e.message for e in errors]}"
 
-    manifest = load_manifest("glass")
-    groups = schema()["frozen"]["token_groups"]
-    resolved = {"version": 1}
-    for group, tokens in groups.items():
-        resolved[group] = {token: manifest[group][token] for token in tokens}
 
-    assert set(resolved) == {"version", *groups}
-    assert resolved["version"] == 1
-    for group, tokens in groups.items():
-        assert set(resolved[group]) == set(tokens)
-        for token in tokens:
-            if token in NUMERIC_TOKENS:
-                value = resolved[group][token]
-                assert isinstance(value, (int, float)) and not isinstance(value, bool)
-                assert not isinstance(value, str)
-
-    errors = sorted(
-        jsonschema.Draft7Validator(skin_json_schema).iter_errors(resolved),
-        key=lambda error: list(error.path),
+def test_appearance_artifact_schema_accepts_a_generation() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    artifact_schema = json.loads(
+        (CONTRACTS / "appearance-artifact.schema.json").read_text()
     )
-    assert errors == [], [error.message for error in errors]
+    jsonschema.Draft7Validator.check_schema(artifact_schema)
+    digest = "0" * 64
+    artifact = {
+        "version": 2,
+        "skin": "glass",
+        "mode": "dark",
+        "paletteHash": digest,
+        "skinHash": digest,
+        "appearanceHash": digest,
+        "generationHash": digest,
+        "tokenRef": "tokens.json",
+    }
+    assert list(jsonschema.Draft7Validator(artifact_schema).iter_errors(artifact)) == []
+
+
+def test_manifest_rejects_a_numeric_string() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    manifest_schema = json.loads(
+        (CONTRACTS / "appearance-manifest.schema.json").read_text()
+    )
+    manifest = load_manifest("glass")
+    manifest["groups"]["surface"]["panel"]["radius"] = "12px"
+    errors = list(jsonschema.Draft7Validator(manifest_schema).iter_errors(manifest))
+    assert errors, "the manifest schema must reject a numeric string"
 
 
 def test_resolved_document_rejects_a_numeric_string() -> None:
     jsonschema = pytest.importorskip("jsonschema")
-    skin_json_schema = json.loads((CONTRACTS / "skin-json.schema.json").read_text())
-    manifest = load_manifest("glass")
-    groups = schema()["frozen"]["token_groups"]
-    resolved = {"version": 1}
-    for group, tokens in groups.items():
-        resolved[group] = {token: manifest[group][token] for token in tokens}
-    resolved["shape"]["radius-panel"] = "12px"
-
-    errors = list(jsonschema.Draft7Validator(skin_json_schema).iter_errors(resolved))
-    assert errors, "the resolved-document schema must reject a numeric string"
+    token_schema = json.loads((CONTRACTS / "appearance-json.schema.json").read_text())
+    tokens = resolved("glass")
+    tokens["surface"]["panel"]["radius"] = "12px"
+    errors = list(jsonschema.Draft7Validator(token_schema).iter_errors(tokens))
+    assert errors, "the resolved-token schema must reject a numeric string"
 
 
-def test_numeric_string_is_not_a_valid_token_value() -> None:
-    manifest = load_manifest("glass")
-    manifest["shape"]["radius-panel"] = "12px"
-    errors: list[str] = []
-    spec = schema()["properties"]["shape"]["properties"]["radius-panel"]
-    resolved = validate_skins._deref(  # noqa: SLF001 - the gate's own resolver
-        spec, ROOT, "skins/schema.json", "shape.radius-panel", errors
-    )
-    assert errors == []
-    validate_skins._validate_value(  # noqa: SLF001 - the gate's own type check
-        resolved, manifest["shape"]["radius-panel"], "shape.radius-panel", errors
-    )
-    assert any("must be a number" in error for error in errors), errors
+def test_every_css_token_path_is_present_in_every_resolved_document() -> None:
+    paths = set(css_token_paths())
+    for name in ("glass", "flat", "paper"):
+        for mode in ("dark", "light"):
+            tokens = resolved(name, mode)
+            present = set(validate_skins._css_paths(tokens).values())
+            assert present == paths, f"{name}:{mode}"
 
 
-def test_every_required_token_is_present_in_every_manifest() -> None:
-    groups = schema()["frozen"]["token_groups"]
-    for path in MANIFESTS.glob("*.toml"):
-        with path.open("rb") as handle:
-            manifest = tomllib.load(handle)
-        assert manifest["name"] == path.stem
-        for group, tokens in groups.items():
-            assert set(manifest[group]) == set(tokens), f"{path.name}: {group}"
+def test_state_role_and_surface_coverage() -> None:
+    used: set[str] = set()
+    for path in TEMPLATES.glob("*.j2"):
+        for raw in PLACEHOLDER.findall(path.read_text()):
+            used.add(raw.strip())
+    paths = set(css_token_paths())
+    used_paths = {path for path in paths if validate_skins._flatten(path) in used}
 
-
-def test_template_placeholders_are_schema_tokens() -> None:
-    expected = set(token_value_map(load_manifest("glass")))
-    used = {match.strip() for match in PLACEHOLDER.findall(TEMPLATE.read_text())}
-    assert used
-    assert used <= expected
-    assert not {token for token in used if not token.startswith("SKIN_")}
-
-
-def test_template_does_not_expand_layout_tokens() -> None:
-    """Layout metrics are TSX-owned; the template must not emit them as CSS."""
-    text = TEMPLATE.read_text()
+    for state in ("hover", "selected", "focus", "disabled"):
+        assert any(path.startswith(f"state.{state}.") for path in used_paths), state
+    for role in ("panel", "card", "cell", "control", "pill"):
+        assert any(path.startswith(f"surface.{role}.") for path in used_paths), role
+    for token in ("ink", "ink-dim", "accent", "accent-muted", "ink-over"):
+        assert f"ink.{token}" in used_paths, token
     for token in (
-        "SKIN_PANEL_WIDTH",
-        "SKIN_BT_LIST_SPACING",
-        "SKIN_BAR_ROW_HEIGHT",
-        "SKIN_CHIP_MIN",
+        "font-family",
+        "font-weight",
+        "letter-spacing",
+        "size-caption",
+        "size-meta",
+        "size-body",
+        "size-title",
+        "size-display",
     ):
-        assert "{{" + token + "}}" not in text, token
-
-    css = render(TEMPLATE.read_text(), load_manifest("glass"))
-    assert "min-width: 312px" not in css
-    assert "margin-bottom: 4px" not in css
-
-    flat = render(TEMPLATE.read_text(), load_manifest("flat"))
-    paper = render(TEMPLATE.read_text(), load_manifest("paper"))
-    # The layout values that used to leak into CSS must not appear as a whole
-    # declaration. (48px/30px are legal source literals elsewhere in the
-    # template, so only the unique leaked values are asserted here; the parity
-    # suite checks the owning selector's declaration list.)
-    assert "min-height: 28px" not in flat  # flat bar-row-height
-    assert "margin-bottom: 4px" not in flat  # flat bt-list-spacing
-    assert "margin-bottom: 6px" not in paper  # paper bt-list-spacing
-    assert "min-width: 52px" not in paper  # paper chip-min
+        assert f"type.{token}" in used_paths, token
 
 
 @pytest.mark.parametrize("name", ["glass", "flat", "paper"])
@@ -640,78 +622,103 @@ def test_no_literal_hex_or_transition_in_manifest(name: str) -> None:
     assert "animation" not in text
 
 
-def test_template_has_no_literal_hex_or_transition() -> None:
-    text = TEMPLATE.read_text()
-    assert not HEX.search(text)
-    assert not re.search(r"\btransition\s*:", text)
-    assert not re.search(r"\banimation\s*:", text)
-    assert "overflow HIDDEN" in text
-
-
 # --------------------------------------------------------------------------- #
-# Frozen v1 values and the glass expansion
+# Frozen v2 values and mode resolution
 # --------------------------------------------------------------------------- #
 
 
-def test_frozen_manifest_values() -> None:
+def test_frozen_glass_values() -> None:
     glass = load_manifest("glass")
-    flat = load_manifest("flat")
-    paper = load_manifest("paper")
-
-    assert [glass["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell", "radius-pill")] == [
-        12,
-        9,
-        7,
-        20,
-    ]
-    assert glass["shape"]["border-w"] == 1.5
-    assert glass["shape"]["hairline-w"] == 1
-    assert glass["rhythm"] == {"gap": 8, "cell-pad": "8px 9px"}
-    assert glass["surface"] == {
-        "bg-panel": "alpha(@surface, 0.94)",
-        "bg-card": "alpha(@surface_container_high, 0.18)",
+    assert glass["schemaVersion"] == 2
+    assert glass["name"] == "glass"
+    assert glass["groups"]["surface"]["panel"] == {
+        "bg": "alpha(@surface, 0.94)",
         "border": "@primary",
+        "border-width": 1.5,
+        "radius": 12,
+        "padding": 11,
         "shadow": "none",
         "blur": "none",
     }
-    assert glass["ink"]["ink-dim"] == "alpha(@on_surface, 0.62)"
-    assert glass["type"] == {
-        "font-family": "inherit",
-        "title-size": 12.5,
-        "text-size": 13,
+    assert glass["groups"]["surface"]["card"] == {
+        "bg": "alpha(@surface_container_high, 0.18)",
+        "border": "alpha(@on_surface, 0.10)",
+        "border-width": 1,
+        "radius": 9,
+        "padding": 10,
     }
-    assert glass["layout"] == {
+    assert glass["groups"]["surface"]["cell"] == {
+        "bg": "transparent",
+        "border": "transparent",
+        "border-width": 0,
+        "radius": 7,
+        "padding": 8,
+        "hover-bg": "alpha(@on_surface, 0.08)",
+    }
+    assert glass["groups"]["surface"]["control"]["border-width"] == 1
+    assert glass["groups"]["surface"]["control"]["padding"] == 4
+    assert glass["groups"]["surface"]["control"]["font-size"] == 11
+    assert glass["groups"]["surface"]["pill"]["radius"] == 20
+    assert glass["groups"]["surface"]["pill"]["font-size"] == 9.5
+    assert glass["groups"]["surface"]["pill"]["letter-spacing"] == 0.05
+    assert glass["groups"]["state"]["hover"] == {
+        "fill": "alpha(@on_surface, 0.08)",
+        "ink": "@on_surface",
+        "ring": "@primary",
+    }
+    assert glass["groups"]["state"]["selected"] == {
+        "fill": "@primary_container",
+        "ink": "@on_primary_container",
+        "ring": "@primary",
+    }
+    assert glass["groups"]["type"] == {
+        "font-family": "inherit",
+        "font-weight": 400,
+        "letter-spacing": 0,
+        "size-caption": 10.5,
+        "size-meta": 11,
+        "size-body": 13,
+        "size-title": 12.5,
+        "size-display": 16,
+    }
+    assert glass["groups"]["ink"] == {
+        "ink": "@on_surface",
+        "ink-dim": "alpha(@on_surface, 0.62)",
+        "accent": "@primary",
+        "accent-muted": "alpha(@primary, 0.18)",
+        "ink-over": "auto",
+    }
+    assert glass["groups"]["layout"]["ags"] == {
         "panel-width": 312,
         "bt-list-spacing": 4,
         "bar-row-height": 0,
         "chip-min": 0,
     }
+    assert "mode" not in glass
 
-    assert [flat["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell")] == [
-        0,
-        0,
-        0,
-    ]
-    assert flat["shape"]["border-w"] == 0
-    assert flat["shape"]["hairline-w"] == 0
-    assert flat["rhythm"] == {"gap": 8, "cell-pad": "7px 8px"}
-    assert flat["surface"]["bg-panel"] == "transparent"
-    assert flat["surface"]["shadow"] == "none"
-    assert flat["layout"]["bar-row-height"] == 28
-    assert flat["layout"]["chip-min"] == 48
 
-    assert [paper["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell")] == [
-        6,
-        4,
-        3,
-    ]
-    assert paper["surface"]["bg-panel"] == "@surface_container_lowest"
-    assert paper["surface"]["bg-card"] == "@surface_container_low"
-    assert paper["shape"]["border-w"] == 1
-    assert paper["shape"]["hairline-w"] == 1
-    assert paper["surface"]["border"] == "alpha(@on_surface, 0.22)"
-    assert paper["surface"]["shadow"] == "0 10px 28px rgba(0,0,0,0.22)"
-    assert paper["layout"] == {
+def test_frozen_flat_and_paper_values() -> None:
+    flat = load_manifest("flat")
+    paper = load_manifest("paper")
+
+    assert flat["groups"]["surface"]["panel"]["radius"] == 0
+    assert flat["groups"]["surface"]["panel"]["border-width"] == 0
+    assert flat["groups"]["surface"]["panel"]["bg"] == "transparent"
+    assert flat["groups"]["surface"]["pill"]["radius"] == 999
+    assert flat["groups"]["type"]["size-title"] == 15
+    assert flat["groups"]["layout"]["ags"]["bar-row-height"] == 28
+    assert flat["groups"]["layout"]["ags"]["chip-min"] == 48
+
+    assert paper["groups"]["surface"]["panel"]["bg"] == "@surface_container_lowest"
+    assert paper["groups"]["surface"]["panel"]["border"] == "alpha(@on_surface, 0.22)"
+    assert paper["groups"]["surface"]["card"]["bg"] == "@surface_container_low"
+    assert paper["groups"]["surface"]["panel"]["radius"] == 6
+    assert paper["groups"]["surface"]["card"]["radius"] == 4
+    assert paper["groups"]["surface"]["cell"]["radius"] == 3
+    assert paper["groups"]["surface"]["panel"]["shadow"] == (
+        "0 10px 28px rgba(0,0,0,0.22)"
+    )
+    assert paper["groups"]["layout"]["ags"] == {
         "panel-width": 312,
         "bt-list-spacing": 6,
         "bar-row-height": 30,
@@ -719,8 +726,35 @@ def test_frozen_manifest_values() -> None:
     }
 
 
-def test_glass_expands_to_the_frozen_values() -> None:
-    css = render(TEMPLATE.read_text(), load_manifest("glass"))
+def test_paper_declares_explicit_light_mode_overrides() -> None:
+    paper = load_manifest("paper")
+    assert "light" in paper["mode"]
+    assert set(paper["mode"]["light"]) == {"surface", "state", "ink"}
+    light = paper["mode"]["light"]
+
+    # A complete same-shape surface group, not a partial merge.
+    assert set(light["surface"]) == {"panel", "card", "cell", "control", "pill"}
+    assert light["surface"]["panel"]["border"] == "alpha(@on_surface, 0.16)"
+    assert light["surface"]["card"]["border"] == "alpha(@on_surface, 0.10)"
+    assert light["surface"]["cell"]["hover-bg"] == "alpha(@on_surface, 0.06)"
+    assert light["state"]["hover"]["fill"] == "alpha(@on_surface, 0.06)"
+    assert light["ink"]["ink"] == "@on_surface"
+
+    dark = resolved("paper", "dark")
+    light_tokens = resolved("paper", "light")
+    assert dark["surface"]["panel"]["border"] == "alpha(@on_surface, 0.22)"
+    assert light_tokens["surface"]["panel"]["border"] == "alpha(@on_surface, 0.16)"
+    assert dark["state"]["hover"]["fill"] == "alpha(@on_surface, 0.08)"
+    assert light_tokens["state"]["hover"]["fill"] == "alpha(@on_surface, 0.06)"
+    # The base dark branch stays the v1-equivalent paper look.
+    assert dark["surface"]["panel"]["bg"] == "@surface_container_lowest"
+    assert light_tokens["surface"]["panel"]["shadow"] == (
+        "0 8px 22px alpha(@shadow, 0.16)"
+    )
+
+
+def test_glass_expands_to_the_tokenized_values() -> None:
+    css = render(TEMPLATE.read_text(), "glass")
     assert "background-color: alpha(@surface, 0.94);" in css
     assert "background-color: alpha(@surface_container_high, 0.18);" in css
     assert "border: 1.5px solid @primary;" in css
@@ -730,31 +764,41 @@ def test_glass_expands_to_the_frozen_values() -> None:
     assert "box-shadow: none;" in css
     assert "backdrop-filter: none;" in css
     assert "border-radius: 12px;" in css
-    assert "padding: 11px;" in css
-    assert "padding: 10px 11px;" in css
-    assert "padding: 8px 9px;" in css
     assert "border-radius: 9px;" in css
     assert "border-radius: 7px;" in css
     assert "border-radius: 20px;" in css
-    assert "min-width: 312px;" not in css
+    assert "padding: 11px;" in css
+    assert "padding: 10px 11px;" in css
+    assert "padding: 8px 9px;" in css
+    assert "padding: 4px 8px;" in css
+    assert "padding: 2px 6px;" in css
+    assert "font-size: 10.5px;" in css
+    assert "font-size: 11px;" in css
     assert "font-size: 12.5px;" in css
     assert "font-size: 13px;" in css
+    assert "font-size: 16px;" in css
+    assert "letter-spacing: 0.05em;" in css
+    assert "min-width: 312px;" not in css
 
 
 def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
-    flat = render(TEMPLATE.read_text(), load_manifest("flat"))
+    flat = render(TEMPLATE.read_text(), "flat")
     assert "background-color: transparent;" in flat
     assert "border: 0px solid transparent;" in flat
-    assert "border: 0px solid alpha(@on_surface, 0.10);" in flat
     assert "box-shadow: none;" in flat
-    assert "padding: 7px 8px;" in flat
+    assert "padding: 7px 9px;" in flat
+    assert "border-radius: 0px;" in flat
 
-    paper = render(TEMPLATE.read_text(), load_manifest("paper"))
-    assert "background-color: @surface_container_lowest;" in paper
-    assert "background-color: @surface_container_low;" in paper
-    assert "border: 1px solid alpha(@on_surface, 0.22);" in paper
-    assert "border: 1px solid alpha(@on_surface, 0.10);" in paper
-    assert "box-shadow: 0 10px 28px rgba(0,0,0,0.22);" in paper
+    paper_dark = render(TEMPLATE.read_text(), "paper", "dark")
+    assert "background-color: @surface_container_lowest;" in paper_dark
+    assert "background-color: @surface_container_low;" in paper_dark
+    assert "border: 1px solid alpha(@on_surface, 0.22);" in paper_dark
+    assert "box-shadow: 0 10px 28px rgba(0,0,0,0.22);" in paper_dark
+
+    paper_light = render(TEMPLATE.read_text(), "paper", "light")
+    assert "border: 1px solid alpha(@on_surface, 0.16);" in paper_light
+    assert "box-shadow: 0 8px 22px alpha(@shadow, 0.16);" in paper_light
+    assert "background-color: alpha(@on_surface, 0.06);" in paper_light
 
 
 # --------------------------------------------------------------------------- #
@@ -768,8 +812,10 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
         ("literal-hex.toml", "literal hex colour"),
         ("unknown-role.toml", "not in palette.v1"),
         ("structure.toml", "structure/variant keys are forbidden"),
-        ("missing-token.toml", "missing token(s)"),
+        ("missing-token.toml", "missing required property"),
         ("numeric-string.toml", "must be a number"),
+        ("unknown-surface-role.toml", "unexpected property"),
+        ("incomplete-mode.toml", "missing required property"),
     ],
 )
 def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
@@ -785,6 +831,7 @@ def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
     [
         ("transition.gtk.css.j2", "CSS transition"),
         ("unknown-placeholder.gtk.css.j2", "is not a token"),
+        ("layout-placeholder.gtk.css.j2", "layout token"),
         ("ags-bar.css.j2", "template name"),
     ],
 )
@@ -802,7 +849,7 @@ def test_missing_manifest_fails(tmp_path: Path) -> None:
 
 def test_vendored_hash_mismatch_fails(tmp_path: Path) -> None:
     root = make_root(tmp_path)
-    target = root / "skins" / "contracts" / "skin-token.schema.json"
+    target = root / "skins" / "contracts" / "appearance-manifest.schema.json"
     target.write_text(target.read_text() + "\n")
     errors = errors_for(root)
     assert any("does not match" in error for error in errors), errors
@@ -810,7 +857,7 @@ def test_vendored_hash_mismatch_fails(tmp_path: Path) -> None:
 
 def test_pinned_tag_disagreement_fails(tmp_path: Path) -> None:
     data = schema()
-    data["canonical"]["tag"] = "v0.4.0"
+    data["canonical"]["tag"] = "v0.6.0"
     bad_schema = tmp_path / "schema-tag.json"
     bad_schema.write_text(json.dumps(data))
     root = make_root(tmp_path, schema_override=bad_schema)

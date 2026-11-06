@@ -1,11 +1,12 @@
 {
-  "policy": "glass is a faithful extraction of ../ags-bar/style.css; border-w is the 1.5px panel/frame border and hairline-w is the 1px card/control/badge hairline, so there is no border-width deviation",
+  "policy": "glass is a faithful conversion of ../ags-bar/style.css to the v2 Appearance token model; the panel keeps its 1.5px frame and the card/control/pill own their per-role 1px hairlines, so there is no border-width deviation",
   "deviations": [],
   "nonvisual": [
-    "border-w = 1.5 is the outer .settings-surface frame (style.css:163); hairline-w = 1 is the card/control/badge hairline (style.css:183/:428/:433/:442/:559/:761)",
+    "per-role borders: surface.panel.border-width = 1.5 is the outer .settings-surface frame (style.css:163); surface.card/control/pill.border-width = 1 are the card/control/badge hairlines (style.css:183/:428/:433/:442/:559/:761)",
     ".settings-net has border: none and emits no margin-bottom or min-height (row height and list spacing are TSX-owned; style.css:378-387)",
-    "layout tokens panel-width, bt-list-spacing, bar-row-height and chip-min are not expanded into CSS; they remain manifest/skin.json values for skinValue()",
-    "box-shadow: none and backdrop-filter: none from the shadow/blur tokens (the source has no declaration)",
-    "font-family: inherit on the window root (the source inherits without a declaration; no font-size is emitted)"
+    "layout.<app> metrics are not expanded into CSS; layout.ags.panel-width/bt-list-spacing/bar-row-height/chip-min remain manifest/tokens.json values for skinValue()",
+    "box-shadow: none and backdrop-filter: none from surface.panel.shadow/blur (the source has no declaration)",
+    "font-family: inherit on the window root (the source inherits without a declaration; no font-size is emitted)",
+    "asymmetric component paddings keep their second/literal component (card 10px 11px, cell 8px 9px, control 4px 8px, pill 2px 6px): the contract stores one numeric padding per role"
   ]
 }

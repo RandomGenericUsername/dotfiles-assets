@@ -1,19 +1,21 @@
-# Vendored canonical skin contract pin.
+# Vendored canonical skin/appearance contract pin.
 #
 # Rule: these files are byte copies from the `contracts` repository. A change to
 # any vendored file MUST update its sha256 here, and the copy must be re-taken
 # from the tag named below. Do not edit a vendored schema by hand.
 #
-# v0.6.0 is the hairline/layout-ownership release: it adds the numeric
-# `hairline-w` shape token (24 tokens total; `border-w` is the outer panel/frame
-# border, `hairline-w` is the card/control/badge hairline), keeps the v0.5.1
-# unit convention (numeric tokens are unitless JSON numbers and the CSS expander
-# appends `px`), and declares the four layout tokens TSX-owned: `panel-width`,
-# `bt-list-spacing`, `bar-row-height` and `chip-min` stay in the manifest and
-# resolved `skin.json` for `skinValue()`, but templates MUST NOT expand them
-# into CSS.
-contracts=v0.6.0
-source-commit=e512f5c3dc6bec6023dc9ca1552213220001b07d
+# v0.7.0 is the Appearance plane v2 release. The canonical set for this class is
+# the three appearance schemas: `appearance-manifest` (the v2 TOML/JSON manifest
+# envelope), `appearance-json` (the resolved tokens.json document; mode overrides
+# already applied) and `appearance-artifact` (appearance.json metadata). The three
+# frozen v1 skin schemas are vendored at the same tag for provenance; this class
+# no longer emits v1 manifests. All lengths are unitless JSON numbers rendered as
+# CSS px, letter-spacing renders as em and font-weight stays unitless.
+contracts=v0.7.0
+source-commit=3ea6d8354f23d0b9239e06392897e53496f25144
+sha256  b25275ef7430b08bbe66a3b46c6fbf7e6e3467b3c4bb863ef2df63ff2aa3d7f7  appearance-manifest.schema.json
+sha256  3601b764bd7dea0bb7c5e30e010d10303dd6e70cd6423530f2c2df0622311751  appearance-json.schema.json
+sha256  dda28261b7a74372c8643a582eb8a20d63811e8732cd96e2e97b911f33939ac2  appearance-artifact.schema.json
 sha256  6383165244ecb85c91f51bad7194d68a27881f85cada9a41c97585310a2947b5  skin-token.schema.json
 sha256  82d1229cf78cd4cfec54a25677838a912de1d1ecf81d454c9318ed3af2fa64c8  skin-manifest.schema.json
 sha256  fbe980af1f5b4bea961d1addc512e32039dd2d3ae25464d6d528c2445ac04ad4  skin-json.schema.json

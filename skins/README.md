@@ -1,68 +1,74 @@
-# `skins/` — frozen skin manifests and the GTK paint templates
+# `skins/` — v2 Appearance manifests and the GTK paint templates
 
-A **skin** is a palette/ink mapping, paint and rhythm/density. It is not a
-variant and it is not structure: which widget sits where, and which named
-variant a host selects, belong to the app. The frozen v1 token groups are:
+A **skin** is appearance: surface paint/geometry, interaction state, type, ink
+and mode overrides. It is not a variant and it is not structure: which widget
+sits where, and which named variant a host selects, belong to the app. This
+class now targets the **Appearance token model v2** from `contracts=v0.7.0`;
+the frozen v1 skin schemas stay vendored for provenance only.
+
+## The v2 token groups
 
 | Group | Tokens |
 | --- | --- |
-| `shape` | `radius-panel`, `radius-card`, `radius-cell`, `radius-pill`, `border-w`, `hairline-w` |
-| `rhythm` | `gap`, `cell-pad` |
-| `surface` | `bg-panel`, `bg-card`, `border`, `shadow`, `blur` |
-| `ink` | `ink`, `ink-dim`, `accent`, `ink-over` (always `auto`) |
-| `type` | `font-family`, `title-size`, `text-size` |
-| `layout` | `panel-width`, `bt-list-spacing`, `bar-row-height`, `chip-min` |
+| `surface.panel` | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur` |
+| `surface.card` | `bg`, `border`, `border-width`, `radius`, `padding` |
+| `surface.cell` | `bg`, `border`, `border-width`, `radius`, `padding`, `hover-bg` |
+| `surface.control` | `bg`, `border`, `border-width`, `radius`, `padding`, `font-size`, `font-weight` |
+| `surface.pill` | `bg`, `border`, `border-width`, `radius`, `padding`, `font-size`, `letter-spacing` |
+| `state.hover` | `fill`, `ink`, `ring` |
+| `state.selected` | `fill`, `ink`, `ring` |
+| `state.focus` | `fill`, `ink`, `ring` |
+| `state.disabled` | `fill`, `ink`, `ring` |
+| `type` | `font-family`, `font-weight`, `letter-spacing`, `size-caption`, `size-meta`, `size-body`, `size-title`, `size-display` |
+| `ink` | `ink`, `ink-dim`, `accent`, `accent-muted`, `ink-over` (always `auto`) |
+| `layout.<app>` | unitless numeric metrics, namespaced per app |
 
-`border-w` is the outer panel/frame border; `hairline-w` is the card, tile,
-mini, password, row-action and badge hairline (and the Wi-Fi settings top rule).
-The row/cell itself has no border.
+There are no `structure`, `variant`, `density` or `paint` groups. A key outside
+the five groups (plus the optional `mode` overrides) fails `make
+validate-skins`; the app owns everything the tokens do not describe.
 
-There are no `structure`, `variant`, `state`, `density` or `paint` keys. A key
-outside the six groups fails `make validate-skins`; the app owns everything the
-tokens do not describe.
+**Per-role borders replace the v1 global split.** `surface.panel.border-width`
+is `1.5` in `glass`; `surface.card`, `surface.control` and `surface.pill` own
+their own `1` hairlines. `surface.cell` is deliberately borderless (`transparent`,
+width `0`) because a transparent border changes allocated height.
 
-**The four `layout` tokens are TSX-owned.** `panel-width`, `bt-list-spacing`,
-`bar-row-height` and `chip-min` stay in the manifest and in the resolved
-`skin.json` because widgets read them through `skinValue()`, but a template
-MUST NOT expand them into CSS (`min-width`, `margin`, `min-height`). The
-widgets set the panel width, list spacing and row/chip geometry; a declaration
-in both places is a second owner and breaks parity when either side changes.
+**`layout.<app>` is TSX-owned.** `layout.ags.panel-width`,
+`layout.ags.bt-list-spacing`, `layout.ags.bar-row-height` and
+`layout.ags.chip-min` (plus the other apps' observed metrics) stay in the
+manifest and resolved `tokens.json` for `skinValue()`, but a template MUST NOT
+expand them into CSS (`min-width`, `margin`, `min-height`). A layout
+placeholder in a template is a gate failure.
 
 ## Layout
 
 ```text
 skins/
-  schema.json                       local envelope that delegates token types to the vendored pair
-  contracts/PIN                     contracts tag + sha256 of each vendored canonical schema
-  contracts/skin-token.schema.json  vendored canonical flat token vocabulary
-  contracts/skin-manifest.schema.json  vendored canonical grouped manifest schema
-  contracts/skin-json.schema.json   vendored canonical resolved skin.json schema
-  manifests/glass.toml              default/fallback parity skin (today's ags-bar look)
-  manifests/flat.toml               zero-chrome skin
-  manifests/paper.toml              light/palette-axis skin
-  templates/ags.gtk.css.j2          bar settings + Bluetooth paint (target configDir: ags)
-  templates/ags-clipboard.gtk.css.j2          clipboard overlay (target: ags-clipboard)
-  templates/ags-notifications.gtk.css.j2      notification cards (target: ags-notifications)
+  schema.json                             local v2 envelope + vendored/pin metadata
+  contracts/PIN                           contracts tag + sha256 of each vendored schema
+  contracts/appearance-manifest.schema.json   canonical v2 manifest schema
+  contracts/appearance-json.schema.json       canonical resolved tokens.json schema
+  contracts/appearance-artifact.schema.json   canonical appearance.json schema
+  contracts/skin-*.schema.json                frozen v1 schemas, provenance only
+  manifests/glass.toml                    default/fallback parity skin
+  manifests/flat.toml                     zero-chrome skin
+  manifests/paper.toml                    palette-axis skin with explicit mode.light
+  templates/ags.gtk.css.j2                bar settings + Bluetooth paint (target: ags)
+  templates/ags-clipboard.gtk.css.j2      clipboard overlay (target: ags-clipboard)
+  templates/ags-notifications.gtk.css.j2  notification cards (target: ags-notifications)
   templates/ags-wallpaper-selector.gtk.css.j2 selector dialog (target: ags-wallpaper-selector)
-  templates/ags-capture.gtk.css.j2            capture bar/overlay/panel (target: ags-capture)
-  templates/ags-icme.gtk.css.j2               icon color mapping editor (target: ags-icme)
-  templates/ags-btop-studio.gtk.css.j2        btop theme studio (target: ags-btop-studio)
-  tests/                            pytest fixtures mirroring the validator
-  tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string, template name)
-  tests/fixtures/parity/            the glass-vs-source ownership/parity record (no border-width deviation)
+  templates/ags-capture.gtk.css.j2        capture bar/overlay/panel (target: ags-capture)
+  templates/ags-icme.gtk.css.j2           icon color mapping editor (target: ags-icme)
+  templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
+  tests/                                  pytest fixtures mirroring the validator
+  tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
+  tests/fixtures/parity/                  glass-vs-source ownership/parity record
 ```
 
 ## Template set: `<configDir>.gtk.css.j2` → `<configDir>.css`
 
-The canonical artifact interface freezes one template per target config
-directory. Every file in `skins/templates/` must be named
-`<configDir>.gtk.css.j2`; the target is the prefix, so
-`templates/ags.gtk.css.j2` renders `current/skins/ags.css` and the bar consumes
-it as `$XDG_CONFIG_HOME/ags/skin.css`. The name is a contract, not a label: an
-expander that follows `skins.md` would never find `ags-bar.gtk.css.j2`, and the
-bar's `configDir` is `ags`.
-
-At `v0.11.0` the set covers every AGS app, not only the bar:
+Every file in `skins/templates/` must be named `<configDir>.gtk.css.j2`; the
+target is the prefix, so `templates/ags.gtk.css.j2` renders `ags.css` and the
+bar consumes it through its config directory. The set covers every AGS app:
 
 | Template | Target `configDir` | Canonical source |
 | --- | --- | --- |
@@ -74,194 +80,129 @@ At `v0.11.0` the set covers every AGS app, not only the bar:
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
 
-`scripts/validate-skins.py` enforces
-`^[a-z0-9][a-z0-9_-]*\.gtk\.css\.j2$`, rejects any other file in
-`skins/templates/`, derives every target from the prefix, prints all targets in
-its summary, and expands every template through `glass`, `flat` and `paper`.
+## Placeholder flattening and the value convention
 
-## Value convention: numbers are unitless, `px` is added at render time
+A v2 placeholder is the full nested token path, uppercased with every run of
+non-alphanumeric characters replaced by `_`, prefixed with `SKIN` and wrapped
+in `{{...}}`:
 
-The canonical contract types radii, `border-w`, `hairline-w`, `gap`,
-`title-size`, `text-size` and the four layout tokens as JSON **numbers**, not
-`"12px"` strings. A manifest
-stores `radius-panel = 12`; the GTK template expands that token as
-`border-radius: 12px`. `cell-pad` is the only length-valued **string** token
-(`"Npx Npx"`) and is emitted verbatim, which is why it keeps its `px` units in
-TOML. Paint, ink and `font-family` values are strings and render verbatim.
+| Token path | Placeholder |
+| --- | --- |
+| `surface.panel.bg` | `{{SKIN_SURFACE_PANEL_BG}}` |
+| `surface.cell.hover-bg` | `{{SKIN_SURFACE_CELL_HOVER_BG}}` |
+| `state.selected.ring` | `{{SKIN_STATE_SELECTED_RING}}` |
+| `type.size-body` | `{{SKIN_TYPE_SIZE_BODY}}` |
+| `ink.ink` | `{{SKIN_INK_INK}}` |
 
-That rule is mechanical in both directions: `scripts/validate-skins.py` rejects
-`radius-panel = "12px"` against the vendored canonical schema (AGS would reject
-it at startup), and it expands each manifest through every template with the
-number → `<n>px` rule so a green gate means the rendered CSS is length-correct.
+All lengths are **unitless JSON numbers** in the manifest and in the resolved
+`tokens.json`; in a CSS length position the expander renders `<number>px`.
+`font-weight` renders unitless; `letter-spacing` renders `<number>em`. Paints,
+fonts and ink values render verbatim. The v1 `cell-pad` pair is gone: the
+contract stores one numeric `padding` per surface role, so an asymmetric
+component padding keeps its second value as a template literal.
 
 ## The three manifests
 
-Numbers below are stored unitless; the `px` shown in prose is what the template
+Numbers are stored unitless; the `px` shown in prose is what the template
 renders.
 
 | Token | `glass` (default/fallback) | `flat` | `paper` |
 | --- | --- | --- | --- |
-| `radius-panel/card/cell/pill` | 12 / 9 / 7 / 20 | 0 / 0 / 0 / 999 | 6 / 4 / 3 / 999 |
-| `border-w` (panel/frame) | 1.5 | 0 | 1 |
-| `hairline-w` (card/control/badge) | 1 | 0 | 1 |
-| `gap` / `cell-pad` | 8 / `8px 9px` | 8 / `7px 8px` | 9 / `8px 10px` |
-| `bg-panel` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` |
-| `bg-card` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` |
-| `border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` |
-| `shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` |
-| `blur` | `none` | `none` | `none` |
-| `ink` / `ink-dim` / `accent` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` | `@on_surface` / `@on_surface_variant` / `@primary` | same as `flat` |
-| `font-family` | `inherit` | system-ui / Cantarell / Noto Sans | same as `flat` |
-| `title-size` / `text-size` | 12.5 / 13 | 15 / 13 | 15 / 13 |
-| `panel-width` / `bt-list-spacing` / `bar-row-height` / `chip-min` | 312 / 4 / 0 / 0 | 312 / 4 / 28 / 48 | 312 / 6 / 30 / 52 |
+| `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 |
+| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 |
+| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same |
+| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 |
+| `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 |
+| `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` |
+| `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` |
+| `surface.panel.border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` |
+| `surface.panel.shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` |
+| `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` |
+| `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` |
+| `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` |
+| `layout.ags` panel-width / bt-list-spacing / bar-row-height / chip-min | 312 / 4 / 0 / 0 | 312 / 4 / 28 / 48 | 312 / 6 / 30 / 52 |
 
-`glass` is the value a consumer uses when no skin is selected. Its values are a
-**literal extraction** of today's `../ags-bar/style.css`, not a design-system
-re-expression: panel `alpha(@surface, 0.94)` / `1.5px @primary` / `12px` / `11px`
-(`:161-166`), card `alpha(@surface_container_high, 0.18)` / `9px` (`:181-186`),
-row `8px 9px` / `7px` (`:378-387`), badge radius `20px` (`:422-429`), no panel
-shadow, and `ink-dim = alpha(@on_surface, 0.62)` (`:413-416`). `flat` removes
-every surface and border and tightens the rhythm. `paper` changes only shape,
-rhythm and surface roles; it does not add a second variant.
+`glass` is the value a consumer uses when no skin is selected. Its declarations
+are a **literal extraction** of today's `../ags-bar/style.css`, not a
+design-system re-expression: panel `alpha(@surface, 0.94)` / `1.5px @primary` /
+`12px` / `11px`, card `alpha(@surface_container_high, 0.18)` / `9px` / `10px
+11px`, row `8px 9px` / `7px`, badge radius `20px` / `9.5px` / `0.05em`, no panel
+shadow, and `ink-dim = alpha(@on_surface, 0.62)`. `flat` removes surfaces and
+borders and tightens the rhythm. `paper` changes shape, rhythm and surface
+roles; it does not add a second variant.
 
-## What the GTK template does and does not control (v1 limitations)
+Other namespaces (`layout.ags-capture`, `layout.ags-clipboard`,
+`layout.ags-notifications`, `layout.ags-wallpaper-selector`, `layout.ags-icme`,
+`layout.ags-btop-studio`) carry the app metrics observed in their canonical
+stylesheets and remain TSX-owned.
 
-`templates/ags.gtk.css.j2` uses a `SKIN_*` placeholder **only** where the
-frozen token is a genuine global knob: panel background/frame border/
-`border-w`/`hairline-w`/radius/shadow/blur, card background/radius, cell
-radius/padding, control radius, pill radius, ink/ink-dim/accent,
-`title-size`/`text-size`. It does **not** consume the layout tokens.
+## `paper` is mode-aware now
 
-Everything else is a component literal copied from today's `style.css`, because
-the frozen 24-token contract has no token for it. A second token would be a
-contract change, and a "density"/"structure" token is explicitly forbidden.
-The literals are:
+`paper`'s **base** groups are the v1 paper values converted faithfully; they
+are the deliberate dark-paper branch (a dark palette + `paper` keeps them).
+`paper` also declares an explicit **`mode.light`** override: complete
+`surface`, `state` and `ink` groups with light-paper borders, wash and shadow.
+Generation selects exactly one mode before expansion, so a template never
+branches on mode, palette or skin. A light palette + `paper` reads light; a
+dark palette + `paper` keeps the base groups. This replaces the v1 behaviour
+where `paper` depended on whichever mode the palette happened to be.
 
-| Component detail | Literal (source) | Why it is not a token |
-| --- | --- | --- |
-| panel padding | `11px` (`:165`) | not the same thing as the `gap` rhythm; padding is component geometry |
-| card/tile/mini/password padding | `10px 11px`, `8px 11px 8px 10px`, `10px` (`:185`, `:198`, `:263`) | asymmetric component padding |
-| row background/border | `transparent` + `border: none` (`:381-383`) | the row is a bare list cell; the skin supplies radius/padding only |
-| row-action padding/font | `4px 8px`, `11px/600` (`:439-441`) | control typography, not the 13px body size |
-| badge type/padding | `9.5px`, `letter-spacing: 0.05em`, `2px 6px` (`:423-425`) | small component type |
-| small text | net-sub `10.5px`, tile-sub/section-label `11px`, empty `12px`, mini-title `12px`, detail `11px`, Wi-Fi note `10px`, arrow `14px` | these are deliberately below `text-size = 13px` |
-| scrollbar | `5px` (`:175-176`) | fixed widget detail |
-| level-slider pill/thumb | `99px`, `50%`, `15px` (`:350-371`) | fixed control geometry; the native switch is app-owned |
-| back button/nav header | `26px`, `8px`, `18px`, `13.5px`, `7px` (`:287-325`) | header measurements have no matching token |
-| signal cell | `30px` (`:711-715`) | row content size; `bar-row-height` is TSX-owned/not a template knob |
+## What the GTK templates do and do not control
 
-`gap` and the four layout tokens are manifest metadata: every gap-looking
-declaration is a component padding, and row height/list spacing/panel width are
-set by the widgets. Rewriting them into the template would make glass *less*
-faithful and double-own the geometry. The window root gets
-`font-family: {{SKIN_FONT_FAMILY}}` only — today it inherits `font-size`, so the
-template deliberately emits no root `font-size`.
+The templates use a `{{SKIN_*}}` placeholder for every role property the v2
+model covers: panel/card/cell/control/pill paint, per-role borders and radii,
+role paddings, control/pill type and padding, hover/selected/focus/disabled
+state, the type scale and ink. Component geometry that has no token stays a
+literal copied from that app's `style.css` (for example the bar scrollbar's
+`5px`, tile asymmetric padding, slider geometry, signal-cell size and the
+`0.5`/`0.42` ink alphas that are not `ink-dim`).
 
-**There is no border-width deviation.** `border-w` is the outer panel/frame
-border: `1.5px` in glass (`style.css:163`). `hairline-w` is the card,
-row-action, badge and password hairline and the Wi-Fi settings top rule: `1px`
-in the source (`:183`, `:442`, `:428`/`:433`, `:559`, `:761`). The expanded
-glass therefore matches the source widths exactly. `.settings-net` keeps
-`border: none`; it has no `margin-bottom` and no layout `min-height`, so its
-allocated row height matches the source's 50px rather than the 54px produced by
-the former template overlay. `tests/fixtures/parity/deviations.json` records
-the split and the nonvisual rules (shadow/blur `none`, `font-family: inherit`);
-`tests/test_parity.py` asserts the rendered declarations and, when the read-only
-`../ags-bar` tree is present, the exact source lines.
-
-## `paper` is a palette-mode axis, not a baked light theme
-
-`paper` sets `bg-panel = @surface_container_lowest` and
-`bg-card = @surface_container_low`. Both are `palette.v1` roles. In a **light**
-palette, `surface_container_lowest` is the lightest sheet and
-`surface_container_low` is one step off it, so the panel reads as paper with a
-slightly separated card. In a **dark** palette the same two roles are dark
-sheets: the skin still applies, but the *appearance* is dark because the palette
-mode is dark.
-
-That is deliberate. The skin vocabulary has no `mode` token, no light/dark
-variant and no literal colour, so a consumer selects the palette mode first and
-the skin second. If a host needs a literal paper look it must pair `paper` with
-a light palette; the skin cannot override the palette's mode. `make
-validate-skins` enforces role membership, not a mode.
-
-## Vendoring and pinning the canonical schema
-
-The canonical documents live in the separate `contracts` repository:
-`schemas/skin-token.schema.json`, `schemas/skin-manifest.schema.json` and
-`schemas/skin-json.schema.json`. This repository still does **not** import them
-at runtime; it vendors byte-for-byte copies under `skins/contracts/` so the gate
-validates the same types a consumer will parse.
-
-- `skins/contracts/PIN` records `contracts=<tag>`, the source commit, and one
-  `sha256` line per vendored file. Editing a vendored schema by hand is a
-  defect; re-vendor from the canonical tag and update the PIN in the same
-  change.
-- `skins/schema.json` sets `canonical.vendored: true`, `canonical.tag`, and
-  `canonical.pin`. It carries the frozen local envelope (`schema_major` + the six
-  flat groups) and **delegates every token value type by external `$ref`** to
-  `skins/contracts/skin-manifest.schema.json`; it has no local `px`/dimension
-  lookalike grammar. `canonical.resolved_document` names the vendored
-  `skins/contracts/skin-json.schema.json`, the schema for the runtime-emitted
-  `current/skin.json` (`version: 1` plus the six groups, numeric tokens as raw
-  JSON numbers).
-- `scripts/validate-skins.py` and `skins/tests/` assert the recorded hashes, the
-  delegation (every token property is a canonical `$ref`), the canonical numeric
-  types, the unit-rule expansion, the template naming rule, and that a resolved
-  glass `skin.json` validates against the vendored `skin-json` schema.
-
-At `v0.11.0` the vendored set is still pinned at `contracts=v0.6.0`, the
-hairline/layout-ownership release. It adds the numeric `hairline-w` shape token
-(24 tokens total), keeps the `v0.5.1` unit convention, and declares the four
-layout tokens TSX-owned: they remain in the manifest/`skin.json` for
-`skinValue()` but templates MUST NOT expand them into CSS. Do not claim a tag
-whose bytes are not present; re-vendor from the tag and update the PIN hashes in
-the same change.
-
-## Template rules
-
-Every template keeps its app-local selector vocabulary and substitutes a
-`{{SKIN_*}}` placeholder only for the genuine knobs above. The bar template,
-for example, keeps `settings-surface`, `settings-net` and its `.sel` /
-`.out-of-range` / `.confirming` states, `settings-rowact` and its states, the
-chevron, section, divider, connected-details, empty, level-slider, Wi-Fi
-settings and nav-header classes. The non-bar templates keep the same contract
-for their own windows: the clipboard kind/head/card classes, the notification
-card/tile/chip and progress-card classes, the selector panel/card/crumb/LIVE
-classes, the capture bar/overlay/field/recording classes, the icme pane/tree/
-card/inspector classes, and the studio rail/tree/stage/diff classes.
-
-Component-specific values (paddings, small font sizes, thumbnail radii,
-selection rings and per-element state colours) stay as literals copied from
-that app's `style.css`, expressed only as `palette.v1` roles or alpha
-derivatives. No template has a literal hex colour, a `transition`, an
-`animation`, a layout placeholder or structure/variant vocabulary. The
-placeholder name is the upper-snake form of the token: `radius-panel` →
-`{{SKIN_RADIUS_PANEL}}`, `bg-panel` → `{{SKIN_BG_PANEL}}`.
+**There is no border-width deviation.** The expanded `glass` bar keeps its
+`1.5px` panel frame and `1px` card/control/pill hairlines, `.settings-net` keeps
+`border: none` with no layout margin/height, and no template emits a layout
+token. `tests/fixtures/parity/deviations.json` records the policy and the
+nonvisual rules; `tests/test_parity.py` asserts the rendered declarations and,
+when the read-only `../ags-bar` tree is present, the exact source lines.
 
 **Radius clipping is the app's job.** GTK CSS has no `overflow` property. When a
 radius-clipped container's children can reach its corners, the app MUST set
 overflow HIDDEN on the widget carrying `.settings-surface` (and any other
-radius-clipped surface). The template comment states the same requirement; the
-stylesheet can set the radius but cannot apply the clip.
+radius-clipped surface). The template comment states the same requirement.
+
+## Vendoring and pinning the canonical schema
+
+The canonical documents live in the separate `contracts` repository. This
+repository vendors byte-for-byte copies under `skins/contracts/` so the gate
+validates the same bytes a consumer will parse.
+
+- `skins/contracts/PIN` records `contracts=v0.7.0`, the source commit and one
+  `sha256` line per vendored file. Editing a vendored schema by hand is a
+  defect; re-vendor from the canonical tag and update the PIN in the same
+  change.
+- `skins/schema.json` sets `schema_major: 2`, `canonical.vendored: true`,
+  `canonical.tag`, `canonical.pin`, the three v2 delegates, the frozen v1
+  `legacy` paths and `canonical.resolved_document` (the vendored
+  `appearance-json` schema for the runtime-emitted `tokens.json`).
+- The manifests are `schemaVersion = 2` (the manifest envelope is
+  `schema_major: 2` in the local schema). The resolved document is
+  `{"version": 2, "surface": …, "state": …, "type": …, "ink": …, "layout": …}`;
+  mode overrides are already applied and there are no `mode`/`skin`/palette
+  fields.
 
 ## Validation
 
 ```bash
-make validate-skins   # vendored hashes + template naming/targets + canonical types + unit expansion + placeholder coverage
-make test-skins       # pytest fixtures, including the parity, resolved-document and negative cases
+make validate-skins   # vendored hashes + v2 manifests + both modes + tokens.json + template naming/expansion
+make test-skins       # pytest fixtures, including parity, mode and negative cases
 ```
 
-`make validate-skins` is stdlib-only and part of `make gates`. `make test-skins`
-is the fixture suite and uses the repository's development pytest dependency.
-`skins/tests/test_skins.py` checks the PIN hashes, the canonical `$ref`
-delegation, all seven template targets, unitless numeric values, the
-numeric-string rejection, and a resolved glass `skin.json` against the vendored
-`skin-json` schema. Its per-app cases expand every template for `glass`, `flat`
-and `paper`, assert the expected top-level selectors and genuine placeholder
-coverage, and reject literal hex, transitions/animations and layout tokens.
-`skins/tests/test_parity.py` expands `glass` through `validate-skins`' own
-unit-rule expander and compares the result with the source declarations (with
-line references): the `1.5px` panel vs `1px` hairlines, `.settings-net` with
-`border: none` and no layout margin/height, no emitted layout placeholder, the
-empty deviation fixture, and the no-shadow/no-transition/no-hex rules.
+`make validate-skins` is stdlib-only and part of `make gates`. It validates
+each manifest against the vendored `appearance-manifest` schema, resolves it
+under both `dark` and `light`, validates each resolved `tokens.json` against
+`appearance-json`, and expands all seven templates for every manifest × mode.
+It checks the flattened placeholder vocabulary two ways, rejects literal hex,
+transitions/animations, structure/variant properties and layout placeholders,
+and verifies the unit rule (length → `<n>px`, letter-spacing → `<n>em`,
+font-weight unitless). `make test-skins` adds the positive frozen values, glass
+parity against today's declarations, paper light/dark expansion, state/role
+coverage and the negative fixtures.
