@@ -4,7 +4,7 @@
   "nonvisual": [
     "per-role borders: surface.panel.border-width = 1.5 is the outer .settings-surface frame (style.css:163); surface.card/control/pill.border-width = 1 are the card/control/badge hairlines (style.css:183/:428/:433/:442/:559/:761)",
     ".settings-net has border: none and emits no margin-bottom or min-height (row height and list spacing are TSX-owned; style.css:378-387)",
-    "layout.<app> metrics are not expanded into CSS; layout.ags.panel-width/bt-list-spacing remain manifest/tokens.json values for skinValue(); bar-row-height and chip-min were removed because no app source reads them (v0.12.2)",
+    "layout.<app> metrics are not expanded into CSS; layout.ags.panel-width/bt-list-spacing remain manifest/tokens.json values for skinValue(); bar-row-height and chip-min were removed because no app source reads them (v0.12.2); ags-capture.panel-width and the ags-btop-studio rail widths were removed in v0.13.0 because their only pre-v2 source was a CSS minimum (the apps are corrected to their pre-v2 natural layout)",
     "box-shadow: none and backdrop-filter: none from surface.panel.shadow/blur (the source has no declaration)",
     "font-family: inherit on the window root (the source inherits without a declaration; no font-size is emitted)",
     "asymmetric component paddings keep their second/literal component (card 10px 11px, cell 8px 9px, control 4px 8px, pill 2px 6px): the contract stores one numeric padding per role"

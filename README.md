@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.12.2`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.13.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -32,8 +32,8 @@ six tool directories — the compositor, editor, prompt and wlogout layout (one 
 SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
-binaries; `skins/` holds three `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
-with today's ags-bar look, `flat`, `paper`), seven `<configDir>.gtk.css.j2` templates (the bar's
+binaries; `skins/` holds four `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
+with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline), seven `<configDir>.gtk.css.j2` templates (the bar's
 settings/Bluetooth set plus clipboard, notifications, wallpaper selector, capture, icme and btop
 studio; targets `ags`, `ags-clipboard`, `ags-notifications`, `ags-wallpaper-selector`, `ags-capture`,
 `ags-icme`, `ags-btop-studio`, rendered as `<configDir>.css`), and the pinned byte copies of the
@@ -46,9 +46,10 @@ letter-spacing renders as `em`, and font-weight stays unitless. Per-role borders
 global `border-w`/hairline split. Layout metrics are TSX-owned: they stay in the manifest and
 resolved `tokens.json` for `skinValue()` but the templates never emit them as CSS. The default skin
 preserves the apps' pre-v2 window sizes (`ags-icme` 1280×800, `ags-wallpaper-selector` 960×640);
-`ags-capture.panel-width` and the `ags-btop-studio` rail widths stay as CSS-min-derived cleanup
-candidates because the apps read them today. Since `v0.12.0`
-`paper` declares an explicit `mode.light` branch instead of guessing from the palette. Each class
+`v0.13.0` removes the CSS-min-derived `ags-capture.panel-width` and `ags-btop-studio` rail widths
+from every manifest because the apps are corrected to their pre-v2 natural layout in parallel.
+Since `v0.12.0` `paper` declares an explicit `mode.light` branch instead of guessing from the
+palette, while `terminal` is mode-agnostic. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names

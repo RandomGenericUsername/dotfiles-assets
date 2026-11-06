@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.13.0 — `terminal` joins the built-in skins; cleanup-candidate layout tokens removed
+
+### Added
+
+- **A fourth v2 built-in: `terminal`.** `skins/manifests/terminal.toml`
+  (name `"terminal"`) is the approved dense-monospace, square/hairline skin:
+  opaque `@surface` panel with a `1px` `alpha(@on_surface, 0.22)` frame and zero
+  radius, `@surface_container` cards, transparent/cell and control fills,
+  `0/2px` radii, tight padding, `JetBrainsMono Nerd Font, monospace` at weight
+  `500`, and a `9`/`10`/`12`/`13`/`14` type scale. State hover is
+  `alpha(@on_surface, 0.10)`, selected is `@primary_container` on
+  `@on_primary_container` with a `@primary` ring, focus uses the `@primary`
+  ring, and disabled uses `alpha(@on_surface, 0.06)`. Every paint is a
+  palette-role expression; there is no literal hex.
+- **`terminal` is mode-agnostic.** The manifest has no `mode.dark`/`mode.light`
+  overrides, so both modes resolve from the same base groups.
+
+### Removed
+
+- **The two cleanup-candidate layout blocks are gone from every manifest.**
+  `[groups.layout.ags-capture]` (`panel-width = 560`) and
+  `[groups.layout.ags-btop-studio]` (`left-width = 280`, `right-width = 320`)
+  came from the apps' CSS `min-width` values, not their pre-v2 TSX defaults
+  (`tickets/req-017-layout-defaults/ticket.md` §"Cleanup handoff"). The apps
+  are being corrected to their pre-v2 natural layout in parallel, so `glass`,
+  `flat`, `paper` and `terminal` no longer declare them. The remaining layout
+  blocks stay: `layout.ags.panel-width = 312`,
+  `layout.ags.bt-list-spacing = 4` (`paper` 6),
+  `layout.ags-clipboard.card-width = 260`,
+  `layout.ags-notifications.card-width = 380`,
+  `layout.ags-wallpaper-selector = 960 × 640` and
+  `layout.ags-icme = 1280 × 800`.
+
+### Changed
+
+- **The validator and fixture suite cover four manifests.** `skins/schema.json`
+  `frozen.required_files` now requires `terminal`; `make validate-skins`
+  expands all seven templates for four manifests × two modes (8 expansions),
+  and every resolved `tokens.json` still validates against the vendored
+  `appearance-json` schema. `make test-skins` pins terminal's frozen values,
+  both-mode expansion, role-only/no-hex/no-transition values, the removed
+  layout blocks and a positive terminal fixture under
+  `skins/tests/fixtures/positive/`.
+- **MINOR, additive skin.** No existing class path, template, token path,
+  `schema_major` or resolved-document field changed. `terminal.toml` is a new
+  manifest; the removed layout blocks are CSS minima the apps are dropping in
+  their own commits.
+
 ## v0.12.2 — Layout defaults preserve the apps' pre-v2 window sizes
 
 ### Fixed

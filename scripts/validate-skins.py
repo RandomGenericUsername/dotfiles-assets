@@ -12,8 +12,9 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.7.0):
      tag for provenance. The 51-role palette list is `palette.v1`, checked
      against `icons/mappings/vocabulary.json`.
 
-  2. EVERY MANIFEST IS A V2 APPEARANCE MANIFEST. The three required manifests
-     exist, no extra manifest hides beside them, `name` equals the file stem,
+  2. EVERY MANIFEST IS A V2 APPEARANCE MANIFEST. The required manifests exist
+     (currently `glass`, `flat`, `paper` and `terminal`), no extra manifest hides
+     beside them, `name` equals the file stem,
      and the document validates against the vendored `appearance-manifest`
      schema (nested `surface`, `state`, `type`, `ink`, `layout.<app>` and
      optional `mode.dark`/`mode.light` overrides). A `structure`, `variant`,

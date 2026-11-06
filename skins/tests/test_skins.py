@@ -30,6 +30,8 @@ TEMPLATES = ROOT / "skins" / "templates"
 TEMPLATE = TEMPLATES / "ags.gtk.css.j2"
 CONTRACTS = ROOT / "skins" / "contracts"
 FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
+POSITIVE = Path(__file__).parent / "fixtures" / "positive"
+MANIFEST_NAMES = ("glass", "flat", "paper", "terminal")
 
 VENDORED = {
     "appearance-manifest.schema.json": "skins/contracts/appearance-manifest.schema.json",
@@ -370,12 +372,12 @@ def test_corpus_passes_the_gate() -> None:
     errors, notes, stats = validate_skins.validate(ROOT)
     assert errors == []
     assert stats == {
-        "manifests": 3,
+        "manifests": 4,
         "templates": 7,
         "targets": sorted(APP_TEMPLATES),
         "tokens": 57,
         "roles": 51,
-        "expansions": 6,
+        "expansions": 8,
     }
     assert any("palette roles ==" in note for note in notes)
     for target in APP_TEMPLATES:
@@ -384,7 +386,7 @@ def test_corpus_passes_the_gate() -> None:
             "",
         )
         assert note, target
-        for manifest_name in ("glass", "flat", "paper"):
+        for manifest_name in MANIFEST_NAMES:
             for mode in ("dark", "light"):
                 assert f"{manifest_name}:{mode}" in note, f"{target}: {note}"
 
@@ -403,7 +405,7 @@ def test_template_target_is_the_filename_prefix() -> None:
 def test_app_template_expands_for_every_manifest_and_mode(target: str) -> None:
     path = TEMPLATES / f"{target}.gtk.css.j2"
     text = path.read_text()
-    for manifest_name in ("glass", "flat", "paper"):
+    for manifest_name in MANIFEST_NAMES:
         for mode in ("dark", "light"):
             css = render(text, manifest_name, mode)
             assert "{{" not in css, f"{path.name}: {manifest_name}:{mode}"
@@ -441,7 +443,7 @@ def test_app_template_has_no_literal_hex_transition_or_structure(target: str) ->
 def test_app_template_does_not_expand_layout_tokens(target: str) -> None:
     text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()
     assert not LAYOUT_PLACEHOLDER.search(text), f"{target}: layout placeholder"
-    for manifest_name in ("glass", "flat", "paper"):
+    for manifest_name in MANIFEST_NAMES:
         for mode in ("dark", "light"):
             css = render(text, manifest_name, mode)
             assert not LAYOUT_PLACEHOLDER.search(css), f"{target}: {manifest_name}:{mode}"
@@ -466,6 +468,12 @@ def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
 def test_schema_vendors_the_pinned_contracts_set() -> None:
     data = schema()
     assert data["schema_major"] == 2
+    assert data["frozen"]["required_files"] == [
+        "glass",
+        "flat",
+        "paper",
+        "terminal",
+    ]
     canonical = data["canonical"]
     assert canonical["repository"] == "contracts"
     assert set(canonical["paths"]) == {
@@ -527,7 +535,7 @@ def test_resolved_tokens_validate_for_every_manifest_and_mode() -> None:
     token_schema = json.loads((CONTRACTS / "appearance-json.schema.json").read_text())
     jsonschema.Draft7Validator.check_schema(token_schema)
     validator = jsonschema.Draft7Validator(token_schema)
-    for name in ("glass", "flat", "paper"):
+    for name in MANIFEST_NAMES:
         for mode in ("dark", "light"):
             tokens = resolved(name, mode)
             assert tokens["version"] == 2
@@ -580,7 +588,7 @@ def test_resolved_document_rejects_a_numeric_string() -> None:
 
 def test_every_css_token_path_is_present_in_every_resolved_document() -> None:
     paths = set(css_token_paths())
-    for name in ("glass", "flat", "paper"):
+    for name in MANIFEST_NAMES:
         for mode in ("dark", "light"):
             tokens = resolved(name, mode)
             present = set(validate_skins._css_paths(tokens).values())
@@ -614,7 +622,7 @@ def test_state_role_and_surface_coverage() -> None:
         assert f"type.{token}" in used_paths, token
 
 
-@pytest.mark.parametrize("name", ["glass", "flat", "paper"])
+@pytest.mark.parametrize("name", MANIFEST_NAMES)
 def test_no_literal_hex_or_transition_in_manifest(name: str) -> None:
     text = (MANIFESTS / f"{name}.toml").read_text()
     assert not HEX.search(text)
@@ -728,9 +736,134 @@ def test_frozen_flat_and_paper_values() -> None:
     }
 
 
+def test_frozen_terminal_values() -> None:
+    terminal = load_manifest("terminal")
+    assert terminal["schemaVersion"] == 2
+    assert terminal["name"] == "terminal"
+    assert terminal["groups"]["surface"]["panel"] == {
+        "bg": "@surface",
+        "border": "alpha(@on_surface, 0.22)",
+        "border-width": 1,
+        "radius": 0,
+        "padding": 9,
+        "shadow": "none",
+        "blur": "none",
+    }
+    assert terminal["groups"]["surface"]["card"] == {
+        "bg": "@surface_container",
+        "border": "alpha(@on_surface, 0.18)",
+        "border-width": 1,
+        "radius": 0,
+        "padding": 8,
+    }
+    assert terminal["groups"]["surface"]["cell"] == {
+        "bg": "transparent",
+        "border": "transparent",
+        "border-width": 0,
+        "radius": 0,
+        "padding": 5,
+        "hover-bg": "alpha(@on_surface, 0.10)",
+    }
+    assert terminal["groups"]["surface"]["control"] == {
+        "bg": "transparent",
+        "border": "alpha(@on_surface, 0.30)",
+        "border-width": 1,
+        "radius": 2,
+        "padding": 3,
+        "font-size": 10,
+        "font-weight": 600,
+    }
+    assert terminal["groups"]["surface"]["pill"] == {
+        "bg": "alpha(@on_surface, 0.12)",
+        "border": "alpha(@on_surface, 0.18)",
+        "border-width": 1,
+        "radius": 2,
+        "padding": 1,
+        "font-size": 9,
+        "letter-spacing": 0.04,
+    }
+    assert terminal["groups"]["state"]["hover"] == {
+        "fill": "alpha(@on_surface, 0.10)",
+        "ink": "@on_surface",
+        "ring": "@primary",
+    }
+    assert terminal["groups"]["state"]["selected"] == {
+        "fill": "@primary_container",
+        "ink": "@on_primary_container",
+        "ring": "@primary",
+    }
+    assert terminal["groups"]["state"]["focus"] == {
+        "fill": "transparent",
+        "ink": "@on_surface",
+        "ring": "@primary",
+    }
+    assert terminal["groups"]["state"]["disabled"] == {
+        "fill": "alpha(@on_surface, 0.06)",
+        "ink": "alpha(@on_surface, 0.38)",
+        "ring": "transparent",
+    }
+    assert terminal["groups"]["type"] == {
+        "font-family": "JetBrainsMono Nerd Font, monospace",
+        "font-weight": 500,
+        "letter-spacing": 0,
+        "size-caption": 9,
+        "size-meta": 10,
+        "size-body": 12,
+        "size-title": 13,
+        "size-display": 14,
+    }
+    assert terminal["groups"]["ink"] == {
+        "ink": "@on_surface",
+        "ink-dim": "alpha(@on_surface, 0.62)",
+        "accent": "@primary",
+        "accent-muted": "alpha(@primary, 0.5)",
+        "ink-over": "auto",
+    }
+    assert terminal["groups"]["layout"] == {
+        "ags": {"panel-width": 312, "bt-list-spacing": 4},
+        "ags-clipboard": {"card-width": 260},
+        "ags-notifications": {"card-width": 380},
+        "ags-wallpaper-selector": {"root-width": 960, "root-height": 640},
+        "ags-icme": {"root-width": 1280, "root-height": 800},
+    }
+    assert "mode" not in terminal
+
+
+def test_terminal_expands_with_its_dense_monospace_shape() -> None:
+    css = render(TEMPLATE.read_text(), "terminal")
+    assert "background-color: @surface;" in css
+    assert "background-color: @surface_container;" in css
+    assert "border: 1px solid alpha(@on_surface, 0.22);" in css
+    assert "border: 1px solid alpha(@on_surface, 0.30);" in css
+    assert "border-radius: 0px;" in css
+    assert "border-radius: 2px;" in css
+    assert "padding: 9px;" in css
+    assert "font-family: JetBrainsMono Nerd Font, monospace;" in css
+    assert "font-size: 9px;" in css
+    assert "font-size: 10px;" in css
+    assert "font-size: 12px;" in css
+    assert "font-size: 13px;" in css
+    assert "font-size: 14px;" in css
+    assert "letter-spacing: 0.04em;" in css
+    # Mode-agnostic: both modes expand from the same base groups.
+    assert render(TEMPLATE.read_text(), "terminal", "light") == css
+
+
+def test_positive_terminal_fixture_is_accepted(tmp_path: Path) -> None:
+    fixture = POSITIVE / "terminal.toml"
+    with fixture.open("rb") as handle:
+        fixture_data = tomllib.load(handle)
+    assert fixture_data == load_manifest("terminal")
+
+    root = make_root(tmp_path, manifest_override=("terminal", fixture))
+    errors, _notes, stats = validate_skins.validate(root)
+    assert errors == []
+    assert stats["manifests"] == 4
+
+
 def test_layout_defaults_preserve_the_apps_pre_v2_window_sizes() -> None:
     """Every skin keeps the app defaults; only paint/rhythm differs per skin."""
-    for name in ("glass", "flat", "paper"):
+    for name in MANIFEST_NAMES:
         layout = load_manifest(name)["groups"]["layout"]
         assert layout["ags-icme"] == {"root-width": 1280, "root-height": 800}, name
         assert layout["ags-wallpaper-selector"] == {
@@ -740,18 +873,16 @@ def test_layout_defaults_preserve_the_apps_pre_v2_window_sizes() -> None:
         # Retired v1 knobs: no app source reads them.
         assert "bar-row-height" not in layout["ags"], name
         assert "chip-min" not in layout["ags"], name
-        # Real TSX literals and the CSS-derived cleanup candidates stay put.
+        # Real TSX literals stay; the CSS-derived cleanup candidates are gone
+        # in v0.13.0 (the apps are corrected to their pre-v2 natural layout).
         assert layout["ags"] == {
             "panel-width": 312,
             "bt-list-spacing": 4 if name != "paper" else 6,
         }, name
         assert layout["ags-clipboard"] == {"card-width": 260}, name
         assert layout["ags-notifications"] == {"card-width": 380}, name
-        assert layout["ags-capture"] == {"panel-width": 560}, name
-        assert layout["ags-btop-studio"] == {
-            "left-width": 280,
-            "right-width": 320,
-        }, name
+        assert "ags-capture" not in layout, name
+        assert "ags-btop-studio" not in layout, name
 
 
 def test_paper_declares_explicit_light_mode_overrides() -> None:

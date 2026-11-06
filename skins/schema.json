@@ -5,7 +5,7 @@
   "title": "dotfiles-assets appearance manifest v2",
   "schema_major": 2,
   "contract": "skins",
-  "status": "populated (v0.12.0)",
+  "status": "populated (v0.13.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
@@ -110,7 +110,8 @@
     "required_files": [
       "glass",
       "flat",
-      "paper"
+      "paper",
+      "terminal"
     ],
     "token_groups": {
       "surface": [

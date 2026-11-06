@@ -52,6 +52,7 @@ skins/
   manifests/glass.toml                    default/fallback parity skin
   manifests/flat.toml                     zero-chrome skin
   manifests/paper.toml                    palette-axis skin with explicit mode.light
+  manifests/terminal.toml                 dense-monospace, square/hairline skin
   templates/ags.gtk.css.j2                bar settings + Bluetooth paint (target: ags)
   templates/ags-clipboard.gtk.css.j2      clipboard overlay (target: ags-clipboard)
   templates/ags-notifications.gtk.css.j2  notification cards (target: ags-notifications)
@@ -61,6 +62,7 @@ skins/
   templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
+  tests/fixtures/positive/                positive fixture (terminal shape the validator must accept)
   tests/fixtures/parity/                  glass-vs-source ownership/parity record
 ```
 
@@ -101,31 +103,31 @@ fonts and ink values render verbatim. The v1 `cell-pad` pair is gone: the
 contract stores one numeric `padding` per surface role, so an asymmetric
 component padding keeps its second value as a template literal.
 
-## The three manifests
+## The four manifests
 
 Numbers are stored unitless; the `px` shown in prose is what the template
 renders.
 
-| Token | `glass` (default/fallback) | `flat` | `paper` |
-| --- | --- | --- | --- |
-| `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 |
-| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 |
-| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same |
-| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 |
-| `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 |
-| `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` |
-| `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` |
-| `surface.panel.border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` |
-| `surface.panel.shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` |
-| `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` |
-| `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` |
-| `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` |
-| `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 |
+| Token | `glass` (default/fallback) | `flat` | `paper` | `terminal` |
+| --- | --- | --- | --- | --- |
+| `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 | 0 / 1 / 9 |
+| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 |
+| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` |
+| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 | 2 / 1 / 3 / 10 / 600 |
+| `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 | 2 / 1 / 1 / 9 / 0.04 |
+| `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` | `@surface` |
+| `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` | `@surface_container` |
+| `surface.panel.border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.22)` |
+| `surface.panel.shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` | `none` |
+| `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` | `@primary_container` / `@on_primary_container` |
+| `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.5)` |
+| `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` | JetBrainsMono Nerd Font, monospace / 13 / 12 / 9 / 10 / 14 |
+| `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 | 312 / 4 |
 
 ### Layout defaults preserve the apps' pre-v2 window sizes
 
 `v0.12.2` corrects two blocks that were extracted from CSS minima instead of
-the apps' default window size. All three skins carry the same values, so the
+the apps' default window size. All four skins carry the same values, so the
 default skin keeps the pre-v2 behaviour:
 
 | Block | Value | Source of truth |
@@ -141,13 +143,15 @@ The rest of the layout audit:
 | `layout.ags.bt-list-spacing` | 4 (`paper` 6) | keep — real TSX literal (`ags-bar@v0.3.0:components/bluetooth/BluetoothContent.tsx:750,798`) |
 | `layout.ags-clipboard.card-width` | 260 | keep — real TSX literal (`ags-clipboard@v0.3.0:ui/ItemCard.tsx:179`) |
 | `layout.ags-notifications.card-width` | 380 | keep — real TSX literal (`ags-notifications@v0.3.0:ui/NotificationsWindow.tsx:60`) |
-| `layout.ags-capture.panel-width` | 560 | **cleanup candidate** — CSS `min-width` only (`ags-capture-tool@v0.5.0:style.css:793,997`); the app reads the token today, so it is unchanged here |
-| `layout.ags-btop-studio.left-width` / `right-width` | 280 / 320 | **cleanup candidate** — CSS `min-width` only (`ags-btop-theme-studio@v0.3.0:style.css:42,241`); the app reads the tokens today, so they are unchanged here |
+| `layout.ags-capture.panel-width` | removed in `v0.13.0` | was CSS `min-width` only (`ags-capture-tool@v0.5.0:style.css:793,997`); the app is corrected to its pre-v2 natural layout in parallel |
+| `layout.ags-btop-studio.left-width` / `right-width` | removed in `v0.13.0` | was CSS `min-width` only (`ags-btop-theme-studio@v0.3.0:style.css:42,241`); the app is corrected to its pre-v2 natural layout in parallel |
 
-The capture panel width and btop rail widths stay skin tokens for now because
-the migrated apps read them (`app.tsx:50` / `SettingsPage.tsx:344`;
-`StudioWindow.tsx:197-198,371,784`). A follow-up decides whether they remain
-authored skin metrics or move back to TSX literals.
+`v0.13.0` removes the capture panel width and btop rail widths from every
+manifest. `req-017` recorded them as cleanup candidates: their only pre-v2
+source was a CSS minimum, not a TSX default, and the apps are being corrected
+to their pre-v2 natural layout in parallel. The skin class no longer declares
+CSS geometry as skin semantics; a consumer that still reads those tokens falls
+back to the app's own default until the app commit lands.
 
 `glass` is the value a consumer uses when no skin is selected. Its declarations
 are a **literal extraction** of today's `../ags-bar/style.css`, not a
@@ -156,14 +160,14 @@ design-system re-expression: panel `alpha(@surface, 0.94)` / `1.5px @primary` /
 11px`, row `8px 9px` / `7px`, badge radius `20px` / `9.5px` / `0.05em`, no panel
 shadow, and `ink-dim = alpha(@on_surface, 0.62)`. `flat` removes surfaces and
 borders and tightens the rhythm. `paper` changes shape, rhythm and surface
-roles; it does not add a second variant.
+roles; it does not add a second variant. `terminal` is the dense monospace,
+square/hairline skin: opaque `@surface` panels, `@surface_container` cards, zero
+radii, 1px hairlines, tight paddings and a 9–14px JetBrainsMono scale.
 
-Other namespaces (`layout.ags-capture`, `layout.ags-clipboard`,
-`layout.ags-notifications`, `layout.ags-wallpaper-selector`, `layout.ags-icme`,
-`layout.ags-btop-studio`) carry the app metrics from the audit above and remain
-TSX-owned. The two window-size blocks preserve the apps' pre-v2 defaults;
-capture and btop are recorded cleanup candidates, not CSS minima promoted to
-permanent skin semantics.
+Other namespaces (`layout.ags-clipboard`, `layout.ags-notifications`,
+`layout.ags-wallpaper-selector`, `layout.ags-icme`) carry the app metrics from
+the audit above and remain TSX-owned. The two window-size blocks preserve the
+apps' pre-v2 defaults; capture and btop are no longer skin tokens.
 
 ## `paper` is mode-aware now
 
@@ -175,6 +179,17 @@ Generation selects exactly one mode before expansion, so a template never
 branches on mode, palette or skin. A light palette + `paper` reads light; a
 dark palette + `paper` keeps the base groups. This replaces the v1 behaviour
 where `paper` depended on whichever mode the palette happened to be.
+
+## `terminal` is mode-agnostic
+
+`terminal` is the dense monospace, square/hairline skin. Its panel is opaque
+`@surface` with a `1px` `alpha(@on_surface, 0.22)` frame; cards use
+`@surface_container`; radii are `0` on panel/card/cell, `2` on control/pill;
+paddings are `9`/`8`/`5`/`3`/`1`; and the type scale is JetBrainsMono Nerd Font
+at weight `500`, `9`/`10`/`12`/`13`/`14`. It declares no `mode` overrides: the
+base groups serve both dark and light, so a palette-only mode change cannot
+produce a different terminal shape. Only palette-role expressions are used, so
+it still follows the palette family it is generated against.
 
 ## What the GTK templates do and do not control
 
@@ -228,7 +243,8 @@ make test-skins       # pytest fixtures, including parity, mode and negative cas
 `make validate-skins` is stdlib-only and part of `make gates`. It validates
 each manifest against the vendored `appearance-manifest` schema, resolves it
 under both `dark` and `light`, validates each resolved `tokens.json` against
-`appearance-json`, and expands all seven templates for every manifest × mode.
+`appearance-json`, and expands all seven templates for all four manifests ×
+both modes.
 It checks the flattened placeholder vocabulary two ways, rejects literal hex,
 transitions/animations, structure/variant properties and layout placeholders,
 and verifies the unit rule (length → `<n>px`, letter-spacing → `<n>em`,

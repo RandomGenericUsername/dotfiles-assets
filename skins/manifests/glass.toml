@@ -90,9 +90,6 @@ ink-over = "auto"
 panel-width = 312
 bt-list-spacing = 4
 
-[groups.layout.ags-capture]
-panel-width = 560
-
 [groups.layout.ags-clipboard]
 card-width = 260
 
@@ -106,7 +103,3 @@ root-height = 640
 [groups.layout.ags-icme]
 root-width = 1280
 root-height = 800
-
-[groups.layout.ags-btop-studio]
-left-width = 280
-right-width = 320
