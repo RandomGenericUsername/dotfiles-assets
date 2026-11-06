@@ -128,9 +128,9 @@ tree):
 schema ink grammar, parity tests, README/CHANGELOG/version updates).
 **Merge:** fast-forward into `master` after the gates; the ticket branch is not
 left unmerged.
-**Tag:** `v0.8.0`, annotated on the merged commit after the merge; the tag
-object hash is recorded in the follow-up index commit (a tag cannot contain its
-own hash).
+**Tag:** `v0.8.0` (annotated object `20e77e7`, commit `fd0deef`), created on
+the merged commit after the fast-forward merge; the object hash is recorded in
+this follow-up index commit because a tag cannot contain its own hash.
 
 ### Delivered
 
