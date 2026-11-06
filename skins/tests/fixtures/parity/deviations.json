@@ -1,0 +1,52 @@
+{
+  "policy": "glass is a faithful extraction of ../ags-bar/style.css; the frozen v1 border-w token cannot split the panel from the hairlines",
+  "deviations": [
+    {
+      "selector": ".settings-card",
+      "template": "border: 1.5px solid alpha(@on_surface, 0.10)",
+      "source": "border: 1px solid alpha(@on_surface, 0.10);",
+      "source_ref": "ags-bar/style.css:183",
+      "delta": "+0.5px (1.5px vs 1px)",
+      "reason": "one frozen border-w token; the panel needs 1.5px, so the card hairline inherits it"
+    },
+    {
+      "selector": ".settings-rowact",
+      "template": "border: 1.5px solid alpha(@on_surface, 0.26)",
+      "source": "border: 1px solid alpha(@on_surface, 0.26);",
+      "source_ref": "ags-bar/style.css:442",
+      "delta": "+0.5px (1.5px vs 1px)",
+      "reason": "one frozen border-w token; the panel needs 1.5px, so the row-action hairline inherits it"
+    },
+    {
+      "selector": ".settings-badge",
+      "template": "border: 1.5px solid alpha(@on_surface, 0.14)",
+      "source": "border: 1px solid alpha(@on_surface, 0.14);",
+      "source_ref": "ags-bar/style.css:428",
+      "delta": "+0.5px (1.5px vs 1px)",
+      "reason": "one frozen border-w token; the panel needs 1.5px, so the badge hairline inherits it"
+    },
+    {
+      "selector": ".settings-badge.conn",
+      "template": "border: 1.5px solid alpha(@primary, 0.45)",
+      "source": "border: 1px solid alpha(@primary, 0.45);",
+      "source_ref": "ags-bar/style.css:433",
+      "delta": "+0.5px (1.5px vs 1px)",
+      "reason": "one frozen border-w token; the panel needs 1.5px, so the connected-badge hairline inherits it"
+    },
+    {
+      "selector": ".settings-wifi-settings-row",
+      "template": "border-top: 1.5px solid alpha(@on_surface, 0.06)",
+      "source": "border-top: 1px solid alpha(@on_surface, 0.06);",
+      "source_ref": "ags-bar/style.css:761",
+      "delta": "+0.5px (1.5px vs 1px)",
+      "reason": "one frozen border-w token; the panel needs 1.5px, so the footer hairline inherits it"
+    }
+  ],
+  "nonvisual": [
+    "min-width: 312px on .settings-surface (the source sets width in SettingsPanel.tsx:22)",
+    "margin-bottom: 4px on .settings-net (the source sets widget spacing 4 in BluetoothContent.tsx:750/:798)",
+    "min-height/min-width: 0px from bar-row-height/chip-min (the source has min-height: 0 or no declaration)",
+    "box-shadow: none and backdrop-filter: none from the shadow/blur tokens (the source has no declaration)",
+    "font-family: inherit on the window root (the source inherits without a declaration; no font-size is emitted)"
+  ]
+}

@@ -94,11 +94,18 @@ tree):
 
 - **One `border-w` cannot split panel from hairline.** Today the panel is
   `1.5px` (`:163`) while cards (`:183`), row actions (`:442`), badges
-  (`:428`) and the Wi-Fi settings top rule (`:760`) are `1px`. The frozen v1
+  (`:428`) and the Wi-Fi settings top rule (`:761`) are `1px`. The frozen v1
   contract has one `border-w`; glass keeps the panel's `1.5px`, so those
   hairlines render `0.5px` thicker (`1.5px` vs `1px`). This is the only visual
   deviation in the tokenized declarations; the alternative (a second
   border-width token) would break the frozen 23-token contract.
+- **Local `ink` grammar follows the canonical contract.** `contracts` `v0.5.0`
+  defines `inkValue` as a palette role *or* a role expression. The local
+  `skins/schema.json` now points `ink`, `ink-dim` and `accent` at its existing
+  `roleExpression` definition, so glass can carry
+  `ink-dim = alpha(@on_surface, 0.62)` (today's `style.css:415`) without
+  changing the 23 token names, groups or manifest shape. This is a value-grammar
+  alignment, not a new token.
 - **`gap` is not consumed by the GTK template.** Today every gap-looking
   declaration is a component padding (`11px`, `10px 11px`, etc.) or the
   widget-level Bluetooth list spacing (`4`). Those stay literal/`bt-list-spacing`

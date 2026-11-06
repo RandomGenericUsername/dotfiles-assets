@@ -184,27 +184,31 @@ def test_frozen_manifest_values() -> None:
     paper = load_manifest("paper")
 
     assert [glass["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell", "radius-pill")] == [
-        "16px",
         "12px",
-        "8px",
-        "999px",
+        "9px",
+        "7px",
+        "20px",
     ]
     assert glass["shape"]["border-w"] == "1.5px"
-    assert glass["rhythm"] == {"gap": "12px", "cell-pad": "9px 12px"}
+    assert glass["rhythm"] == {"gap": "8px", "cell-pad": "8px 9px"}
     assert glass["surface"] == {
         "bg-panel": "alpha(@surface, 0.94)",
-        "bg-card": "alpha(@surface_container_high, 0.88)",
-        "border": "alpha(@primary, 0.35)",
-        "shadow": "0 16px 40px rgba(0,0,0,0.5)",
+        "bg-card": "alpha(@surface_container_high, 0.18)",
+        "border": "@primary",
+        "shadow": "none",
         "blur": "none",
     }
-    assert glass["type"]["title-size"] == "15px"
-    assert glass["type"]["text-size"] == "13px"
+    assert glass["ink"]["ink-dim"] == "alpha(@on_surface, 0.62)"
+    assert glass["type"] == {
+        "font-family": "inherit",
+        "title-size": "12.5px",
+        "text-size": "13px",
+    }
     assert glass["layout"] == {
         "panel-width": "312px",
-        "bt-list-spacing": "6px",
-        "bar-row-height": "30px",
-        "chip-min": "52px",
+        "bt-list-spacing": "4px",
+        "bar-row-height": "0px",
+        "chip-min": "0px",
     }
 
     assert [flat["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell")] == [
@@ -228,20 +232,30 @@ def test_frozen_manifest_values() -> None:
     assert paper["surface"]["bg-card"] == "@surface_container_low"
     assert paper["surface"]["border"] == "alpha(@on_surface, 0.22)"
     assert paper["surface"]["shadow"] == "0 10px 28px rgba(0,0,0,0.22)"
-    assert paper["layout"] == glass["layout"]
+    assert paper["layout"] == {
+        "panel-width": "312px",
+        "bt-list-spacing": "6px",
+        "bar-row-height": "30px",
+        "chip-min": "52px",
+    }
 
 
 def test_glass_expands_to_the_frozen_values() -> None:
     css = render(TEMPLATE.read_text(), load_manifest("glass"))
     assert "background-color: alpha(@surface, 0.94);" in css
-    assert "background-color: alpha(@surface_container_high, 0.88);" in css
-    assert "border: 1.5px solid alpha(@primary, 0.35);" in css
-    assert "box-shadow: 0 16px 40px rgba(0,0,0,0.5);" in css
-    assert "border-radius: 16px;" in css
-    assert "padding: 12px;" in css
-    assert "padding: 9px 12px;" in css
+    assert "background-color: alpha(@surface_container_high, 0.18);" in css
+    assert "border: 1.5px solid @primary;" in css
+    assert "box-shadow: none;" in css
+    assert "backdrop-filter: none;" in css
+    assert "border-radius: 12px;" in css
+    assert "padding: 11px;" in css
+    assert "padding: 10px 11px;" in css
+    assert "padding: 8px 9px;" in css
+    assert "border-radius: 9px;" in css
+    assert "border-radius: 7px;" in css
+    assert "border-radius: 20px;" in css
     assert "min-width: 312px;" in css
-    assert "font-size: 15px;" in css
+    assert "font-size: 12.5px;" in css
     assert "font-size: 13px;" in css
 
 
@@ -249,13 +263,15 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
     flat = render(TEMPLATE.read_text(), load_manifest("flat"))
     assert "background-color: transparent;" in flat
     assert "border: 0px solid transparent;" in flat
+    assert "border: 0px solid alpha(@on_surface, 0.10);" in flat
     assert "box-shadow: none;" in flat
-    assert "padding: 8px;" in flat
+    assert "padding: 7px 8px;" in flat
 
     paper = render(TEMPLATE.read_text(), load_manifest("paper"))
     assert "background-color: @surface_container_lowest;" in paper
     assert "background-color: @surface_container_low;" in paper
     assert "border: 1px solid alpha(@on_surface, 0.22);" in paper
+    assert "border: 1px solid alpha(@on_surface, 0.10);" in paper
     assert "box-shadow: 0 10px 28px rgba(0,0,0,0.22);" in paper
 
 

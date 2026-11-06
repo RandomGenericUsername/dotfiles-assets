@@ -219,9 +219,9 @@
         "ink-over"
       ],
       "properties": {
-        "ink": { "$ref": "#/$defs/role" },
-        "ink-dim": { "$ref": "#/$defs/role" },
-        "accent": { "$ref": "#/$defs/role" },
+        "ink": { "$ref": "#/$defs/roleExpression" },
+        "ink-dim": { "$ref": "#/$defs/roleExpression" },
+        "accent": { "$ref": "#/$defs/roleExpression" },
         "ink-over": { "const": "auto" }
       }
     },

@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.7.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.8.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -32,9 +32,9 @@ six tool directories — the compositor, editor, prompt and wlogout layout (one 
 SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
-binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback, `flat`, `paper`), one
-GTK settings/Bluetooth template and the local validation target that points at the canonical
-`contracts` schemas. Each class validator arrives **with** its corpus, so every check has run
+binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback parity with today's ags-bar
+look, `flat`, `paper`), one GTK settings/Bluetooth template and the local validation target that
+points at the canonical `contracts` schemas. Each class validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
 `configs/hypr/hyprland.lua:7` as the one reviewed exception. Since `v0.6.1` it also requires the

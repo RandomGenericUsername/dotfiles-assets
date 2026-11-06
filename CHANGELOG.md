@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.8.0 — skins fidelity (glass = today's ags-bar)
+
+### Fixed
+
+- **`glass` is now a literal parity extraction of `../ags-bar/style.css`, not a
+  design-system re-expression.** Panel `12px` radius / `11px` padding /
+  `1.5px @primary` hairline / no shadow, card `alpha(@surface_container_high,
+  0.18)` / `9px` / `10px 11px`, row `8px 9px` padding / `7px` radius, badge
+  `20px` radius / `9.5px` type, and the 10.5–12px small-text values all match
+  the source. `bt-list-spacing` is `4px`, `bar-row-height` and `chip-min` are
+  `0px`, and `title-size`/`text-size` are `12.5px`/`13px`.
+- **`skins/templates/ags-bar.gtk.css.j2`** now uses `{{SKIN_*}}` only where the
+  frozen token is a genuine global knob. Component padding, small type,
+  scrollbar/slider geometry, row borderlessness, nav-header measurements and
+  badge type stay literal, expressed with `palette.v1` roles only. The window
+  root applies `font-family` but no `font-size` (today inherits it).
+- **`skins/tests/test_parity.py`** expands glass through the validator's own
+  placeholder map and asserts every source declaration (with line references),
+  no non-`none` shadow, no transition/animation, no hex, and the explicit
+  deviations. `fixtures/parity/deviations.json` records the five hairline cases.
+
+### Changed
+
+- **`skins/README.md`** documents the v1 limitations: which component details
+  are not skin-controlled and why, and the one unavoidable visual deviation.
+  The local schema's `ink`/`ink-dim`/`accent` now accept the same
+  role-or-role-expression grammar as the canonical contracts `inkValue`; the
+  23-token set is unchanged.
+- **`flat`/`paper`** keep their own values under the corrected template
+  semantics; `flat` remains transparent/borderless and `paper` remains
+  role-based.
+
+### Notes
+
+- **MINOR, no path or token change.** The frozen v1 23-token contract is
+  unchanged (`contracts` `v0.5.0`). The remaining visual deviation is the single
+  `border-w` token: the panel needs `1.5px`, so the source's `1px` card, row,
+  badge and Wi-Fi-footer hairlines render `1.5px` (+0.5px). A second
+  border-width token would break the frozen contract, so the deviation is
+  recorded rather than hidden.
+- **No transition declarations.** GTK 4.24 ignores them; the source's switch
+  transitions and switch shadows remain app-owned and are not copied into the
+  skin template.
+
 ## v0.7.0 — skins class (frozen v1)
 
 ### Added

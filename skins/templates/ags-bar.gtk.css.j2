@@ -1,11 +1,38 @@
 /*
  * skins/templates/ags-bar.gtk.css.j2 — settings + Bluetooth paint rules.
  *
- * The app owns this selector vocabulary and the widget structure. A skin
- * supplies only palette/ink mapping, paint and rhythm/density through the
- * SKIN_* tokens below; every token is a key in the selected TOML manifest.
- * There are no structure or variant tokens, no literal hex colours and no
- * transitions (GTK 4.24 ignores them, so shipping one would be dead CSS).
+ * FIDELITY POLICY (skin spec v1)
+ * -----------------------------
+ * `glass` is a faithful extraction of today's ../ags-bar/style.css, not a
+ * design-system re-expression of it. A SKIN_* placeholder is used ONLY
+ * where the frozen token is a genuine global knob: panel background / border /
+ * border-width / radius / shadow / blur, card background / radius, cell radius
+ * / padding, control radius, pill radius, ink / ink-dim / accent, title-size /
+ * text-size, and layout metrics. Everything else is a component literal copied
+ * from style.css, expressed with palette roles only (never a hex colour).
+ *
+ * DOCUMENTED DEVIATIONS (glass, with numbers)
+ * -------------------------------------------
+ * 1. One `border-w` cannot split the panel from the hairlines. style.css uses
+ *    1.5px on .settings-surface (:163) but 1px on cards (:183), row actions
+ *    (:442), badges (:428) and the Wi-Fi settings top rule (:760). The frozen
+ *    23-token contract has a single border-w, and glass keeps the panel's
+ *    1.5px, so those hairlines render at 1.5px (0.5px thicker than today).
+ *    2. Template-only declarations with no visual change: min-width: 312px on
+ *    .settings-surface (the width is set by SettingsPanel.tsx:22),
+ *    margin-bottom: 4px on .settings-net (the list spacing is widget-level 4
+ *    in BluetoothContent.tsx:750/:798), min-height/min-width: 0px from the
+ *    layout tokens, box-shadow: none / backdrop-filter: none from the
+ *    shadow/blur tokens, and font-family: inherit on the window root where
+ *    today inherits without a declaration. The window root deliberately has no
+ *    font-size (today inherits it).
+ * 3. `gap` is not consumed here: every gap-looking source declaration is a
+ *    component padding or the separate bt-list-spacing metric. It remains
+ *    manifest metadata in v1.
+ *
+ * The app owns this selector vocabulary and the widget structure. There are no
+ * structure or variant tokens, no literal hex colours and no CSS transition
+ * declarations (GTK 4.24 ignores transitions, so shipping one would be dead CSS).
  *
  * ink-over is {{SKIN_INK_OVER}}: on a painted container the app resolves the
  * paired on-colour automatically instead of hard-coding a second ink token.
@@ -22,21 +49,22 @@ window.settings-catcher {
   background-color: transparent;
   color: {{SKIN_INK}};
   font-family: {{SKIN_FONT_FAMILY}};
-  font-size: {{SKIN_TEXT_SIZE}};
 }
 
 /* The click-outside catcher needs a non-zero fill to be hit-testable on this
-   compositor. One percent is imperceptible and is not a skin value. */
+   compositor. One percent is imperceptible and is copied from style.css:157-159
+   (the catcher fill is a surface wash, not the ink token). */
 .settings-catcher-fill {
-  background-color: alpha({{SKIN_INK}}, 0.01);
+  background-color: alpha(@surface, 0.01);
 }
 
+/* style.css:161-166 — no box-shadow and no backdrop-filter in the source. */
 .settings-surface {
   min-width: {{SKIN_PANEL_WIDTH}};
   background-color: {{SKIN_BG_PANEL}};
   border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
   border-radius: {{SKIN_RADIUS_PANEL}};
-  padding: {{SKIN_GAP}};
+  padding: 11px;
   box-shadow: {{SKIN_SHADOW}};
   backdrop-filter: {{SKIN_BLUR}};
 }
@@ -47,46 +75,84 @@ window.settings-catcher {
   border: none;
 }
 
+/* style.css:174-178 — the scrollbar is a fixed 5px detail, not a skin radius. */
 .settings-scroll scrollbar slider {
-  min-width: {{SKIN_RADIUS_CELL}};
-  border-radius: {{SKIN_RADIUS_PILL}};
+  min-width: 5px;
+  border-radius: 5px;
   background-color: alpha({{SKIN_INK}}, 0.25);
 }
 
-/* Cards and the capability/password surfaces share the card paint. */
+/* Cards. .settings-password shares the card paint (style.css:556-561);
+   .settings-tile and .settings-mini have their own padding (:194-199, :260-268).
+   The card border is 1px in the source and 1.5px here — see deviation 1. */
 .settings-card,
-.settings-tile,
-.settings-mini,
 .settings-password {
   background-color: {{SKIN_BG_CARD}};
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
   border-radius: {{SKIN_RADIUS_CARD}};
-  padding: {{SKIN_GAP}};
-  color: {{SKIN_INK}};
+  padding: 10px 11px;
 }
 
-.settings-card-title,
-.settings-tile-title,
-.settings-mini-title {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK}};
+.settings-card-title {
+  font-size: {{SKIN_TITLE_SIZE}};
+  font-weight: 650;
 }
 
-.settings-tile-sub,
-.settings-chevron {
+/* style.css:194-199 — capability tile has asymmetric padding. */
+.settings-tile {
+  background-color: {{SKIN_BG_CARD}};
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  padding: 8px 11px 8px 10px;
+}
+
+.settings-tile-title {
   font-size: {{SKIN_TEXT_SIZE}};
+  font-weight: 600;
+}
+
+.settings-tile-sub {
+  font-size: 11px;
   color: {{SKIN_INK_DIM}};
 }
 
-/* Bluetooth device rows. The list spacing is a layout token: the app can also
-   apply it as the list container's row spacing; the margin keeps the stylesheet
-   faithful when the app renders a plain box. */
+/* style.css:211-214 — the chevron is a 16px glyph at half ink. */
+.settings-chevron {
+  font-size: 16px;
+  color: alpha({{SKIN_INK}}, 0.5);
+}
+
+/* style.css:260-268 — mini action tile keeps its 10px padding and its
+   none-shadow. */
+.settings-mini {
+  min-height: 0;
+  padding: 10px;
+  background-color: {{SKIN_BG_CARD}};
+  background-image: none;
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.10);
+  border-radius: {{SKIN_RADIUS_CARD}};
+  color: {{SKIN_INK}};
+  box-shadow: none;
+}
+
+.settings-mini:hover {
+  border-color: {{SKIN_ACCENT}};
+}
+
+.settings-mini-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Wi-Fi / Bluetooth rows (style.css:378-387). The row is transparent and has no
+   border; cell-pad and radius-cell are genuine density knobs. */
 .settings-net {
   min-height: {{SKIN_BAR_ROW_HEIGHT}};
   padding: {{SKIN_CELL_PAD}};
   margin-bottom: {{SKIN_BT_LIST_SPACING}};
   background-color: transparent;
-  border: {{SKIN_BORDER_W}} solid transparent;
+  background-image: none;
+  border: none;
   border-radius: {{SKIN_RADIUS_CELL}};
   box-shadow: none;
   color: {{SKIN_INK}};
@@ -98,7 +164,6 @@ window.settings-catcher {
 
 .settings-net.sel {
   background-color: @primary_container;
-  border-color: @primary;
   color: @on_primary_container;
 }
 
@@ -106,20 +171,17 @@ window.settings-catcher {
   opacity: 0.45;
 }
 
-/* Inline unpair confirmation: a different mode, not a different connection
-   state, so it wins over the selected fill. */
-.settings-net.confirming {
-  background-color: alpha({{SKIN_INK}}, 0.06);
-}
-
+/* style.css:407-411 — the name is a 12.5px title; 48px keeps the cell from
+   collapsing while the badge reserves its width. */
 .settings-net-name {
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: {{SKIN_TITLE_SIZE}};
   font-weight: 600;
-  color: {{SKIN_INK}};
+  min-width: 48px;
 }
 
+/* style.css:413-416 — line two is a small 10.5px literal, not text-size. */
 .settings-net-sub {
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: 10.5px;
   color: {{SKIN_INK_DIM}};
 }
 
@@ -127,37 +189,35 @@ window.settings-catcher {
   color: alpha(@on_primary_container, 0.85);
 }
 
-.settings-net-signal {
-  min-width: {{SKIN_BAR_ROW_HEIGHT}};
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
-}
-
+/* style.css:422-429 — badge type/padding are component details; only the pill
+   radius is a skin knob. The border is 1px in the source and 1.5px here. */
 .settings-badge {
-  font-size: {{SKIN_TEXT_SIZE}};
+  font-size: 9.5px;
   letter-spacing: 0.05em;
-  padding: 2px {{SKIN_GAP}};
+  padding: 2px 6px;
   border-radius: {{SKIN_RADIUS_PILL}};
   background-color: alpha({{SKIN_INK}}, 0.12);
   border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.14);
-  color: {{SKIN_INK}};
 }
 
 .settings-badge.conn {
   background-color: alpha({{SKIN_ACCENT}}, 0.18);
-  border-color: alpha({{SKIN_ACCENT}}, 0.45);
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_ACCENT}}, 0.45);
   color: {{SKIN_INK}};
 }
 
-/* Row actions: Connect, Pair, Unpair. */
+/* Row actions: Connect, Pair, Unpair (style.css:437-448). The border is 1px in
+   the source and 1.5px here; padding/font are component details. */
 .settings-rowact {
   min-width: {{SKIN_CHIP_MIN}};
   min-height: {{SKIN_BAR_ROW_HEIGHT}};
-  padding: 4px {{SKIN_GAP}};
-  font-size: {{SKIN_TEXT_SIZE}};
+  padding: 4px 8px;
+  font-size: 11px;
   font-weight: 600;
-  border: {{SKIN_BORDER_W}} solid {{SKIN_BORDER}};
+  border: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.26);
   border-radius: {{SKIN_RADIUS_CELL}};
   background-color: transparent;
+  background-image: none;
   box-shadow: none;
   color: {{SKIN_INK}};
 }
@@ -189,29 +249,16 @@ window.settings-catcher {
   color: @secondary;
 }
 
-/* Chevron disclosure row and the section heading above it. */
-.settings-chevron-row {
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
-  padding: {{SKIN_CELL_PAD}};
-  border-radius: {{SKIN_RADIUS_CELL}};
+/* style.css:488-490 — a confirming row is a mode, not a connection state. */
+.settings-net.confirming {
+  background: alpha({{SKIN_INK}}, 0.06);
 }
 
-.settings-chevron-row:hover {
-  background-color: alpha({{SKIN_INK}}, 0.05);
-}
-
-.settings-chevron-label {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
-}
-
-.settings-section-label {
-  font-size: {{SKIN_TEXT_SIZE}};
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: {{SKIN_INK_DIM}};
-  padding: 4px {{SKIN_GAP}};
+/* style.css:493-497 — the spinner is a fixed 14px glyph. */
+.settings-spinner {
+  min-width: 14px;
+  min-height: 14px;
+  color: {{SKIN_ACCENT}};
 }
 
 .settings-divider {
@@ -220,40 +267,59 @@ window.settings-catcher {
   margin: 4px 0;
 }
 
-/* Connected-device detail table. */
+/* Connected-device detail table (style.css:699-709). */
 .settings-conn-details {
-  padding: 6px {{SKIN_GAP}};
+  padding: 6px 16px;
 }
 
 .settings-detail-row {
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  min-height: 18px;
 }
 
 .settings-detail {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: 11px;
+  color: alpha({{SKIN_INK}}, 0.5);
 }
 
-/* Empty and inline message states. */
+/* Empty and inline message states (style.css:637-641). */
 .settings-empty {
-  padding: {{SKIN_CELL_PAD}};
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  padding: 18px 10px;
+  font-size: 12px;
+  color: alpha({{SKIN_INK}}, 0.6);
 }
 
 .settings-other-networks {
   padding: 4px 0;
 }
 
-.settings-spinner {
-  min-width: {{SKIN_TEXT_SIZE}};
-  min-height: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_ACCENT}};
+/* Level slider (style.css:350-371): a fixed 99px pill, not a skin radius. */
+.settings-level-slider trough {
+  min-height: 10px;
+  min-width: 10px;
+  border-radius: 99px;
+  background-color: alpha({{SKIN_INK}}, 0.16);
+  border: none;
 }
 
-/* Wi-Fi settings footer row and its label/note/arrow set. */
+.settings-level-slider trough highlight {
+  border-radius: 99px;
+  background-color: {{SKIN_ACCENT}};
+}
+
+.settings-level-slider trough slider {
+  min-width: 15px;
+  min-height: 15px;
+  margin: -3px 0;
+  border: none;
+  border-radius: 50%;
+  background-color: {{SKIN_INK}};
+  box-shadow: none;
+}
+
+/* Wi-Fi settings footer row (style.css:759-794). The 1px top rule is 1.5px
+   here — see deviation 1. The note/arrow are fixed small literals. */
 .settings-wifi-settings-row {
-  padding: {{SKIN_CELL_PAD}};
+  padding: 10px 16px;
   border-top: {{SKIN_BORDER_W}} solid alpha({{SKIN_INK}}, 0.06);
 }
 
@@ -263,32 +329,33 @@ window.settings-catcher {
 
 .settings-wifi-settings-label {
   font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  color: alpha({{SKIN_INK}}, 0.7);
 }
 
 .settings-wifi-settings-note {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
-  opacity: 0.7;
+  font-size: 10px;
+  color: alpha({{SKIN_INK}}, 0.3);
 }
 
 .settings-wifi-settings-arrow {
-  font-size: {{SKIN_TEXT_SIZE}};
-  color: {{SKIN_INK_DIM}};
+  font-size: 14px;
+  color: alpha({{SKIN_INK}}, 0.3);
 }
 
-/* Subview header: back button, title and the header row itself. */
+/* Subview header: back button, title and the header row itself
+   (style.css:287-325). The 26px/18px/13.5px measurements are component details. */
 .settings-nav-header {
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  min-height: 26px;
   padding-bottom: 7px;
 }
 
 .settings-back {
-  min-width: {{SKIN_BAR_ROW_HEIGHT}};
-  min-height: {{SKIN_BAR_ROW_HEIGHT}};
+  min-width: 26px;
+  min-height: 26px;
   padding: 0;
-  border-radius: {{SKIN_RADIUS_CELL}};
+  border-radius: 8px;
   background-color: alpha({{SKIN_INK}}, 0.12);
+  background-image: none;
   border: none;
   box-shadow: none;
   color: {{SKIN_INK}};
@@ -299,11 +366,37 @@ window.settings-catcher {
 }
 
 .settings-back-glyph {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: 18px;
 }
 
 .settings-nav-title {
-  font-size: {{SKIN_TITLE_SIZE}};
+  font-size: 13.5px;
   font-weight: 650;
-  color: {{SKIN_INK}};
+}
+
+.settings-net-signal {
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.settings-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: alpha({{SKIN_INK}}, 0.4);
+  padding: 4px 16px;
+}
+
+.settings-chevron-row {
+  padding: 8px 16px;
+}
+
+.settings-chevron-row:hover {
+  background-color: alpha({{SKIN_INK}}, 0.05);
+}
+
+.settings-chevron-label {
+  font-size: {{SKIN_TEXT_SIZE}};
+  color: alpha({{SKIN_INK}}, 0.7);
 }
