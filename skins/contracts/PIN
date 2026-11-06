@@ -1,0 +1,14 @@
+# Vendored canonical skin contract pin.
+#
+# Rule: these files are byte copies from the `contracts` repository. A change to
+# either vendored file MUST update its sha256 here, and the copy must be
+# re-taken from the tag named below. Do not edit a vendored schema by hand.
+#
+# v0.5.1 is the unit-convention patch: it states that numeric tokens are
+# unitless JSON numbers and that the CSS expander appends `px`. The skin schemas
+# are unchanged again at v0.5.2, but this pin stays on the tag that defines the
+# convention.
+contracts=v0.5.1
+source-commit=d1adb19904217ef2def02d47da8d509bd69c2d57
+sha256  aac5d8caf3997eb45bb8c03068f708b07b79cdd68a098de29e4e96c9319bb48a  skin-manifest.schema.json
+sha256  22e81ec4e73a659ed94334f323e6c578886842ed873abac50eacc6608ba906fd  skin-token.schema.json

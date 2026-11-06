@@ -1,5 +1,56 @@
 # Changelog
 
+## v0.9.0 — skins value types (unitless numbers, vendored canonical schemas)
+
+### Fixed
+
+- **Skin numeric tokens are unitless TOML numbers, not `"12px"` strings.** The
+  canonical `contracts` schema types `radius-panel`, `radius-card`,
+  `radius-cell`, `radius-pill`, `border-w`, `gap`, `title-size`, `text-size`,
+  `panel-width`, `bt-list-spacing`, `bar-row-height` and `chip-min` as JSON
+  numbers; AGS rejects the string form at startup. `glass`, `flat` and `paper`
+  now store `12` / `1.5` / `8` / `12.5` / `312` etc. Only `cell-pad` remains a
+  length string (`"Npx Npx"`), and only paint/ink/`font-family` remain strings.
+  Glass keeps every `v0.8.0` parity value; this is a representation fix.
+- **The canonical pair is vendored and pinned.** `skins/contracts/` holds
+  byte-for-byte copies of `skin-token.schema.json` and
+  `skin-manifest.schema.json` at `v0.5.1`, the unit-convention patch.
+  `skins/contracts/PIN` records `contracts=v0.5.1`, the source commit and each
+  file's sha256. `skins/schema.json` now sets `canonical.vendored: true`,
+  `canonical.tag: v0.5.1`, and delegates every token value type by external
+  `$ref` to the vendored manifest schema — the local `px`/`dimension` lookalike
+  grammar is gone.
+
+### Changed
+
+- **`scripts/validate-skins.py` validates canonical types and expands the unit
+  rule.** It checks the PIN hashes and the `$ref` delegation, rejects a numeric
+  string (`radius-panel = "12px"` → must be a number), and expands every
+  manifest through the template with number → `<n>px` (numeric tokens in CSS
+  length positions) while emitting `cell-pad` verbatim.
+- **`skins/tests/` covers the new contract.** Added PIN byte-equality,
+  vendored-type, delegation, numeric-string fixture and unit-expansion tests;
+  the parity suite still asserts the expanded glass contains
+  `border-radius: 12px`, `border: 1.5px solid @primary`, `padding: 8px 9px`,
+  `border-radius: 20px`, `font-size: 12.5px` and `min-width: 312px`.
+- **`skins/README.md` and root `README.md`** document the value convention
+  (number = unitless, `px` at render time) and the vendoring/pin rule. The
+  `skins/` class now lists `contracts/` among its subdirectories.
+
+### Notes
+
+- **MINOR, no path or token change.** The 23-token vocabulary, six groups and
+  `schema_major: 1` are unchanged; only the value representation and the
+  validation source moved. `flat` keeps `0/0/0/999` radii, `0` border, `8` gap,
+  `15`/`13` type and `312/4/28/48` layout; `paper` keeps `6/4/3/999`, `1`
+  border, `9` gap, `15`/`13` type and `312/6/30/52` layout. `paper`'s shadow,
+  role expressions and `cell-pad` strings are untouched.
+- **Canonical tag honesty.** `v0.5.1` became reachable in the local `contracts`
+  checkout during this work, so the vendored bytes were re-taken from that tag
+  rather than from the older `v0.5.0` checkout. The PIN records the actual tag
+  and hashes. The skin schemas are unchanged again at `v0.5.2`, but the pin stays
+  on `v0.5.1`, the tag that defines the unit convention.
+
 ## v0.8.0 — skins fidelity (glass = today's ags-bar)
 
 ### Fixed

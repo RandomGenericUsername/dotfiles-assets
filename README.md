@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.8.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.9.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -16,7 +16,7 @@ templates/   Jinja sources + one *.vars.schema.json per template
 configs/     static config corpus (compositor, editor, prompt, wlogout layout)
 content/     binary/large content (wallpapers, authored themes)
 desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional)
-skins/       frozen v1 skin manifests + GTK settings/Bluetooth template + local validation target
+skins/       frozen v1 skin manifests + GTK template + vendored/pinned canonical schemas
 ```
 
 `catalog.yaml` is what is inside each class, with a `schema_major` per schema-bearing class. It
@@ -33,8 +33,9 @@ SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imp
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries; `skins/` holds three frozen v1 manifests (`glass` default/fallback parity with today's ags-bar
-look, `flat`, `paper`), one GTK settings/Bluetooth template and the local validation target that
-points at the canonical `contracts` schemas. Each class validator arrives **with** its corpus, so every check has run
+look, `flat`, `paper`), one GTK settings/Bluetooth template, and the pinned byte copies of the
+canonical `contracts` schemas under `skins/contracts/` (numeric tokens are unitless numbers; the
+template adds `px`). Each class validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
 `configs/hypr/hyprland.lua:7` as the one reviewed exception. Since `v0.6.1` it also requires the
@@ -87,14 +88,17 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `configs/` bears **no** schema file: its contract is a boundary, not a document. `configs/README.md`
   states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
   files and mutable preferences belong to the consumer.
-- `skins/schema.json` — `schema_major: 1`; the local data-only validation target for the frozen skin
-  vocabulary (`shape`, `rhythm`, `surface`, `ink`, `type`, `layout`), the 51-role `palette.v1` list,
-  and the pointer to the canonical `contracts` schemas (`schemas/skin-token.schema.json` +
-  `schemas/skin-manifest.schema.json`). No cross-repo runtime import: the canonical pair is not
-  present at the reachable `contracts` tag, so this file records `canonical.tag: null` and
-  `canonical.vendored: false` rather than claiming a copy. `make validate-skins` enforces the exact
-  manifest token set, role-only values, no literal hex, no transitions and two-way template
-  placeholder coverage; `skins/README.md` documents the manifests, the `paper` light-mode axis and
+- `skins/schema.json` — `schema_major: 1`; the local envelope for the frozen skin vocabulary
+  (`shape`, `rhythm`, `surface`, `ink`, `type`, `layout`), the 51-role `palette.v1` list, and the
+  delegation to the canonical `contracts` pair now vendored at
+  `skins/contracts/{skin-token,skin-manifest}.schema.json`. No cross-repo runtime import: the
+  vendored bytes are pinned by tag and sha256 in `skins/contracts/PIN` (`contracts=v0.5.1`,
+  the unit-convention patch), every token value type is an external `$ref` to the canonical
+  manifest schema, and `skins/schema.json` has no divergent local `px` grammar. `make
+  validate-skins` enforces the PIN hashes, canonical numeric types (a `"12px"` string fails), the
+  exact manifest token set, role-only values, no literal hex, no transitions, two-way template
+  placeholder coverage, and the unit-rule expansion (number → `<n>px`, `cell-pad` verbatim);
+  `skins/README.md` documents the value convention, the manifests, the `paper` light-mode axis and
   the overflow-HIDDEN rule.
 
 ## Gates
@@ -109,7 +113,7 @@ make validate-content # the tarball holds a top-level default.png; every *.theme
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
-make validate-skins   # skin manifests, schema pointer, palette.v1 roles, template placeholder coverage
+make validate-skins   # vendored canonical hashes/types, unit expansion, palette.v1 roles, placeholders
 make test-skins       # pytest fixtures for the skins class (development dependency)
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
 make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic

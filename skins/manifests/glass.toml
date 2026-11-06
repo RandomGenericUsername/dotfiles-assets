@@ -9,14 +9,14 @@ schema_major = 1
 name = "glass"
 
 [shape]
-radius-panel = "12px"
-radius-card = "9px"
-radius-cell = "7px"
-radius-pill = "20px"
-border-w = "1.5px"
+radius-panel = 12
+radius-card = 9
+radius-cell = 7
+radius-pill = 20
+border-w = 1.5
 
 [rhythm]
-gap = "8px"
+gap = 8
 cell-pad = "8px 9px"
 
 [surface]
@@ -34,11 +34,11 @@ ink-over = "auto"
 
 [type]
 font-family = "inherit"
-title-size = "12.5px"
-text-size = "13px"
+title-size = 12.5
+text-size = 13
 
 [layout]
-panel-width = "312px"
-bt-list-spacing = "4px"
-bar-row-height = "0px"
-chip-min = "0px"
+panel-width = 312
+bt-list-spacing = 4
+bar-row-height = 0
+chip-min = 0

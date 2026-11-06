@@ -11,6 +11,7 @@ that prove the gate actually bites.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -25,7 +26,13 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "skins" / "schema.json"
 MANIFESTS = ROOT / "skins" / "manifests"
 TEMPLATE = ROOT / "skins" / "templates" / "ags-bar.gtk.css.j2"
+CONTRACTS = ROOT / "skins" / "contracts"
+PIN = CONTRACTS / "PIN"
 FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
+VENDORED = {
+    "skin-token.schema.json": "skins/contracts/skin-token.schema.json",
+    "skin-manifest.schema.json": "skins/contracts/skin-manifest.schema.json",
+}
 PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
 HEX = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 
@@ -57,9 +64,9 @@ def token_value_map(manifest: dict) -> dict[str, str]:
 
 
 def render(template: str, manifest: dict) -> str:
-    rendered = template
-    for placeholder, value in token_value_map(manifest).items():
-        rendered = rendered.replace("{{" + placeholder + "}}", value)
+    rendered = validate_skins.expand_template(
+        template, manifest, schema()["frozen"]["token_groups"]
+    )
     assert "{{" not in rendered, "unexpanded placeholder in template"
     return rendered
 
@@ -75,6 +82,7 @@ def make_root(
     root = tmp_path / "repo"
     (root / "skins" / "manifests").mkdir(parents=True)
     (root / "skins" / "templates").mkdir(parents=True)
+    shutil.copytree(CONTRACTS, root / "skins" / "contracts")
     shutil.copy2(schema_override or SCHEMA, root / "skins" / "schema.json")
     for path in MANIFESTS.glob("*.toml"):
         if drop is not None and path.stem == drop:
@@ -108,7 +116,23 @@ def test_corpus_passes_the_gate() -> None:
     assert any("palette roles ==" in note for note in notes)
 
 
-def test_schema_points_at_contracts_without_a_false_vendoring_claim() -> None:
+def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
+    metadata: dict[str, str] = {}
+    hashes: dict[str, str] = {}
+    for line in PIN.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("sha256 "):
+            _label, digest, name = line.split()
+            hashes[name] = digest
+        elif "=" in line:
+            key, value = line.split("=", 1)
+            metadata[key.strip()] = value.strip()
+    return metadata, hashes
+
+
+def test_schema_vendors_the_pinned_contracts_pair() -> None:
     data = schema()
     assert data["schema_major"] == 1
     canonical = data["canonical"]
@@ -117,8 +141,70 @@ def test_schema_points_at_contracts_without_a_false_vendoring_claim() -> None:
         "schemas/skin-token.schema.json",
         "schemas/skin-manifest.schema.json",
     }
-    assert canonical["tag"] is None
-    assert canonical["vendored"] is False
+    assert canonical["vendored"] is True
+    assert canonical["tag"] == "v0.5.1"
+    assert canonical["pin"] == "skins/contracts/PIN"
+    assert canonical["delegates"] == {
+        "token": "skins/contracts/skin-token.schema.json",
+        "manifest": "skins/contracts/skin-manifest.schema.json",
+    }
+    metadata, _hashes = pin_metadata()
+    assert metadata["contracts"] == canonical["tag"]
+
+
+def test_vendored_files_match_the_pin_hashes() -> None:
+    _metadata, hashes = pin_metadata()
+    assert set(hashes) == set(VENDORED)
+    for name, rel in VENDORED.items():
+        path = ROOT / rel
+        assert path.is_file(), rel
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == hashes[name]
+
+
+def test_vendored_canonical_schemas_type_numeric_tokens_as_numbers() -> None:
+    token_schema = json.loads(
+        (ROOT / VENDORED["skin-token.schema.json"]).read_text()
+    )
+    manifest_schema = json.loads(
+        (ROOT / VENDORED["skin-manifest.schema.json"]).read_text()
+    )
+    numeric = {
+        "radius-panel",
+        "radius-card",
+        "radius-cell",
+        "radius-pill",
+        "border-w",
+        "gap",
+        "title-size",
+        "text-size",
+        "panel-width",
+        "bt-list-spacing",
+        "bar-row-height",
+        "chip-min",
+    }
+    for token in numeric:
+        ref = token_schema["properties"][token]["$ref"]
+        assert ref in {
+            "#/definitions/number",
+            "#/definitions/nonNegativeNumber",
+        }
+    assert manifest_schema["definitions"]["number"]["type"] == "number"
+    assert manifest_schema["definitions"]["nonNegativeNumber"]["type"] == "number"
+    assert manifest_schema["definitions"]["cellPad"]["type"] == "string"
+
+
+def test_local_schema_delegates_to_the_vendored_pair_not_a_lookalike() -> None:
+    data = schema()
+    assert "$defs" not in data
+    groups = data["frozen"]["token_groups"]
+    for group, tokens in groups.items():
+        props = data["properties"][group]["properties"]
+        for token in tokens:
+            spec = props[token]
+            assert set(spec) == {"$ref"}, f"{group}.{token}: {spec}"
+            assert spec["$ref"].startswith(
+                "contracts/skin-manifest.schema.json#"
+            ), f"{group}.{token}: {spec['$ref']}"
 
 
 def test_palette_roles_equal_the_repository_vocabulary() -> None:
@@ -129,14 +215,37 @@ def test_palette_roles_equal_the_repository_vocabulary() -> None:
 
 def test_manifest_documents_validate_against_the_local_schema() -> None:
     jsonschema = pytest.importorskip("jsonschema")
+    from referencing import Registry, Resource
+
     schema_data = schema()
     jsonschema.Draft202012Validator.check_schema(schema_data)
-    validator = jsonschema.Draft202012Validator(schema_data)
+    registry = Registry().with_resources(
+        [
+            (rel, Resource.from_contents(json.loads((ROOT / rel).read_text())))
+            for rel in VENDORED.values()
+        ]
+    )
+    validator = jsonschema.Draft202012Validator(schema_data, registry=registry)
     for path in MANIFESTS.glob("*.toml"):
         with path.open("rb") as handle:
             manifest = tomllib.load(handle)
         errors = sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
         assert errors == [], [error.message for error in errors]
+
+
+def test_numeric_string_is_not_a_valid_token_value() -> None:
+    manifest = load_manifest("glass")
+    manifest["shape"]["radius-panel"] = "12px"
+    errors: list[str] = []
+    spec = schema()["properties"]["shape"]["properties"]["radius-panel"]
+    resolved = validate_skins._deref(  # noqa: SLF001 - the gate's own resolver
+        spec, ROOT, "skins/schema.json", "shape.radius-panel", errors
+    )
+    assert errors == []
+    validate_skins._validate_value(  # noqa: SLF001 - the gate's own type check
+        resolved, manifest["shape"]["radius-panel"], "shape.radius-panel", errors
+    )
+    assert any("must be a number" in error for error in errors), errors
 
 
 def test_every_required_token_is_present_in_every_manifest() -> None:
@@ -184,13 +293,13 @@ def test_frozen_manifest_values() -> None:
     paper = load_manifest("paper")
 
     assert [glass["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell", "radius-pill")] == [
-        "12px",
-        "9px",
-        "7px",
-        "20px",
+        12,
+        9,
+        7,
+        20,
     ]
-    assert glass["shape"]["border-w"] == "1.5px"
-    assert glass["rhythm"] == {"gap": "8px", "cell-pad": "8px 9px"}
+    assert glass["shape"]["border-w"] == 1.5
+    assert glass["rhythm"] == {"gap": 8, "cell-pad": "8px 9px"}
     assert glass["surface"] == {
         "bg-panel": "alpha(@surface, 0.94)",
         "bg-card": "alpha(@surface_container_high, 0.18)",
@@ -201,42 +310,42 @@ def test_frozen_manifest_values() -> None:
     assert glass["ink"]["ink-dim"] == "alpha(@on_surface, 0.62)"
     assert glass["type"] == {
         "font-family": "inherit",
-        "title-size": "12.5px",
-        "text-size": "13px",
+        "title-size": 12.5,
+        "text-size": 13,
     }
     assert glass["layout"] == {
-        "panel-width": "312px",
-        "bt-list-spacing": "4px",
-        "bar-row-height": "0px",
-        "chip-min": "0px",
+        "panel-width": 312,
+        "bt-list-spacing": 4,
+        "bar-row-height": 0,
+        "chip-min": 0,
     }
 
     assert [flat["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell")] == [
-        "0px",
-        "0px",
-        "0px",
+        0,
+        0,
+        0,
     ]
-    assert flat["shape"]["border-w"] == "0px"
-    assert flat["rhythm"] == {"gap": "8px", "cell-pad": "7px 8px"}
+    assert flat["shape"]["border-w"] == 0
+    assert flat["rhythm"] == {"gap": 8, "cell-pad": "7px 8px"}
     assert flat["surface"]["bg-panel"] == "transparent"
     assert flat["surface"]["shadow"] == "none"
-    assert flat["layout"]["bar-row-height"] == "28px"
-    assert flat["layout"]["chip-min"] == "48px"
+    assert flat["layout"]["bar-row-height"] == 28
+    assert flat["layout"]["chip-min"] == 48
 
     assert [paper["shape"][k] for k in ("radius-panel", "radius-card", "radius-cell")] == [
-        "6px",
-        "4px",
-        "3px",
+        6,
+        4,
+        3,
     ]
     assert paper["surface"]["bg-panel"] == "@surface_container_lowest"
     assert paper["surface"]["bg-card"] == "@surface_container_low"
     assert paper["surface"]["border"] == "alpha(@on_surface, 0.22)"
     assert paper["surface"]["shadow"] == "0 10px 28px rgba(0,0,0,0.22)"
     assert paper["layout"] == {
-        "panel-width": "312px",
-        "bt-list-spacing": "6px",
-        "bar-row-height": "30px",
-        "chip-min": "52px",
+        "panel-width": 312,
+        "bt-list-spacing": 6,
+        "bar-row-height": 30,
+        "chip-min": 52,
     }
 
 
@@ -287,6 +396,7 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
         ("unknown-role.toml", "not in palette.v1"),
         ("structure.toml", "structure/variant keys are forbidden"),
         ("missing-token.toml", "missing token(s)"),
+        ("numeric-string.toml", "must be a number"),
     ],
 )
 def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
@@ -316,12 +426,19 @@ def test_missing_manifest_fails(tmp_path: Path) -> None:
     assert any("missing required manifest(s) ['paper']" in error for error in errors), errors
 
 
-def test_false_vendoring_claim_fails(tmp_path: Path) -> None:
+def test_vendored_hash_mismatch_fails(tmp_path: Path) -> None:
+    root = make_root(tmp_path)
+    target = root / "skins" / "contracts" / "skin-token.schema.json"
+    target.write_text(target.read_text() + "\n")
+    errors = errors_for(root)
+    assert any("does not match" in error for error in errors), errors
+
+
+def test_pinned_tag_disagreement_fails(tmp_path: Path) -> None:
     data = schema()
-    data["canonical"]["vendored"] = True
     data["canonical"]["tag"] = "v0.4.0"
-    bad_schema = tmp_path / "schema-vendored.json"
+    bad_schema = tmp_path / "schema-tag.json"
     bad_schema.write_text(json.dumps(data))
     root = make_root(tmp_path, schema_override=bad_schema)
     errors = errors_for(root)
-    assert any("vendored is true but no vendored copy" in error for error in errors), errors
+    assert any("disagrees with canonical.tag" in error for error in errors), errors

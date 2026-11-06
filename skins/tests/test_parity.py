@@ -48,15 +48,11 @@ def load_manifest(name: str) -> dict:
 
 
 def render(name: str) -> str:
-    """Expand a manifest through validate-skins' own placeholder map."""
+    """Expand a manifest through validate-skins' own unit-rule expander."""
     manifest = load_manifest(name)
-    template = TEMPLATE.read_text()
-    placeholder_map = validate_skins._placeholder_map(  # noqa: SLF001 - same substitution
-        schema()["frozen"]["token_groups"]
+    template = validate_skins.expand_template(
+        TEMPLATE.read_text(), manifest, schema()["frozen"]["token_groups"]
     )
-    for placeholder, dotted in placeholder_map.items():
-        group, token = dotted.split(".", 1)
-        template = template.replace("{{" + placeholder + "}}", manifest[group][token])
     assert "{{" not in template, "unexpanded placeholder in template"
     return template
 
@@ -413,6 +409,20 @@ def source_style() -> Path | None:
         if candidate.is_file():
             return candidate
     return None
+
+
+def test_glass_expansion_keeps_unit_suffixed_lengths() -> None:
+    glass = load_manifest("glass")
+    css = render("glass")
+    assert glass["shape"]["radius-panel"] == 12
+    assert glass["shape"]["border-w"] == 1.5
+    assert glass["rhythm"]["cell-pad"] == "8px 9px"
+    assert "border-radius: 12px;" in css
+    assert "border: 1.5px solid @primary;" in css
+    assert "padding: 8px 9px;" in css
+    assert "border-radius: 20px;" in css
+    assert "font-size: 12.5px;" in css
+    assert "min-width: 312px;" in css
 
 
 def test_glass_matches_today_source_declarations() -> None:

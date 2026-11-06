@@ -21,23 +21,43 @@ tokens do not describe.
 
 ```text
 skins/
-  schema.json                       pointer + the local data-only validation target
+  schema.json                       local envelope that delegates token types to the vendored pair
+  contracts/PIN                     contracts tag + sha256 of each vendored canonical schema
+  contracts/skin-token.schema.json  vendored canonical flat token vocabulary
+  contracts/skin-manifest.schema.json  vendored canonical grouped manifest schema
   manifests/glass.toml              default/fallback parity skin (today's ags-bar look)
   manifests/flat.toml               zero-chrome skin
   manifests/paper.toml              light/palette-axis skin
   templates/ags-bar.gtk.css.j2      settings + Bluetooth paint rules
   tests/                            pytest fixtures mirroring the validator
-  tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles)
+  tests/fixtures/invalid/           negative fixtures (hex, transition, structure, roles, numeric string)
   tests/fixtures/parity/            the explicit glass-vs-source deviation record
 ```
 
+## Value convention: numbers are unitless, `px` is added at render time
+
+The canonical contract types radii, `border-w`, `gap`, `title-size`, `text-size`
+and the four layout tokens as JSON **numbers**, not `"12px"` strings. A manifest
+stores `radius-panel = 12`; the GTK template expands that token as
+`border-radius: 12px`. `cell-pad` is the only length-valued **string** token
+(`"Npx Npx"`) and is emitted verbatim, which is why it keeps its `px` units in
+TOML. Paint, ink and `font-family` values are strings and render verbatim.
+
+That rule is mechanical in both directions: `scripts/validate-skins.py` rejects
+`radius-panel = "12px"` against the vendored canonical schema (AGS would reject
+it at startup), and it expands each manifest through the template with the
+number → `<n>px` rule so a green gate means the rendered CSS is length-correct.
+
 ## The three manifests
+
+Numbers below are stored unitless; the `px` shown in prose is what the template
+renders.
 
 | Token | `glass` (default/fallback) | `flat` | `paper` |
 | --- | --- | --- | --- |
-| `radius-panel/card/cell/pill` | 12 / 9 / 7 / 20px | 0 / 0 / 0 / 999px | 6 / 4 / 3 / 999px |
-| `border-w` | 1.5px | 0px | 1px |
-| `gap` / `cell-pad` | 8px / 8px 9px | 8px / 7px 8px | 9px / 8px 10px |
+| `radius-panel/card/cell/pill` | 12 / 9 / 7 / 20 | 0 / 0 / 0 / 999 | 6 / 4 / 3 / 999 |
+| `border-w` | 1.5 | 0 | 1 |
+| `gap` / `cell-pad` | 8 / `8px 9px` | 8 / `7px 8px` | 9 / `8px 10px` |
 | `bg-panel` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` |
 | `bg-card` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` |
 | `border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` |
@@ -45,8 +65,8 @@ skins/
 | `blur` | `none` | `none` | `none` |
 | `ink` / `ink-dim` / `accent` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` | `@on_surface` / `@on_surface_variant` / `@primary` | same as `flat` |
 | `font-family` | `inherit` | system-ui / Cantarell / Noto Sans | same as `flat` |
-| `title-size` / `text-size` | 12.5px / 13px | 15px / 13px | 15px / 13px |
-| `panel-width` / `bt-list-spacing` / `bar-row-height` / `chip-min` | 312 / 4 / 0 / 0px | 312 / 4 / 28 / 48px | 312 / 6 / 30 / 52px |
+| `title-size` / `text-size` | 12.5 / 13 | 15 / 13 | 15 / 13 |
+| `panel-width` / `bt-list-spacing` / `bar-row-height` / `chip-min` | 312 / 4 / 0 / 0 | 312 / 4 / 28 / 48 | 312 / 6 / 30 / 52 |
 
 `glass` is the value a consumer uses when no skin is selected. Its values are a
 **literal extraction** of today's `../ags-bar/style.css`, not a design-system
@@ -116,19 +136,32 @@ the skin second. If a host needs a literal paper look it must pair `paper` with
 a light palette; the skin cannot override the palette's mode. `make
 validate-skins` enforces role membership, not a mode.
 
-## Sourcing the canonical schema
+## Vendoring and pinning the canonical schema
 
 The canonical documents live in the separate `contracts` repository:
 `schemas/skin-token.schema.json` and `schemas/skin-manifest.schema.json`. This
-repository does **not** import them at runtime and does not vendor a copy:
-`skins/schema.json` records the pointer (`canonical.paths`), sets
-`canonical.tag = null` and `canonical.vendored = false`, and is itself the local
-data-only validation target read by `scripts/validate-skins.py` and the fixtures
-under `skins/tests/`. The local `ink` value grammar accepts the same
-role-or-role-expression forms as the canonical `inkValue`, which is why glass
-can carry `ink-dim = alpha(@on_surface, 0.62)` without changing the token set.
-When the canonical pair is vendored it must carry the pinned `contracts` tag and
-a byte-equality test; that test does not exist yet and is not claimed.
+repository still does **not** import them at runtime; it vendors byte-for-byte
+copies under `skins/contracts/` so the gate validates the same types a consumer
+will parse.
+
+- `skins/contracts/PIN` records `contracts=<tag>`, the source commit, and one
+  `sha256` line per vendored file. Editing a vendored schema by hand is a
+  defect; re-vendor from the canonical tag and update the PIN in the same
+  change.
+- `skins/schema.json` sets `canonical.vendored: true`, `canonical.tag`, and
+  `canonical.pin`. It carries the frozen local envelope (`schema_major` + the six
+  flat groups) and **delegates every token value type by external `$ref`** to
+  `skins/contracts/skin-manifest.schema.json`; it has no local `px`/dimension
+  lookalike grammar.
+- `scripts/validate-skins.py` and `skins/tests/` assert the recorded hashes, the
+  delegation (every token property is a canonical `$ref`), the canonical numeric
+  types, and the unit-rule expansion.
+
+At `v0.9.0` the vendored pair is pinned at `contracts=v0.5.1`, the tag that
+states the unit convention. The skin schemas are unchanged again at `v0.5.2`,
+but the pin intentionally stays on the tag that defines the convention;
+re-vendoring is a tag/hash update, not a schema rewrite. Do not claim a tag whose
+bytes are not present.
 
 ## Template rules
 
@@ -155,13 +188,15 @@ stylesheet can set the radius but cannot apply the clip.
 ## Validation
 
 ```bash
-make validate-skins   # manifests + schema + placeholder coverage + no-hex/no-transition/no-structure
+make validate-skins   # vendored hashes + canonical types + unit expansion + placeholder coverage
 make test-skins       # pytest fixtures, including the parity and negative cases
 ```
 
 `make validate-skins` is stdlib-only and part of `make gates`. `make test-skins`
 is the fixture suite and uses the repository's development pytest dependency.
+`skins/tests/test_skins.py` checks the PIN hashes, the canonical `$ref`
+delegation, unitless numeric values and the numeric-string rejection.
 `skins/tests/test_parity.py` expands `glass` through `validate-skins`' own
-placeholder map and compares the result with the source declarations (with line
-references), the explicit deviation fixture, and the no-shadow/no-transition/
+unit-rule expander and compares the result with the source declarations (with
+line references), the explicit deviation fixture, and the no-shadow/no-transition/
 no-hex rules.

@@ -6,14 +6,14 @@ schema_major = 1
 name = "paper"
 
 [shape]
-radius-panel = "6px"
-radius-card = "4px"
-radius-cell = "3px"
-radius-pill = "999px"
-border-w = "1px"
+radius-panel = 6
+radius-card = 4
+radius-cell = 3
+radius-pill = 999
+border-w = 1
 
 [rhythm]
-gap = "9px"
+gap = 9
 cell-pad = "8px 10px"
 
 [surface]
@@ -31,11 +31,11 @@ ink-over = "auto"
 
 [type]
 font-family = "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif"
-title-size = "15px"
-text-size = "13px"
+title-size = 15
+text-size = 13
 
 [layout]
-panel-width = "312px"
-bt-list-spacing = "6px"
-bar-row-height = "30px"
-chip-min = "52px"
+panel-width = 312
+bt-list-spacing = 6
+bar-row-height = 30
+chip-min = 52

@@ -1,20 +1,29 @@
 {
-  "$comment": "The skins contract's LOCAL validation target. The canonical schema lives in the separate `contracts` repository at `schemas/skin-token.schema.json` plus `schemas/skin-manifest.schema.json`; this repository never imports another repository at runtime. No copy is vendored here: the reachable `contracts` tag has no skin schema yet, so `canonical.tag` is null and `canonical.vendored` is false. When a canonical pair is vendored, it MUST carry the pinned `contracts` tag and a byte-equality test. `schema_major` is the consumer-compatibility version and moves independently of the repo tag.",
+  "$comment": "The skins contract's LOCAL validation target. Token value types are NOT defined here: every token property delegates by external $ref to the vendored canonical pair under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type radii/border-w/gap/title-size/text-size/layout tokens as unitless JSON numbers and cell-pad as a literal \"Npx Npx\" string; a numeric string such as \"12px\" is rejected. This file adds only the frozen local manifest envelope (schema_major + six flat groups) and the palette/forbidden metadata. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "skins/schema.json",
   "title": "dotfiles-assets skin manifest v1",
   "schema_major": 1,
   "contract": "skins",
-  "status": "populated (v0.7.0)",
+  "status": "populated (v0.9.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
       "schemas/skin-token.schema.json",
       "schemas/skin-manifest.schema.json"
     ],
-    "tag": null,
-    "vendored": false,
-    "note": "Pointer only. The canonical pair is not present at the reachable contracts v0.4.0 tag (2026-11-05), so a vendored copy would be a false claim. This file is the data-only validation target that `make validate-skins` and the fixture tests read."
+    "tag": "v0.5.1",
+    "vendored": true,
+    "pin": "skins/contracts/PIN",
+    "vendored_paths": [
+      "skins/contracts/skin-token.schema.json",
+      "skins/contracts/skin-manifest.schema.json"
+    ],
+    "delegates": {
+      "token": "skins/contracts/skin-token.schema.json",
+      "manifest": "skins/contracts/skin-manifest.schema.json"
+    },
+    "note": "Byte-for-byte copies of the canonical pair are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.5.1, the unit-convention patch: numeric tokens are unitless JSON numbers (the CSS expander adds px) and cell-pad is the only literal length-pair string. Token value types are external $refs to the vendored manifest schema, never a local lookalike grammar."
   },
   "palette": {
     "vocabulary": "palette.v1",
@@ -172,11 +181,21 @@
         "border-w"
       ],
       "properties": {
-        "radius-panel": { "$ref": "#/$defs/dimension" },
-        "radius-card": { "$ref": "#/$defs/dimension" },
-        "radius-cell": { "$ref": "#/$defs/dimension" },
-        "radius-pill": { "$ref": "#/$defs/dimension" },
-        "border-w": { "$ref": "#/$defs/dimension" }
+        "radius-panel": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
+        },
+        "radius-card": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
+        },
+        "radius-cell": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
+        },
+        "radius-pill": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/nonNegativeNumber"
+        },
+        "border-w": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        }
       }
     },
     "rhythm": {
@@ -187,8 +206,12 @@
         "cell-pad"
       ],
       "properties": {
-        "gap": { "$ref": "#/$defs/dimension" },
-        "cell-pad": { "$ref": "#/$defs/spacing" }
+        "gap": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "cell-pad": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/cellPad"
+        }
       }
     },
     "surface": {
@@ -202,11 +225,21 @@
         "blur"
       ],
       "properties": {
-        "bg-panel": { "$ref": "#/$defs/roleExpression" },
-        "bg-card": { "$ref": "#/$defs/roleExpression" },
-        "border": { "$ref": "#/$defs/roleExpression" },
-        "shadow": { "$ref": "#/$defs/shadow" },
-        "blur": { "$ref": "#/$defs/blur" }
+        "bg-panel": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
+        },
+        "bg-card": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
+        },
+        "border": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
+        },
+        "shadow": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/paint"
+        },
+        "blur": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/blurValue"
+        }
       }
     },
     "ink": {
@@ -219,10 +252,18 @@
         "ink-over"
       ],
       "properties": {
-        "ink": { "$ref": "#/$defs/roleExpression" },
-        "ink-dim": { "$ref": "#/$defs/roleExpression" },
-        "accent": { "$ref": "#/$defs/roleExpression" },
-        "ink-over": { "const": "auto" }
+        "ink": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
+        },
+        "ink-dim": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
+        },
+        "accent": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/inkValue"
+        },
+        "ink-over": {
+          "$ref": "contracts/skin-manifest.schema.json#/properties/groups/properties/ink/properties/ink-over"
+        }
       }
     },
     "type": {
@@ -235,12 +276,14 @@
       ],
       "properties": {
         "font-family": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[^#;{}]+$"
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/fontFamily"
         },
-        "title-size": { "$ref": "#/$defs/dimension" },
-        "text-size": { "$ref": "#/$defs/dimension" }
+        "title-size": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "text-size": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        }
       }
     },
     "layout": {
@@ -253,38 +296,19 @@
         "chip-min"
       ],
       "properties": {
-        "panel-width": { "$ref": "#/$defs/dimension" },
-        "bt-list-spacing": { "$ref": "#/$defs/dimension" },
-        "bar-row-height": { "$ref": "#/$defs/dimension" },
-        "chip-min": { "$ref": "#/$defs/dimension" }
+        "panel-width": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "bt-list-spacing": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "bar-row-height": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        },
+        "chip-min": {
+          "$ref": "contracts/skin-manifest.schema.json#/definitions/number"
+        }
       }
-    }
-  },
-  "$defs": {
-    "dimension": {
-      "type": "string",
-      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px$"
-    },
-    "spacing": {
-      "type": "string",
-      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px(?: (?:0|[1-9][0-9]*)(?:\\.[0-9]+)?px){0,3}$"
-    },
-    "role": {
-      "type": "string",
-      "pattern": "^@[a-z][a-z0-9_]*$"
-    },
-    "roleExpression": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^(?:transparent|@[a-z][a-z0-9_]*|alpha\\(@[a-z][a-z0-9_]*, (?:0|1|0?\\.[0-9]+)\\)|color-mix\\(in srgb, @[a-z][a-z0-9_]* (?:0|[1-9][0-9]?|100)%, (?:transparent|@[a-z][a-z0-9_]*)\\))$"
-    },
-    "shadow": {
-      "type": "string",
-      "pattern": "^(?:none|0(?: [0-9]+(?:\\.[0-9]+)?px){2} rgba\\(0, ?0, ?0, ?(?:0|1|0?\\.[0-9]+)\\))$"
-    },
-    "blur": {
-      "type": "string",
-      "pattern": "^(?:none|blur\\([0-9]+(?:\\.[0-9]+)?px\\)(?: saturate\\([0-9]+(?:\\.[0-9]+)?\\))?)$"
     }
   }
 }

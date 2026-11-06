@@ -19,7 +19,7 @@
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
-#   make validate-skins  skin manifests + schema pointer + role vocabulary + template placeholder coverage
+#   make validate-skins  vendored schema hashes/types + manifests + unit expansion + role vocabulary + placeholders
 #   make test-skins      pytest fixtures for the skins class (dev dependency)
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
 #   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
@@ -54,7 +54,7 @@ help:
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
-	  'validate-skins    skin manifests + schema pointer + role vocabulary + template placeholder coverage' \
+	  'validate-skins    vendored schema hashes/types + manifests + unit expansion + role vocabulary + placeholders' \
 	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
 	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic' \
@@ -130,11 +130,14 @@ validate-desktop:
 	  echo "validate-desktop: shellcheck -> 0 executable scripts (nothing to check)"; \
 	fi
 
-# The skins class (frozen v1). This gate proves the local schema pointer is honest,
-# the three manifests carry the exact frozen token set, every role is palette.v1 (no
-# aliases), every surface value is a role expression (no literal hex), the template
-# has no transition/animation and every {{SKIN_*}} placeholder names a token. It is
-# stdlib-only so a fresh clone runs it; `test-skins` adds the negative fixtures.
+# The skins class (frozen v1). This gate proves the vendored canonical pair matches
+# its PIN hashes and that the local schema delegates token types to it (no px-string
+# lookalike), the three manifests carry the exact frozen token set as canonical types
+# (numeric strings fail), every role is palette.v1 (no aliases), no value is a literal
+# hex, the template has no transition/animation, every {{SKIN_*}} placeholder names a
+# token, and each manifest expands with the unit rule (number -> <n>px; cell-pad
+# verbatim). It is stdlib-only so a fresh clone runs it; `test-skins` adds the
+# negative fixtures.
 validate-skins:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-skins.py"
 

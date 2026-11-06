@@ -4,10 +4,12 @@
 WHAT THIS GATE PROVES (frozen skin spec v1):
 
   1. THE LOCAL CONTRACT IS HONEST. `skins/schema.json` carries `schema_major: 1`,
-     names the canonical `contracts` paths, and does not claim a vendored copy it
-     cannot prove. The 51-role palette list is `palette.v1`, checked against
-     `icons/mappings/vocabulary.json` (the repository's vocabulary of record):
-     50 theme-producer Material roles + `on_backdrop`, no aliases.
+     names the canonical `contracts` paths, and proves its vendored claim:
+     `skins/contracts/{skin-token,skin-manifest}.schema.json` are byte copies
+     whose sha256 matches `skins/contracts/PIN`. The 51-role palette list is
+     `palette.v1`, checked against `icons/mappings/vocabulary.json` (the
+     repository's vocabulary of record): 50 theme-producer Material roles +
+     `on_backdrop`, no aliases.
 
   2. EVERY MANIFEST HAS THE FROZEN SHAPE. The three required manifests exist,
      no extra manifest hides beside them, `name` equals the file stem, and every
@@ -15,22 +17,28 @@ WHAT THIS GATE PROVES (frozen skin spec v1):
      exactly its frozen token names. A `structure`, `variant`, `state`,
      `density` or `paint` key fails: those are the app's business.
 
-  3. VALUES ARE ROLE EXPRESSIONS, NEVER LITERAL COLOURS. Surface/border values
-     are `transparent`, `@role`, `alpha(@role, n)` or
-     `color-mix(in srgb, @role n%, transparent|@role)`; `blur` is `none` or
-     `blur(Npx) [saturate(N)]`; `shadow` is `none` or the app-local offset/blur
-     rgba form. Every `@role` must be in `palette.v1`. No hex literal, no CSS
+  3. TOKEN VALUE TYPES COME FROM THE CANONICAL SCHEMA, NOT A LOOKALIKE.
+     `skins/schema.json` delegates every token property by external `$ref` to
+     the vendored `skin-manifest.schema.json` definitions. Numeric tokens
+     (`radius-*`, `border-w`, `gap`, `title-size`, `text-size` and all layout
+     tokens) are unitless JSON numbers; a string such as `"12px"` is rejected
+     because AGS's parser rejects it. `cell-pad` is the literal `"Npx Npx"`
+     string. Every `@role` must be in `palette.v1`. No hex literal, no CSS
      transition, no animation.
 
-  4. PLACEHOLDER COVERAGE IS TWO-WAY. Every `{{SKIN_*}}` used by the GTK template
-     is a token declared in the schema, and every required token is present in
-     every manifest. An underscore spelling that names no token fails.
+  4. PLACEHOLDER COVERAGE IS TWO-WAY AND THE UNIT RULE HOLDS. Every
+     `{{SKIN_*}}` used by the GTK template is a token declared in the schema,
+     and every required token is present in every manifest. Expanding each
+     manifest through the template renders a numeric token as `<n>px` in its
+     CSS length position; `cell-pad` is emitted verbatim. An underscore spelling
+     that names no token fails.
 
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. The manifest format is TOML (`tomllib`, Python >= 3.11), the contract is
-JSON, and the mini-validator below covers the exact JSON-Schema subset the local
-target uses (`$ref`, `const`, `type`, `pattern`, `minLength`). The fixture suite
-under `skins/tests/` mirrors each negative case; `jsonschema`/`pytest` are NOT
+JSON, and the mini-validator below covers the exact JSON-Schema subset the
+vendored canonical definitions use (`$ref`, `const`, `enum`, `type`, `minimum`,
+`pattern`, `minLength`, `allOf`/`anyOf`/`oneOf`/`not`). The fixture suite under
+`skins/tests/` mirrors each negative case; `jsonschema`/`pytest` are NOT
 required for this gate.
 
 Usage: ``python3 scripts/validate-skins.py [--root REPO_ROOT]``
@@ -41,7 +49,9 @@ Exit 1 = at least one violation, each naming the file and the reason.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import posixpath
 import re
 import sys
 import tomllib
@@ -52,6 +62,18 @@ SCHEMA = "skins/schema.json"
 MANIFESTS_DIR = "skins/manifests"
 TEMPLATES_DIR = "skins/templates"
 VOCABULARY = "icons/mappings/vocabulary.json"
+
+CONTRACTS_DIR = "skins/contracts"
+PIN = "skins/contracts/PIN"
+VENDORED = {
+    "token": "skins/contracts/skin-token.schema.json",
+    "manifest": "skins/contracts/skin-manifest.schema.json",
+}
+CANONICAL_PATHS = {
+    "schemas/skin-token.schema.json",
+    "schemas/skin-manifest.schema.json",
+}
+PIN_HASH = re.compile(r"^sha256\s+([0-9a-f]{64})\s+(\S+)$")
 
 HEX_LITERAL = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 PLACEHOLDER = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
@@ -66,10 +88,6 @@ HARD_FORBIDDEN = {
     "CSS transition": re.compile(r"\btransition\s*:"),
     "CSS animation": re.compile(r"\banimation\s*:"),
 }
-
-
-class ContractError(Exception):
-    """A violation that must be reported by path."""
 
 
 def _rel(path: Path, root: Path) -> str:
@@ -87,54 +105,166 @@ def _compile(pattern: str, where: str, errors: list[str]) -> re.Pattern[str] | N
         return None
 
 
-def _resolve(spec: dict, defs: dict) -> dict:
-    """Resolve the one `$ref` shape the local schema uses (`#/$defs/<name>`)."""
-    seen = 0
-    while isinstance(spec, dict) and "$ref" in spec:
-        ref = spec["$ref"]
-        if not isinstance(ref, str) or not ref.startswith("#/$defs/"):
-            raise ContractError(f"unsupported $ref {ref!r}")
-        spec = defs.get(ref.removeprefix("#/$defs/"))
-        if not isinstance(spec, dict):
-            raise ContractError(f"unresolved $ref {ref!r}")
-        seen += 1
-        if seen > 10:
-            raise ContractError(f"cyclic $ref {ref!r}")
-    return spec
+def _pointer(document, fragment: str, where: str, errors: list[str]):
+    """Resolve a JSON Pointer fragment (`#/definitions/x`) inside a document."""
+    pointer = fragment[1:] if fragment.startswith("#") else fragment
+    if pointer in ("", "/"):
+        return document
+    if not pointer.startswith("/"):
+        errors.append(f"{where}: unsupported $ref fragment {fragment!r}")
+        return None
+    node = document
+    for raw in pointer.lstrip("/").split("/"):
+        key = raw.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and key in node:
+            node = node[key]
+        elif isinstance(node, list) and key.isdigit() and int(key) < len(node):
+            node = node[int(key)]
+        else:
+            errors.append(f"{where}: unresolved $ref fragment {fragment!r}")
+            return None
+    return node
+
+
+def _deref(
+    spec,
+    root: Path,
+    current_rel: str,
+    where: str,
+    errors: list[str],
+    stack: tuple[tuple[str, str], ...] = (),
+):
+    """Inline every `$ref` (local or external) so value checks need no resolver."""
+    if isinstance(spec, list):
+        return [
+            _deref(item, root, current_rel, where, errors, stack) for item in spec
+        ]
+    if not isinstance(spec, dict):
+        return spec
+    if "$ref" not in spec:
+        return {
+            key: _deref(value, root, current_rel, where, errors, stack)
+            for key, value in spec.items()
+        }
+    ref = spec["$ref"]
+    if not isinstance(ref, str):
+        errors.append(f"{where}: $ref must be a string, got {ref!r}")
+        return {}
+    file_part, _, fragment = ref.partition("#")
+    target_rel = current_rel
+    if file_part:
+        target_rel = posixpath.normpath(
+            posixpath.join(posixpath.dirname(current_rel), file_part)
+        )
+    target_path = root / target_rel
+    try:
+        document = json.loads(target_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"{where}: cannot load $ref {ref!r} ({exc})")
+        return {}
+    target = _pointer(document, "#" + fragment, where, errors)
+    key = (target_rel, fragment)
+    if key in stack:
+        errors.append(f"{where}: cyclic $ref {ref!r}")
+        return {}
+    resolved = _deref(
+        target, root, target_rel, where, errors, stack + (key,)
+    )
+    # Draft 2020-12 allows siblings of $ref; canonical definitions do not use
+    # them, but preserving them keeps this resolver honest if one appears.
+    siblings = {k: v for k, v in spec.items() if k != "$ref"}
+    if siblings:
+        sibling_spec = _deref(siblings, root, current_rel, where, errors, stack)
+        return {"allOf": [resolved, sibling_spec]}
+    return resolved
+
+
+def _matches_type(value, wanted: str) -> bool:
+    if wanted == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if wanted == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if wanted == "string":
+        return isinstance(value, str)
+    if wanted == "object":
+        return isinstance(value, dict)
+    if wanted == "array":
+        return isinstance(value, list)
+    if wanted == "boolean":
+        return isinstance(value, bool)
+    if wanted == "null":
+        return value is None
+    return True
+
+
+def _value_messages(spec: dict, value) -> list[str]:
+    """Validate the JSON-Schema subset the vendored canonical pair declares."""
+    if not isinstance(spec, dict):
+        return []
+    messages: list[str] = []
+    if "const" in spec and value != spec["const"]:
+        messages.append(f"must be {spec['const']!r}, got {value!r}")
+    if "enum" in spec and value not in spec["enum"]:
+        messages.append(f"must be one of {spec['enum']!r}, got {value!r}")
+    if "type" in spec:
+        wanted = spec["type"]
+        wanted_types = wanted if isinstance(wanted, list) else [wanted]
+        if not any(_matches_type(value, item) for item in wanted_types):
+            label = " or ".join(str(item) for item in wanted_types)
+            messages.append(
+                f"must be a {label}, got {type(value).__name__} ({value!r})"
+            )
+            return messages
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        minimum = spec.get("minimum")
+        if isinstance(minimum, (int, float)) and value < minimum:
+            messages.append(f"must be >= {minimum}, got {value!r}")
+        maximum = spec.get("maximum")
+        if isinstance(maximum, (int, float)) and value > maximum:
+            messages.append(f"must be <= {maximum}, got {value!r}")
+    if isinstance(value, str):
+        min_length = spec.get("minLength")
+        if isinstance(min_length, int) and len(value) < min_length:
+            messages.append(f"must be at least {min_length} character(s)")
+        pattern = spec.get("pattern")
+        if isinstance(pattern, str):
+            try:
+                compiled = re.compile(pattern)
+            except re.error as exc:
+                messages.append(f"invalid schema pattern {pattern!r} ({exc})")
+            else:
+                if not compiled.search(value):
+                    messages.append(f"{value!r} does not match {pattern}")
+    for sub in spec.get("allOf", []) if isinstance(spec.get("allOf"), list) else []:
+        messages.extend(_value_messages(sub, value))
+    if isinstance(spec.get("anyOf"), list) and spec["anyOf"]:
+        branches = [_value_messages(sub, value) for sub in spec["anyOf"]]
+        if all(branch for branch in branches):
+            messages.append(
+                "does not satisfy any allowed form "
+                f"({branches[0][0] if branches[0] else 'no match'})"
+            )
+    if isinstance(spec.get("oneOf"), list) and spec["oneOf"]:
+        branches = [_value_messages(sub, value) for sub in spec["oneOf"]]
+        matches = sum(1 for branch in branches if not branch)
+        if matches != 1:
+            messages.append(
+                f"must satisfy exactly one allowed form (matched {matches})"
+            )
+    if "not" in spec and isinstance(spec["not"], dict):
+        if not _value_messages(spec["not"], value):
+            messages.append("matches a forbidden form")
+    return messages
 
 
 def _validate_value(
     spec: dict,
     value,
-    defs: dict,
     where: str,
     errors: list[str],
 ) -> None:
-    """Validate the JSON-Schema subset the local skin target declares."""
-    try:
-        spec = _resolve(spec, defs)
-    except ContractError as exc:
-        errors.append(f"{where}: {exc}")
-        return
-    if "const" in spec and value != spec["const"]:
-        errors.append(f"{where}: must be {spec['const']!r}, got {value!r}")
-    if "type" in spec:
-        wanted = spec["type"]
-        if wanted == "string" and not isinstance(value, str):
-            errors.append(f"{where}: must be a string, got {type(value).__name__}")
-            return
-        if wanted == "object" and not isinstance(value, dict):
-            errors.append(f"{where}: must be a table/mapping")
-            return
-    if isinstance(value, str):
-        minimum = spec.get("minLength")
-        if isinstance(minimum, int) and len(value) < minimum:
-            errors.append(f"{where}: must be at least {minimum} character(s)")
-        pattern = spec.get("pattern")
-        if isinstance(pattern, str):
-            compiled = _compile(pattern, where, errors)
-            if compiled is not None and not compiled.search(value):
-                errors.append(f"{where}: {value!r} does not match {pattern}")
+    for message in _value_messages(spec, value):
+        errors.append(f"{where}: {message}")
 
 
 def _check_palette_roles(
@@ -185,6 +315,62 @@ def _check_palette_roles(
     return roles
 
 
+def _read_pin(root: Path, errors: list[str]) -> tuple[dict[str, str], dict[str, str]]:
+    path = root / PIN
+    if not path.is_file():
+        errors.append(f"{PIN}: missing; a vendored canonical pair must be pinned")
+        return {}, {}
+    metadata: dict[str, str] = {}
+    hashes: dict[str, str] = {}
+    for lineno, line in enumerate(path.read_text().splitlines(), start=1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        match = PIN_HASH.match(line)
+        if match:
+            digest, name = match.groups()
+            if name in hashes:
+                errors.append(f"{PIN}:{lineno}: duplicate sha256 entry for {name}")
+            hashes[name] = digest
+            continue
+        if "=" in line:
+            key, value = line.split("=", 1)
+            metadata[key.strip()] = value.strip()
+            continue
+        errors.append(f"{PIN}:{lineno}: unrecognised line {line!r}")
+    return metadata, hashes
+
+
+def _check_delegation(schema: dict, errors: list[str]) -> None:
+    """Prove token value types are canonical $refs, not a local lookalike."""
+    props = schema.get("properties")
+    frozen = schema.get("frozen")
+    groups = frozen.get("token_groups", {}) if isinstance(frozen, dict) else {}
+    if not isinstance(props, dict) or not isinstance(groups, dict):
+        return
+    for group, tokens in groups.items():
+        group_props = props.get(group, {}).get("properties", {})
+        for token in tokens:
+            spec = group_props.get(token)
+            if not isinstance(spec, dict):
+                errors.append(f"{SCHEMA}: {group}.{token} has no value specification")
+                continue
+            ref = spec.get("$ref")
+            if not isinstance(ref, str) or not ref.startswith(
+                "contracts/skin-manifest.schema.json#"
+            ):
+                errors.append(
+                    f"{SCHEMA}: {group}.{token} must delegate by $ref to the "
+                    f"vendored skin-manifest schema, got {spec!r}"
+                )
+            local_grammar = set(spec) - {"$ref", "$comment", "description", "title"}
+            if local_grammar:
+                errors.append(
+                    f"{SCHEMA}: {group}.{token} declares local value grammar "
+                    f"{sorted(local_grammar)} beside its canonical $ref"
+                )
+
+
 def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
     canonical = schema.get("canonical")
     if not isinstance(canonical, dict):
@@ -193,34 +379,35 @@ def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
     if canonical.get("repository") != "contracts":
         errors.append(f"{SCHEMA}: canonical.repository must be 'contracts'")
     paths = canonical.get("paths")
-    expected = {
-        "schemas/skin-token.schema.json",
-        "schemas/skin-manifest.schema.json",
-    }
-    if not isinstance(paths, list) or set(paths) != expected:
+    if not isinstance(paths, list) or set(paths) != CANONICAL_PATHS:
         errors.append(
-            f"{SCHEMA}: canonical.paths must be exactly {sorted(expected)}"
+            f"{SCHEMA}: canonical.paths must be exactly {sorted(CANONICAL_PATHS)}"
         )
     vendored = canonical.get("vendored")
     tag = canonical.get("tag")
-    if vendored is True:
-        # Vendoring is allowed, but only with a pinned tag and a byte-equality
-        # test. This validator has no vendored copy to hash, so a claim here
-        # would be exactly the false statement the contract forbids.
-        if not isinstance(tag, str) or not tag:
-            errors.append(
-                f"{SCHEMA}: canonical.vendored is true but canonical.tag is not pinned"
-            )
+    if vendored is not True:
         errors.append(
-            f"{SCHEMA}: canonical.vendored is true but no vendored copy/byte-equality "
-            f"test exists in this tree; either add both or set vendored=false"
+            f"{SCHEMA}: canonical.vendored must be true; this class requires the "
+            f"pinned byte copies under skins/contracts/"
         )
-    elif vendored is not False:
-        errors.append(f"{SCHEMA}: canonical.vendored must be true or false")
-    if vendored is False and tag is not None:
+    if not isinstance(tag, str) or not tag:
+        errors.append(f"{SCHEMA}: canonical.tag must pin the vendored contracts tag")
+
+    vendored_paths = canonical.get("vendored_paths")
+    expected_vendored = set(VENDORED.values())
+    if not isinstance(vendored_paths, list) or set(vendored_paths) != expected_vendored:
         errors.append(
-            f"{SCHEMA}: canonical.tag is set while canonical.vendored is false"
+            f"{SCHEMA}: canonical.vendored_paths must be exactly "
+            f"{sorted(expected_vendored)}"
         )
+    delegates = canonical.get("delegates")
+    if not isinstance(delegates, dict) or delegates != VENDORED:
+        errors.append(
+            f"{SCHEMA}: canonical.delegates must be exactly {VENDORED}"
+        )
+    if canonical.get("pin") != PIN:
+        errors.append(f"{SCHEMA}: canonical.pin must be {PIN!r}")
+
     for rel in paths if isinstance(paths, list) else []:
         if not isinstance(rel, str):
             errors.append(f"{SCHEMA}: canonical.paths entries must be strings")
@@ -230,6 +417,43 @@ def _check_canonical(schema: dict, root: Path, errors: list[str]) -> None:
                 f"{SCHEMA}: canonical path {rel!r} exists in this repo but is not "
                 f"declared as vendored; do not silently mirror a contracts path"
             )
+
+    metadata, expected_hashes = _read_pin(root, errors)
+    pin_tag = metadata.get("contracts")
+    if pin_tag != tag:
+        errors.append(
+            f"{PIN}: contracts={pin_tag!r} disagrees with canonical.tag {tag!r}"
+        )
+    if not expected_hashes:
+        errors.append(f"{PIN}: no sha256 entries")
+    for name, rel in (
+        ("skin-token.schema.json", VENDORED["token"]),
+        ("skin-manifest.schema.json", VENDORED["manifest"]),
+    ):
+        path = root / rel
+        if not path.is_file():
+            errors.append(f"{rel}: missing vendored canonical schema")
+            continue
+        try:
+            json.loads(path.read_text())
+        except json.JSONDecodeError as exc:
+            errors.append(f"{rel}: invalid JSON ({exc})")
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        recorded = expected_hashes.get(name)
+        if recorded is None:
+            errors.append(f"{PIN}: missing sha256 entry for {name}")
+        elif recorded != actual:
+            errors.append(
+                f"{rel}: sha256 {actual} does not match {PIN} ({recorded})"
+            )
+    extras = sorted(set(expected_hashes) - {
+        "skin-token.schema.json",
+        "skin-manifest.schema.json",
+    })
+    if extras:
+        errors.append(f"{PIN}: unexpected sha256 entries {extras}")
+    _check_delegation(schema, errors)
 
 
 def _token_groups(schema: dict, errors: list[str]) -> dict[str, list[str]]:
@@ -328,9 +552,8 @@ def _validate_manifest(
         )
 
     props = schema.get("properties", {})
-    defs = schema.get("$defs", {})
-    if not isinstance(props, dict) or not isinstance(defs, dict):
-        errors.append(f"{SCHEMA}: properties/$defs must be mappings")
+    if not isinstance(props, dict):
+        errors.append(f"{SCHEMA}: properties must be a mapping")
         return data
 
     for group, token_names in groups.items():
@@ -353,7 +576,10 @@ def _validate_manifest(
                 errors.append(f"{SCHEMA}: no value spec for {group}.{token}")
                 continue
             where = f"{group}.{token}"
-            _validate_value(spec, value[token], defs, f"{rel}: {where}", errors)
+            resolved = _deref(
+                spec, root, SCHEMA, f"{rel}: {where}", errors
+            )
+            _validate_value(resolved, value[token], f"{rel}: {where}", errors)
             if isinstance(value[token], str):
                 _check_role_names(value[token], rel, where, roles, errors)
     return data
@@ -365,6 +591,75 @@ def _placeholder_map(groups: dict[str, list[str]]) -> dict[str, str]:
         for group, tokens in groups.items()
         for token in tokens
     }
+
+
+def _css_number(value: int | float) -> str:
+    if isinstance(value, int):
+        return str(value)
+    return str(int(value)) if float(value).is_integer() else repr(float(value))
+
+
+def _css_token_value(value) -> str:
+    """The v1 unit rule: a numeric token is a CSS length, rendered as `<n>px`.
+
+    `cell-pad` and every paint/ink/font token are strings and are emitted
+    verbatim; only JSON numbers gain the `px` suffix.
+    """
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        return f"{_css_number(value)}px"
+    return str(value)
+
+
+def expand_template(
+    template: str, manifest: dict, groups: dict[str, list[str]]
+) -> str:
+    """Expand `{{SKIN_*}}` placeholders using the unit rule."""
+    for placeholder, dotted in _placeholder_map(groups).items():
+        group, token = dotted.split(".", 1)
+        value = manifest.get(group, {}).get(token)
+        if value is None:
+            continue
+        template = template.replace(
+            "{{" + placeholder + "}}", _css_token_value(value)
+        )
+    return template
+
+
+def _check_expansion(
+    root: Path,
+    templates: list[Path],
+    manifests: list[dict],
+    groups: dict[str, list[str]],
+    errors: list[str],
+    notes: list[str],
+) -> None:
+    """Expand every manifest through every template and enforce the unit rule."""
+    for path in templates:
+        rel = _rel(path, root)
+        text = path.read_text()
+        for manifest in manifests:
+            expanded = expand_template(text, manifest, groups)
+            leftovers = sorted(set(PLACEHOLDER.findall(expanded)))
+            if leftovers:
+                errors.append(
+                    f"{rel}: unexpanded placeholder(s) {leftovers} after "
+                    f"rendering {manifest.get('name')!r}"
+                )
+            for group, tokens in groups.items():
+                for token in tokens:
+                    value = manifest.get(group, {}).get(token)
+                    expected = _css_token_value(value)
+                    placeholder = f"{{{{SKIN_{token.upper().replace('-', '_')}}}}}"
+                    if placeholder in text and expected not in expanded:
+                        errors.append(
+                            f"{rel}: {group}.{token} did not render as {expected!r}"
+                        )
+    notes.append(
+        f"expanded {len(manifests)} manifest(s) through {len(templates)} "
+        f"template(s) with the unit rule (number -> <n>px, cell-pad verbatim)"
+    )
 
 
 def _check_template(
@@ -458,6 +753,7 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
     manifests_dir = root / MANIFESTS_DIR
     required = set(frozen.get("required_files", [])) if isinstance(frozen, dict) else set()
     found: list[Path] = []
+    manifest_data: list[dict] = []
     if not manifests_dir.is_dir():
         errors.append(f"{MANIFESTS_DIR}/: missing")
     else:
@@ -476,7 +772,10 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
             if not tokens:
                 errors.append(f"{SCHEMA}: token group {group!r} is empty")
         for path in found:
-            _validate_manifest(path, root, schema, groups, roles_set, patterns, errors)
+            data = _validate_manifest(
+                path, root, schema, groups, roles_set, patterns, errors
+            )
+            manifest_data.append(data)
             stats["manifests"] += 1
 
     templates_dir = root / TEMPLATES_DIR
@@ -491,6 +790,10 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
     for path in templates:
         _check_template(path, root, expected, roles_set, patterns, errors, notes)
         stats["templates"] += 1
+    if templates and manifest_data:
+        _check_expansion(
+            root, templates, manifest_data, groups, errors, notes
+        )
 
     return errors, notes, stats
 
@@ -513,7 +816,10 @@ def main() -> int:
         for error in errors:
             print(f"  - {error}")
         return 1
-    print("validate-skins: PASS -- manifests, schema pointer, role vocabulary and template coverage agree")
+    print(
+        "validate-skins: PASS -- vendored canonical hashes/types, manifests, "
+        "unit-rule expansion, role vocabulary and template coverage agree"
+    )
     return 0
 
 

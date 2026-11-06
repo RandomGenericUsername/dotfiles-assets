@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.8.0
+tag: v0.9.0
 
 classes:
   icons:
@@ -72,9 +72,10 @@ classes:
   skins:
     dir: skins
     subdirs:
+      - contracts
       - manifests
       - templates
       - tests
     schema: skins/schema.json
     schema_major: 1
-    contents: 3 frozen v1 TOML manifests (glass default/fallback parity with today's ags-bar look, flat, paper), one GTK settings/Bluetooth template, the local validation target pointing at the canonical contracts schemas, and the pytest fixture set including glass-vs-source parity/deviation fixtures; no structure/variant tokens, no literal hex, no transitions
+    contents: 3 frozen v1 TOML manifests (glass default/fallback parity with today's ags-bar look, flat, paper) with unitless numeric tokens, one GTK settings/Bluetooth template, the vendored canonical contracts pair pinned by tag+sha256, the local schema envelope delegating token types to it, and the pytest fixture set including glass-vs-source parity/deviation and numeric-string rejection fixtures; no structure/variant tokens, no literal hex, no transitions

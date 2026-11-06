@@ -4,14 +4,14 @@ schema_major = 1
 name = "flat"
 
 [shape]
-radius-panel = "0px"
-radius-card = "0px"
-radius-cell = "0px"
-radius-pill = "999px"
-border-w = "0px"
+radius-panel = 0
+radius-card = 0
+radius-cell = 0
+radius-pill = 999
+border-w = 0
 
 [rhythm]
-gap = "8px"
+gap = 8
 cell-pad = "7px 8px"
 
 [surface]
@@ -29,11 +29,11 @@ ink-over = "auto"
 
 [type]
 font-family = "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif"
-title-size = "15px"
-text-size = "13px"
+title-size = 15
+text-size = 13
 
 [layout]
-panel-width = "312px"
-bt-list-spacing = "4px"
-bar-row-height = "28px"
-chip-min = "48px"
+panel-width = 312
+bt-list-spacing = 4
+bar-row-height = 28
+chip-min = 48

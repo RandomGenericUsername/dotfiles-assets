@@ -39,13 +39,14 @@ the local schema alone says `dimension: string, pattern ^...px$`.
 
 1. Vendor the canonical pair byte-for-byte into `skins/contracts/` and pin it:
    `skins/contracts/PIN` records the `contracts` tag and the sha256 of each
-   vendored file. `v0.5.1` is not reachable in the local `contracts` checkout
-   yet, so vendor the current `v0.5.0` bytes and record `v0.5.1` as the intended
-   tag; re-vendoring is a hash/tag update, not a schema rewrite.
+   vendored file. `v0.5.1` was not reachable when this ticket was filed; it
+   became reachable during the work, so vendor the `v0.5.1` bytes (the
+   unit-convention patch) and pin that tag. Re-vendoring is a hash/tag update,
+   not a schema rewrite.
 2. `skins/schema.json` delegates its token value types to the vendored canonical
    definitions (external `$ref`s), sets `canonical.vendored: true`,
-   `canonical.tag: v0.5.0`, `canonical.intended_tag: v0.5.1`, and carries no
-   divergent local `px` lookalike grammar.
+   `canonical.tag: v0.5.1`, and carries no divergent local `px` lookalike
+   grammar.
 3. All three manifests (`glass`, `flat`, `paper`) carry the numeric tokens as
    unitless TOML numbers. `cell-pad` stays the literal pair string; role
    expressions, paint, ink and `font-family` stay strings. Glass keeps its
@@ -92,12 +93,13 @@ the local schema alone says `dimension: string, pattern ^...px$`.
 
 ## Discrepancy / judgment log
 
-- **`v0.5.1` is not reachable.** The local `contracts` checkout is at
-  `v0.5.0` (`0625b56`) and has no `v0.5.1` tag. Vendoring waits for a tag that
-  does not exist would be a false claim, so the PIN records the actual
-  `contracts=v0.5.0` bytes plus `intended-contracts=v0.5.1`. The unit
-  convention is already in the `v0.5.0` types, so the local manifests are
-  validated against the reachable canonical truth.
+- **`v0.5.1` arrived during the work.** The local `contracts` checkout was at
+  `v0.5.0` (`0625b56`) when this ticket was filed, so the first vendoring pass
+  used `v0.5.0` and recorded `v0.5.1` as intended. While the branch was open,
+  `contracts` advanced to `v0.5.1` (`d1adb19`, unit-convention patch) and then
+  `v0.5.2` (`320ad69`); the final vendored bytes are re-taken from `v0.5.1`.
+  The skin schemas are unchanged at `v0.5.2`, but the PIN deliberately stays on
+  `v0.5.1`, the tag that defines the convention.
 - **Local manifest envelope, canonical token types.** The canonical manifest
   schema wraps the token groups in `groups` with `schemaVersion`; this
   repository's frozen v1 manifests use the flat `schema_major` + group layout

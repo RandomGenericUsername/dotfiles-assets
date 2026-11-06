@@ -5,14 +5,14 @@ schema_major = 1
 name = "glass"
 
 [shape]
-radius-panel = "16px"
-radius-card = "12px"
-radius-cell = "8px"
-radius-pill = "999px"
-border-w = "1.5px"
+radius-panel = 16
+radius-card = 12
+radius-cell = 8
+radius-pill = 999
+border-w = 1.5
 
 [rhythm]
-gap = "12px"
+gap = 12
 cell-pad = "9px 12px"
 
 [surface]
@@ -30,11 +30,11 @@ ink-over = "auto"
 
 [type]
 font-family = "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif"
-title-size = "15px"
-text-size = "13px"
+title-size = 15
+text-size = 13
 
 [layout]
-panel-width = "312px"
-bt-list-spacing = "6px"
-bar-row-height = "30px"
-chip-min = "52px"
+panel-width = 312
+bt-list-spacing = 6
+bar-row-height = 30
+chip-min = 52
