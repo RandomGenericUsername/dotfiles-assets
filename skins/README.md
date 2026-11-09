@@ -159,10 +159,13 @@ token group and does not change any token type.
   `mode.light.surface` group is therefore explicit and wins in light mode.
 - **Fallback:** headless/invalid host values use the skin fallback by default.
   `fallback = "error"` fails the generation closed before publishing.
-- **Identity churn:** the policy changes the authored `glass`/`paper` manifest
-  bytes, so their skin hashes change and therefore the first appearance and
-  generation identities after this release. No-path/token migration is needed;
-  this is a one-time content-addressed churn.
+- **Identity churn:** `glass`/`paper` gain the host block and `flat`/`terminal`
+  gain opt-out comments, so all four manifest files change bytes and all four
+  skin hashes change. Only `glass`/`paper` change delegation semantics, but
+  skin identity is content-addressed, so the first appearance/generation
+  identities after this release churn for every skin. No-path/token migration
+  is needed; this is a one-time content-addressed churn. The template set is
+  unchanged.
 
 `make validate-skins` enforces the allowlist through the vendored
 `appearance-manifest` schema (including `items`, `minItems` and

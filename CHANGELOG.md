@@ -38,11 +38,14 @@
 
 ### Notes
 
-- **Expected manifest-hash churn.** Adding the `[host]` block changes the
-  authored `glass` and `paper` manifest bytes, so their skin entry hashes
-  change and therefore the first appearance/generation identities after this
-  tag. `flat` and `terminal` manifests do not change. No path or token
-  migration is needed; this is a one-time content-addressed churn.
+- **Expected manifest-hash churn.** `glass` and `paper` gain the `[host]`
+  block, and `flat` and `terminal` gain opt-out comments, so **all four**
+  authored manifest files change bytes and therefore all four skin entry hashes
+  change. Only `glass`/`paper` change host delegation semantics, but the
+  content-addressed skin identity is byte-based, so the first
+  appearance/generation identities after this tag churn for every skin. No
+  path or token migration is needed; this is a one-time content-addressed
+  churn. The template set is unchanged.
 - MINOR, additive corpus release. `schema_major` stays `2`; no existing token
   path, template target or resolved `tokens.json` field changed. Runtime,
   composition, provisioning and app pins land in their own tickets after this
