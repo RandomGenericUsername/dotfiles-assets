@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.14.0 — wlogout paint/rhythm consumer target
+
+### Added
+
+- **`skins/templates/wlogout.gtk.css.j2`** — the first non-AGS CSS consumer
+  target. It maps `surface.panel.bg` to `window`, `surface.control.*` and
+  `ink.ink` to `button`, the `state.{hover,focus,selected}` triples to the
+  button states, and `type.{font-family,font-weight,letter-spacing,size-title}`
+  to `button span`. It contains paint/rhythm only: no literal hex,
+  `transition`, animation, structure/variant, layout IDs, icons, wallpaper,
+  grid or margins.
+- **Required-target gate.** `skins/schema.json` now freezes
+  `required_targets`; `scripts/validate-skins.py` compares it exactly with the
+  discovered `<configDir>.gtk.css.j2` set. A missing `wlogout` template, or an
+  unregistered extra target, fails `make validate-skins`.
+- **Static stylesheet imports the generated sheet last.**
+  `templates/wlogout/style.css.tpl` ends with
+  `@import url("appearance.css");`, so the generated same-specificity paint
+  rules win the GTK3 cascade. Wallpaper, icons, layout IDs and transitions stay
+  static and app-owned. The palette import remains first, so a missing
+  generated target leaves wlogout with palette-only styling at launch; GTK3
+  still reports the missing import clearly.
+- **Fixture coverage** for the wlogout template (all four manifests × both
+  modes), missing required target, missing required-target declaration,
+  unregistered extra target, literal hex and structure; the existing
+  transition/unknown-placeholder/layout fixtures remain.
+
+### Changed
+
+- `skins/README.md`, root `README.md`, `templates/README.md`, `catalog.yaml`
+  and `skins/schema.json` describe the eight-template set and the exact
+  required-target contract.
+
+### Notes
+
+- **One-time template-hash churn (W-2.10).** Adding a template changes the
+  canonical templates hash for every skin, so every skin entry hash changes and
+  the first consumer refresh after this tag is a full appearance refresh even
+  when existing AGS CSS is unchanged. Runtime, provisioning and composition
+  pins are deliberately not changed in this slice; they land in their own
+  tickets after this tag.
+- MINOR, additive corpus release. The v2 manifest/resolved-token schemas and
+  `schema_major: 2` are unchanged; no existing template value moved.
+
 ## v0.13.0 — `terminal` joins the built-in skins; cleanup-candidate layout tokens removed
 
 ### Added

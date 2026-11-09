@@ -64,3 +64,8 @@ button span {
 #reboot {
     background-image: image(url("{{STATE_ROOT}}/dotfiles/current/icons/reboot.svg"));
 }
+
+/* Generated skin appearance is imported LAST so its same-specificity paint
+ * rules win the cascade. The palette import at the top keeps wlogout usable
+ * with palette-only styling if the generated target is not present yet. */
+@import url("appearance.css");

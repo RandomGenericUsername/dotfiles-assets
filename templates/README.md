@@ -27,7 +27,7 @@ templates/
 | Group | Template | Required | Optional | What it is |
 | --- | --- | --- | --- | --- |
 | `zsh/` | `.zshrc.j2` | 11 | 0 | the interactive shell: starship, oh-my-zsh, distro plugin paths, nvm/pyenv, the runtime palette `cat`, the `.zshrc.local` overlay |
-| `wlogout/` | `style.css.tpl` | 5 | 0 | the logout stylesheet: palette import, runtime current/wallpaper + icons, font tunables |
+| `wlogout/` | `style.css.tpl` | 5 | 0 | the logout stylesheet: palette import, runtime current/wallpaper + icons, font tunables, and the generated `appearance.css` import LAST |
 | `kitty/` | `kitty.conf.j2` | 1 | 0 | kitty's config: one absolute include of the runtime palette |
 | `btop/` | `btop.conf.j2` | 1 | 0 | btop's config: the selected theme **filename** + `save_config_on_exit = false` |
 | `display-manager/` | `sddm.conf.j2` | 1 | 1 | SDDM + Pixie, Wayland greeter; optional `[Wayland] CompositorCommand` (default `weston --shell=kiosk`) |

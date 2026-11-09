@@ -294,6 +294,40 @@ APP_TEMPLATES = {
             "SKIN_TYPE_SIZE_META",
         },
     },
+    "wlogout": {
+        "selectors": [
+            "window",
+            "button",
+            "button:hover",
+            "button:focus",
+            "button:active",
+            "button span",
+        ],
+        "tokens": {
+            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_CONTROL_BG",
+            "SKIN_SURFACE_CONTROL_BORDER",
+            "SKIN_SURFACE_CONTROL_BORDER_WIDTH",
+            "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_CONTROL_PADDING",
+            "SKIN_SURFACE_CONTROL_FONT_SIZE",
+            "SKIN_SURFACE_CONTROL_FONT_WEIGHT",
+            "SKIN_STATE_HOVER_FILL",
+            "SKIN_STATE_HOVER_INK",
+            "SKIN_STATE_HOVER_RING",
+            "SKIN_STATE_FOCUS_FILL",
+            "SKIN_STATE_FOCUS_INK",
+            "SKIN_STATE_FOCUS_RING",
+            "SKIN_STATE_SELECTED_FILL",
+            "SKIN_STATE_SELECTED_INK",
+            "SKIN_STATE_SELECTED_RING",
+            "SKIN_INK_INK",
+            "SKIN_TYPE_FONT_FAMILY",
+            "SKIN_TYPE_FONT_WEIGHT",
+            "SKIN_TYPE_LETTER_SPACING",
+            "SKIN_TYPE_SIZE_TITLE",
+        },
+    },
 }
 
 PIN = CONTRACTS / "PIN"
@@ -358,6 +392,39 @@ def make_root(
     return root
 
 
+def make_full_root(
+    tmp_path: Path,
+    *,
+    drop_template: str | None = None,
+    manifest_override: tuple[str, Path] | None = None,
+    schema_override: Path | None = None,
+) -> Path:
+    """A complete corpus copy for required-target tests.
+
+    ``make_root`` deliberately copies one template so a single negative fixture
+    is isolated. Required-target coverage needs the whole set, optionally minus
+    one target to prove the gate bites.
+    """
+    root = tmp_path / "repo"
+    (root / "skins" / "manifests").mkdir(parents=True)
+    (root / "skins" / "templates").mkdir(parents=True)
+    shutil.copytree(CONTRACTS, root / "skins" / "contracts")
+    shutil.copy2(schema_override or SCHEMA, root / "skins" / "schema.json")
+    for path in MANIFESTS.glob("*.toml"):
+        shutil.copy2(path, root / "skins" / "manifests" / path.name)
+    if manifest_override is not None:
+        stem, source = manifest_override
+        shutil.copy2(source, root / "skins" / "manifests" / f"{stem}.toml")
+    for path in TEMPLATES.glob("*.gtk.css.j2"):
+        if drop_template is not None and path.name == f"{drop_template}.gtk.css.j2":
+            continue
+        shutil.copy2(path, root / "skins" / "templates" / path.name)
+    vocabulary = root / "icons" / "mappings" / "vocabulary.json"
+    vocabulary.parent.mkdir(parents=True)
+    shutil.copy2(ROOT / "icons" / "mappings" / "vocabulary.json", vocabulary)
+    return root
+
+
 def errors_for(root: Path) -> list[str]:
     errors, _notes, _stats = validate_skins.validate(root)
     return errors
@@ -373,7 +440,7 @@ def test_corpus_passes_the_gate() -> None:
     assert errors == []
     assert stats == {
         "manifests": 4,
-        "templates": 7,
+        "templates": 8,
         "targets": sorted(APP_TEMPLATES),
         "tokens": 57,
         "roles": 51,
@@ -447,6 +514,71 @@ def test_app_template_does_not_expand_layout_tokens(target: str) -> None:
         for mode in ("dark", "light"):
             css = render(text, manifest_name, mode)
             assert not LAYOUT_PLACEHOLDER.search(css), f"{target}: {manifest_name}:{mode}"
+
+
+def test_required_targets_match_the_template_matrix() -> None:
+    assert set(schema()["frozen"]["required_targets"]) == set(APP_TEMPLATES)
+
+
+def test_wlogout_template_is_paint_and_rhythm_only() -> None:
+    text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    for banned in (
+        "#lock",
+        "#logout",
+        "#suspend",
+        "#hibernate",
+        "#shutdown",
+        "#reboot",
+        "url(",
+        "wallpaper",
+        "background-image",
+        "grid",
+        "margin",
+    ):
+        assert banned not in text, f"wlogout template contains structural token {banned!r}"
+
+
+def test_wlogout_template_expands_panel_control_state_and_type() -> None:
+    text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    glass = render(text, "glass", "dark")
+    assert "background-color: alpha(@surface, 0.94);" in glass
+    assert "border: 1px solid alpha(@on_surface, 0.26);" in glass
+    assert "border-radius: 7px;" in glass
+    assert "font-size: 12.5px;" in glass
+    assert "font-family: inherit;" in glass
+    assert "letter-spacing: 0em;" in glass
+
+    terminal = render(text, "terminal", "dark")
+    assert "background-color: @surface;" in terminal
+    assert "border: 1px solid alpha(@on_surface, 0.30);" in terminal
+    assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal
+    assert "font-size: 13px;" in terminal
+
+
+def test_missing_wlogout_template_fails_the_required_target_gate(tmp_path: Path) -> None:
+    root = make_full_root(tmp_path, drop_template="wlogout")
+    errors = errors_for(root)
+    assert any("missing required target(s) ['wlogout']" in error for error in errors), errors
+
+
+def test_schema_without_required_targets_fails(tmp_path: Path) -> None:
+    data = schema()
+    del data["frozen"]["required_targets"]
+    bad_schema = tmp_path / "schema-no-targets.json"
+    bad_schema.write_text(json.dumps(data))
+    root = make_full_root(tmp_path, schema_override=bad_schema)
+    errors = errors_for(root)
+    assert any("frozen.required_targets" in error for error in errors), errors
+
+
+def test_unregistered_extra_target_fails(tmp_path: Path) -> None:
+    data = schema()
+    data["frozen"]["required_targets"].remove("wlogout")
+    bad_schema = tmp_path / "schema-no-wlogout.json"
+    bad_schema.write_text(json.dumps(data))
+    root = make_full_root(tmp_path, schema_override=bad_schema)
+    errors = errors_for(root)
+    assert any("unregistered target(s) ['wlogout']" in error for error in errors), errors
 
 
 def pin_metadata() -> tuple[dict[str, str], dict[str, str]]:
@@ -855,10 +987,20 @@ def test_positive_terminal_fixture_is_accepted(tmp_path: Path) -> None:
         fixture_data = tomllib.load(handle)
     assert fixture_data == load_manifest("terminal")
 
-    root = make_root(tmp_path, manifest_override=("terminal", fixture))
+    root = make_full_root(tmp_path, manifest_override=("terminal", fixture))
     errors, _notes, stats = validate_skins.validate(root)
     assert errors == []
     assert stats["manifests"] == 4
+
+
+def test_positive_wlogout_fixture_matches_and_expands() -> None:
+    fixture = POSITIVE / "wlogout.gtk.css.j2"
+    shipped = TEMPLATES / "wlogout.gtk.css.j2"
+    assert fixture.read_text() == shipped.read_text()
+    for name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            css = render(fixture.read_text(), name, mode)
+            assert "{{" not in css, f"wlogout fixture: {name}:{mode}"
 
 
 def test_layout_defaults_preserve_the_apps_pre_v2_window_sizes() -> None:
@@ -989,6 +1131,8 @@ def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
     ("fixture", "needle"),
     [
         ("transition.gtk.css.j2", "CSS transition"),
+        ("literal-hex.gtk.css.j2", "literal hex colour"),
+        ("structure.gtk.css.j2", "structure/variant property"),
         ("unknown-placeholder.gtk.css.j2", "is not a token"),
         ("layout-placeholder.gtk.css.j2", "layout token"),
         ("ags-bar.css.j2", "template name"),

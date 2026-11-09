@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.13.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.14.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -33,10 +33,11 @@ SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imp
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries; `skins/` holds four `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
-with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline), seven `<configDir>.gtk.css.j2` templates (the bar's
-settings/Bluetooth set plus clipboard, notifications, wallpaper selector, capture, icme and btop
-studio; targets `ags`, `ags-clipboard`, `ags-notifications`, `ags-wallpaper-selector`, `ags-capture`,
-`ags-icme`, `ags-btop-studio`, rendered as `<configDir>.css`), and the pinned byte copies of the
+with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline), eight `<configDir>.gtk.css.j2` templates (the bar's
+settings/Bluetooth set plus clipboard, notifications, wallpaper selector, capture, icme, btop
+studio and the wlogout paint/rhythm sheet; targets `ags`, `ags-clipboard`, `ags-notifications`,
+`ags-wallpaper-selector`, `ags-capture`, `ags-icme`, `ags-btop-studio`, `wlogout`, rendered as
+`<configDir>.css`), and the pinned byte copies of the
 canonical `contracts` v0.7.0 schemas under `skins/contracts/` — `appearance-manifest`,
 `appearance-json` (the resolved `tokens.json`) and `appearance-artifact`, plus the frozen v1 skin
 schemas for provenance. The v2 groups are `surface.{panel,card,cell,control,pill}`,
@@ -114,7 +115,8 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   `tokens.json` validates against `appearance-json`; `appearance-artifact` describes the generation
   metadata. Layout values are namespaced unitless numbers and are declared TSX-owned: templates
   MUST NOT expand `layout.<app>` into CSS. `make validate-skins` enforces the PIN hashes, template
-  naming (`<configDir>.gtk.css.j2`; all seven targets are reported in the summary), canonical
+  naming (`<configDir>.gtk.css.j2`; all eight targets are reported in the summary and the frozen
+  `required_targets` set is matched exactly), canonical
   numeric types (a `"12px"` string fails), role-only values, no literal hex/transition/structure,
   two-way flattened placeholder coverage, no layout token in CSS, and the unit-rule expansion
   (length → `<n>px`, letter-spacing → `<n>em`, font-weight unitless) of every template through

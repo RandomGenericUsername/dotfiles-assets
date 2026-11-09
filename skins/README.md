@@ -60,6 +60,7 @@ skins/
   templates/ags-capture.gtk.css.j2        capture bar/overlay/panel (target: ags-capture)
   templates/ags-icme.gtk.css.j2           icon color mapping editor (target: ags-icme)
   templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
+  templates/wlogout.gtk.css.j2            wlogout paint/rhythm (target: wlogout)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
   tests/fixtures/positive/                positive fixture (terminal shape the validator must accept)
@@ -70,7 +71,8 @@ skins/
 
 Every file in `skins/templates/` must be named `<configDir>.gtk.css.j2`; the
 target is the prefix, so `templates/ags.gtk.css.j2` renders `ags.css` and the
-bar consumes it through its config directory. The set covers every AGS app:
+bar consumes it through its config directory. The set covers every AGS app
+and the wlogout CSS consumer:
 
 | Template | Target `configDir` | Canonical source |
 | --- | --- | --- |
@@ -81,6 +83,7 @@ bar consumes it through its config directory. The set covers every AGS app:
 | `ags-capture.gtk.css.j2` | `ags-capture` | capture bar/overlay/panel |
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
+| `wlogout.gtk.css.j2` | `wlogout` | logout menu paint/rhythm |
 
 ## Placeholder flattening and the value convention
 
@@ -243,8 +246,10 @@ make test-skins       # pytest fixtures, including parity, mode and negative cas
 `make validate-skins` is stdlib-only and part of `make gates`. It validates
 each manifest against the vendored `appearance-manifest` schema, resolves it
 under both `dark` and `light`, validates each resolved `tokens.json` against
-`appearance-json`, and expands all seven templates for all four manifests ×
-both modes.
+`appearance-json`, and expands all eight templates for all four manifests ×
+both modes. The frozen `required_targets` set is compared exactly with the
+discovered template set, so a missing `wlogout.gtk.css.j2` (or any other
+required consumer) fails the gate instead of silently dropping a target.
 It checks the flattened placeholder vocabulary two ways, rejects literal hex,
 transitions/animations, structure/variant properties and layout placeholders,
 and verifies the unit rule (length → `<n>px`, letter-spacing → `<n>em`,

@@ -3,7 +3,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/wlogout/style.css.vars.schema.json",
   "title": "wlogout/style.css.tpl — render context",
-  "description": "Every value the wlogout stylesheet reads: the palette import, the runtime state-root pointers for icons and the current wallpaper, and the two font tunables.",
+  "description": "Every value the wlogout stylesheet reads: the palette import, the runtime state-root pointers for icons and the current wallpaper, and the two font tunables. The rendered sheet imports the generated skin appearance last; that import is relative and needs no render variable.",
   "schema_major": 1,
   "template": "style.css.tpl",
   "type": "object",
