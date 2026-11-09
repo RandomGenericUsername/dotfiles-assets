@@ -86,7 +86,7 @@ Runtime/provisioning/composition work is deliberately out of scope here.
       wlogout remains launchable with the palette-only fallback.
 - [x] `make validate-skins`, `make test-skins`, `make lint`, `make gates-ci`
       pass.
-- [ ] `v0.14.0` is an annotated tag on the fast-forward-merged commit; `master`
+- [x] `v0.14.0` is an annotated tag on the fast-forward-merged commit; `master`
       and the tag are pushed; the release carries only `v0.14.0` artifacts.
 
 ## Evidence / Verify
@@ -108,6 +108,7 @@ Runtime/provisioning/composition work is deliberately out of scope here.
 red before the template), `7c00d92` (template, static import, tests, docs,
 CHANGELOG), this closing commit (ticket outcome + INDEX done).
 **Tag:** `v0.14.0` (annotated) after the green gates; fast-forward to `master`.
+**Release:** https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.14.0
 
 ### Delivered
 
