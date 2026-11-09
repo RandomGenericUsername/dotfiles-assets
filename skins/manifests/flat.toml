@@ -5,6 +5,8 @@
 schemaVersion = 2
 name = "flat"
 
+# Host defaults are intentionally not inherited: zero chrome is explicit. No
+# [host] policy is declared for this skin.
 [groups.surface.panel]
 bg = "transparent"
 border = "transparent"

@@ -1,25 +1,30 @@
 #!/usr/bin/env python3
 """validate-skins -- the `skins` class contract, asserted against the corpus.
 
-WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.7.0):
+WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.9.0):
 
   1. THE LOCAL CONTRACT IS HONEST. `skins/schema.json` carries
      `schema_major: 2`, names the canonical `contracts` paths and proves its
      vendored claim: every file under `skins/contracts/` is a byte copy whose
      sha256 matches `skins/contracts/PIN`. The three appearance schemas are the
      delegates (`appearance-manifest`, `appearance-json`,
-     `appearance-artifact`); the frozen v1 skin schemas are pinned at the same
-     tag for provenance. The 51-role palette list is `palette.v1`, checked
-     against `icons/mappings/vocabulary.json`.
+     `appearance-artifact`); the generation manifest schema is vendored for
+     contract-byte parity (this class does not emit generations), and the
+     frozen v1 skin schemas are pinned at the same tag for provenance. The
+     51-role palette list is `palette.v1`, checked against
+     `icons/mappings/vocabulary.json`.
 
   2. EVERY MANIFEST IS A V2 APPEARANCE MANIFEST. The required manifests exist
      (currently `glass`, `flat`, `paper` and `terminal`), no extra manifest hides
      beside them, `name` equals the file stem,
      and the document validates against the vendored `appearance-manifest`
-     schema (nested `surface`, `state`, `type`, `ink`, `layout.<app>` and
-     optional `mode.dark`/`mode.light` overrides). A `structure`, `variant`,
-     `transition` or `animation` property fails; layout keys must be namespaced
-     app names with numeric values.
+     schema (nested `surface`, `state`, `type`, `ink`, `layout.<app>`, optional
+     `mode.dark`/`mode.light` overrides and the optional root `host` policy).
+     A `structure`, `variant`, `transition` or `animation` property fails;
+     layout keys must be namespaced app names with numeric values. `host` is a
+     policy object, not a token group: its `inherit` allowlist is non-empty,
+     unique and limited to `surface.panel.radius` and
+     `surface.panel.border-width`; `fallback` is `skin|error`.
 
   3. EVERY MODE RESOLVES TO A VALID tokens.json. For each manifest the gate
      resolves the base groups plus the selected `mode.dark`/`mode.light`
@@ -50,9 +55,10 @@ WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. The manifest format is TOML (`tomllib`, Python >= 3.11), the contract is
 JSON, and the mini-validator below covers the exact JSON-Schema subset the
 vendored canonical definitions use (`$ref`, `const`, `enum`, `type`, `minimum`,
-`exclusiveMinimum`, `maximum`, `pattern`, `minLength`, `minProperties`,
-`required`, `properties`, `patternProperties`, `additionalProperties`,
-`propertyNames`, `allOf`/`anyOf`/`oneOf`/`not`). The fixture suite under
+`exclusiveMinimum`, `maximum`, `pattern`, `minLength`, `items`, `minItems`,
+`uniqueItems`, `minProperties`, `required`, `properties`, `patternProperties`,
+`additionalProperties`, `propertyNames`, `allOf`/`anyOf`/`oneOf`/`not`). The
+fixture suite under
 `skins/tests/` mirrors each negative case; `jsonschema`/`pytest` are NOT
 required for this gate.
 
@@ -85,6 +91,7 @@ VENDORED = {
     "appearance-manifest": "skins/contracts/appearance-manifest.schema.json",
     "appearance-json": "skins/contracts/appearance-json.schema.json",
     "appearance-artifact": "skins/contracts/appearance-artifact.schema.json",
+    "generation-manifest": "skins/contracts/generation-manifest.schema.json",
     "skin-token": "skins/contracts/skin-token.schema.json",
     "skin-manifest": "skins/contracts/skin-manifest.schema.json",
     "skin-json": "skins/contracts/skin-json.schema.json",
@@ -104,6 +111,7 @@ CANONICAL_PATHS = {
     "schemas/appearance-manifest.schema.json",
     "schemas/appearance-json.schema.json",
     "schemas/appearance-artifact.schema.json",
+    "schemas/generation-manifest.schema.json",
     "schemas/skin-token.schema.json",
     "schemas/skin-manifest.schema.json",
     "schemas/skin-json.schema.json",
@@ -264,6 +272,25 @@ def _value_messages(spec: dict, value) -> list[str]:
                 f"must be a {label}, got {type(value).__name__} ({value!r})"
             )
             return messages
+    if isinstance(value, list):
+        items = spec.get("items")
+        if isinstance(items, dict):
+            for index, item in enumerate(value):
+                messages.extend(_value_messages(items, item))
+        min_items = spec.get("minItems")
+        if isinstance(min_items, int) and len(value) < min_items:
+            messages.append(f"must have at least {min_items} item(s)")
+        max_items = spec.get("maxItems")
+        if isinstance(max_items, int) and len(value) > max_items:
+            messages.append(f"must have at most {max_items} item(s)")
+        if spec.get("uniqueItems") is True:
+            seen: set[str] = set()
+            for item in value:
+                key = json.dumps(item, sort_keys=True, separators=(",", ":"))
+                if key in seen:
+                    messages.append("must not contain duplicate items")
+                    break
+                seen.add(key)
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         minimum = spec.get("minimum")
         if isinstance(minimum, (int, float)) and value < minimum:
@@ -1052,9 +1079,9 @@ def main() -> int:
             print(f"  - {error}")
         return 1
     print(
-        "validate-skins: PASS -- vendored v0.7.0 hashes, v2 manifests, mode "
-        "resolution, tokens.json schema, flattened placeholder coverage, role "
-        "vocabulary and unit-rule expansion agree"
+        "validate-skins: PASS -- vendored v0.9.0 hashes, v2 manifests, host "
+        "policy, mode resolution, tokens.json schema, flattened placeholder "
+        "coverage, role vocabulary and unit-rule expansion agree"
     )
     return 0
 

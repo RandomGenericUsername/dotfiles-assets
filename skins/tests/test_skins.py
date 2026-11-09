@@ -7,7 +7,8 @@ Run with the repository's development dependencies:
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
 that prove the gate actually bites. The model is the v2 Appearance token set
-from ``contracts`` v0.7.0, not the frozen v1 skin vocabulary.
+from ``contracts`` v0.9.0, not the frozen v1 skin vocabulary. The optional
+root ``[host]`` policy is a delegation object, not a token group.
 """
 
 from __future__ import annotations
@@ -37,6 +38,7 @@ VENDORED = {
     "appearance-manifest.schema.json": "skins/contracts/appearance-manifest.schema.json",
     "appearance-json.schema.json": "skins/contracts/appearance-json.schema.json",
     "appearance-artifact.schema.json": "skins/contracts/appearance-artifact.schema.json",
+    "generation-manifest.schema.json": "skins/contracts/generation-manifest.schema.json",
     "skin-token.schema.json": "skins/contracts/skin-token.schema.json",
     "skin-manifest.schema.json": "skins/contracts/skin-manifest.schema.json",
     "skin-json.schema.json": "skins/contracts/skin-json.schema.json",
@@ -612,12 +614,13 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "schemas/appearance-manifest.schema.json",
         "schemas/appearance-json.schema.json",
         "schemas/appearance-artifact.schema.json",
+        "schemas/generation-manifest.schema.json",
         "schemas/skin-token.schema.json",
         "schemas/skin-manifest.schema.json",
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.7.0"
+    assert canonical["tag"] == "v0.9.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "manifest": "skins/contracts/appearance-manifest.schema.json",
@@ -635,7 +638,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
     assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "3ea6d8354f23d0b9239e06392897e53496f25144"
+    assert metadata["source-commit"] == "5c9fd615cae8d6596799bbafaeea93a05b3c3c11"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -660,6 +663,53 @@ def test_manifest_documents_validate_against_the_vendored_manifest_schema() -> N
             manifest = tomllib.load(handle)
         errors = sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
         assert errors == [], [error.message for error in errors]
+
+
+def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
+    glass = load_manifest("glass")
+    paper = load_manifest("paper")
+    expected = {
+        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
+        "fallback": "skin",
+    }
+    assert glass["host"] == expected
+    assert paper["host"] == expected
+
+    for name in MANIFEST_NAMES:
+        manifest = load_manifest(name)
+        assert "host" not in manifest["groups"], name
+        assert "host" not in resolved(name, "dark"), name
+
+    for name in ("flat", "terminal"):
+        assert "host" not in load_manifest(name), name
+
+    manifest_schema = json.loads(
+        (CONTRACTS / "appearance-manifest.schema.json").read_text()
+    )
+    assert "host" in manifest_schema["properties"]
+    ref = manifest_schema["properties"]["host"]["$ref"].split("/")[-1]
+    policy = manifest_schema["definitions"][ref]
+    assert policy["required"] == ["inherit"]
+    assert policy["additionalProperties"] is False
+    assert policy["properties"]["inherit"]["minItems"] == 1
+    assert policy["properties"]["inherit"]["uniqueItems"] is True
+    assert policy["properties"]["inherit"]["items"]["enum"] == [
+        "surface.panel.radius",
+        "surface.panel.border-width",
+    ]
+    assert policy["properties"]["fallback"]["enum"] == ["skin", "error"]
+
+
+def test_positive_host_fixture_is_accepted(tmp_path: Path) -> None:
+    fixture = POSITIVE / "host.toml"
+    with fixture.open("rb") as handle:
+        fixture_data = tomllib.load(handle)
+    assert fixture_data == load_manifest("glass")
+
+    root = make_full_root(tmp_path, manifest_override=("glass", fixture))
+    errors, _notes, stats = validate_skins.validate(root)
+    assert errors == []
+    assert stats["manifests"] == 4
 
 
 def test_resolved_tokens_validate_for_every_manifest_and_mode() -> None:
@@ -1117,6 +1167,11 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
         ("numeric-string.toml", "must be a number"),
         ("unknown-surface-role.toml", "unexpected property"),
         ("incomplete-mode.toml", "missing required property"),
+        ("host-empty-inherit.toml", "at least 1 item"),
+        ("host-duplicate-inherit.toml", "duplicate items"),
+        ("host-unknown-inherit.toml", "surface.card.radius"),
+        ("host-bad-fallback.toml", "must be one of"),
+        ("host-extra-key.toml", "unexpected property"),
     ],
 )
 def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
