@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.15.0 — host-default skin policy, contracts `v0.9.0`
+
+### Added
+
+- **`[host]` policy on `glass` and `paper`.** Both manifests now declare:
+  ```toml
+  [host]
+  inherit = ["surface.panel.radius", "surface.panel.border-width"]
+  fallback = "skin"
+  ```
+  A delegated token follows the live compositor when readable; the selected
+  `mode.<mode>` group still wins, and the skin value is the headless/invalid
+  fallback. `terminal` and `flat` carry an explicit opt-out comment and no
+  `[host]` block: square/hairline and zero-chrome remain explicit identities.
+  `[host]` is a policy object, not a token group.
+- **Stdlib host enforcement.** `scripts/validate-skins.py` now implements
+  `items`, `minItems` and `uniqueItems`, so the `inherit` enum, non-empty
+  requirement and uniqueness are enforced without adding a dependency.
+- **Host fixtures.** A positive `host.toml` plus negative empty/duplicate/
+  unknown inherit, bad fallback and extra-key fixtures. Existing no-host
+  manifests remain valid.
+- **Contracts `v0.9.0` re-vendor.** `skins/contracts/` carries the v0.9.0
+  appearance schemas and the generation manifest schema for contract-byte
+  parity; `skins/contracts/PIN` records tag, peeled source commit
+  `5c9fd615cae8d6596799bbafaeea93a05b3c3c11` and new sha256 hashes.
+
+### Changed
+
+- `skins/schema.json` names `canonical.tag = v0.9.0`, includes the vendored
+  generation schema, and documents `[host]` as a policy object with
+  `mode override > host > skin fallback` precedence.
+- `skins/README.md`, root `README.md`, `catalog.yaml` and this changelog
+  document the host policy, the four-skin opt-in matrix and the validation
+  rules. The v0.14.0 wlogout template and exact `required_targets` gate are
+  unchanged; all eight AGS + wlogout targets still expand.
+
+### Notes
+
+- **Expected manifest-hash churn.** Adding the `[host]` block changes the
+  authored `glass` and `paper` manifest bytes, so their skin entry hashes
+  change and therefore the first appearance/generation identities after this
+  tag. `flat` and `terminal` manifests do not change. No path or token
+  migration is needed; this is a one-time content-addressed churn.
+- MINOR, additive corpus release. `schema_major` stays `2`; no existing token
+  path, template target or resolved `tokens.json` field changed. Runtime,
+  composition, provisioning and app pins land in their own tickets after this
+  tag.
+
 ## v0.14.0 — wlogout paint/rhythm consumer target
 
 ### Added

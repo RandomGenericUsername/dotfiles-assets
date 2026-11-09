@@ -2,7 +2,7 @@
 id: req-020
 title: "Skins host defaults: opt-in [host] policy and contracts v0.9.0 re-vendor"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -57,20 +57,20 @@ out of scope.
 
 ## Acceptance
 
-- [ ] `skins/contracts/` is byte-identical to the `contracts v0.9.0` appearance
+- [x] `skins/contracts/` is byte-identical to the `contracts v0.9.0` appearance
       and generation schema set; PIN hashes and `source-commit` agree; the
       local schema names `canonical.tag = v0.9.0`.
-- [ ] `glass` and `paper` carry the exact `[host]` block; `terminal` and
+- [x] `glass` and `paper` carry the exact `[host]` block; `terminal` and
       `flat` carry no host block and explicitly document the opt-out.
-- [ ] The stdlib validator enforces `items`, `minItems`, `uniqueItems`; host
+- [x] The stdlib validator enforces `items`, `minItems`, `uniqueItems`; host
       positive/negative fixtures pass/fail as named.
-- [ ] Existing no-host manifests remain valid; wlogout remains a required
+- [x] Existing no-host manifests remain valid; wlogout remains a required
       target and its template is unchanged.
-- [ ] Re-vendoring and the manifest policy leave all eight AGS + wlogout
+- [x] Re-vendoring and the manifest policy leave all eight AGS + wlogout
       targets and every resolved `tokens.json` valid.
-- [ ] `make validate-skins`, `make test-skins`, `make lint` and
+- [x] `make validate-skins`, `make test-skins`, `make lint` and
       `make gates-ci` pass.
-- [ ] `v0.15.0` is an annotated tag on the fast-forward-merged commit;
+- [x] `v0.15.0` is an annotated tag on the fast-forward-merged commit;
       `master` and the tag are pushed; the GitHub Release is published.
 
 ## Evidence
@@ -94,25 +94,29 @@ Commands run from the worktree root (`.worktrees/req-020/`, branch
 
 | Claim | Command | Result |
 | --- | --- | --- |
-| Skins gate | `make validate-skins` | pending |
-| Skins fixtures | `make test-skins` | pending |
-| Lint | `make lint` | pending |
-| CI gate set | `make gates-ci` | pending |
-| PIN/schema tag parity | `grep -E 'contracts=|source-commit=' skins/contracts/PIN` | pending |
+| Skins gate | `make validate-skins` | PASS — 4 manifests, 8 templates, 8 targets, 57 tokens, 51 roles, 8 expansions |
+| Skins fixtures | `make test-skins PYTEST="<repo>/.venv/bin/python -m pytest"` | `96 passed in 16.70s` |
+| Lint | `PATH="/tmp/opencode/bin:$PATH" make lint` | compileall ok; shellcheck 1 script clean (local shim for the broken `~/.local/bin/shellcheck` symlink) |
+| CI gate set | `PATH="/tmp/opencode/bin:$PATH" make gates-ci` | all validators PASS; `hermetic: PASS` |
+| PIN/schema tag parity | `grep -E 'contracts=|source-commit=' skins/contracts/PIN` | `contracts=v0.9.0`, `source-commit=5c9fd615cae8d6596799bbafaeea93a05b3c3c11` |
 
 ### Commits
 
 | Commit | Subject |
 | --- | --- |
-| pending | `docs(req-020): plan the host-default skin policy` |
-| pending | `chore(req-020): start — record worktree/branch, move to in-progress` |
-| pending | `feat(req-020): adopt the host-default skin policy` |
-| pending | `chore(req-020): release v0.15.0` |
+| `628770a` | `docs(req-020): plan the host-default skin policy` |
+| `ad1ff09` | `chore(req-020): start — record worktree/branch, move to in-progress` |
+| `4830c08` | `feat(req-020): adopt the host-default skin policy` |
+| release commit (the `v0.15.0` tag target) | `chore(req-020): release v0.15.0` |
 
 ### Status
 
-**Proposed.** No runtime, composition, provisioning, app or live state change
-is in this slice.
+**Done on `ticket/req-020-host-defaults`.** The host policy, contracts v0.9.0
+vendor set, validator enforcement and fixtures are in place; all eight
+AGS + wlogout targets still expand. Merge to `master` fast-forward, create the
+annotated `v0.15.0` tag on the release commit, push `master` + the tag and
+publish the GitHub Release. No runtime, composition, provisioning, app or live
+state change is in this slice.
 
 ## Downstream pins (not part of this slice)
 

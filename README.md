@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.14.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.15.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -38,11 +38,12 @@ settings/Bluetooth set plus clipboard, notifications, wallpaper selector, captur
 studio and the wlogout paint/rhythm sheet; targets `ags`, `ags-clipboard`, `ags-notifications`,
 `ags-wallpaper-selector`, `ags-capture`, `ags-icme`, `ags-btop-studio`, `wlogout`, rendered as
 `<configDir>.css`), and the pinned byte copies of the
-canonical `contracts` v0.7.0 schemas under `skins/contracts/` — `appearance-manifest`,
-`appearance-json` (the resolved `tokens.json`) and `appearance-artifact`, plus the frozen v1 skin
-schemas for provenance. The v2 groups are `surface.{panel,card,cell,control,pill}`,
-`state.{hover,selected,focus,disabled}`, `type`, `ink`, `layout.<app>` and optional
-`mode.dark`/`mode.light` overrides; numeric lengths are unitless and the expander appends `px`,
+canonical `contracts` v0.9.0 schemas under `skins/contracts/` — `appearance-manifest`,
+`appearance-json` (the resolved `tokens.json`) and `appearance-artifact`, plus the generation
+manifest schema for contract-byte parity and the frozen v1 skin schemas for provenance. The v2
+groups are `surface.{panel,card,cell,control,pill}`,
+`state.{hover,selected,focus,disabled}`, `type`, `ink`, `layout.<app>`, optional
+`mode.dark`/`mode.light` overrides and the optional root `[host]` policy; numeric lengths are unitless and the expander appends `px`,
 letter-spacing renders as `em`, and font-weight stays unitless. Per-role borders replace the v1
 global `border-w`/hairline split. Layout metrics are TSX-owned: they stay in the manifest and
 resolved `tokens.json` for `skinValue()` but the templates never emit them as CSS. The default skin
@@ -50,7 +51,10 @@ preserves the apps' pre-v2 window sizes (`ags-icme` 1280×800, `ags-wallpaper-se
 `v0.13.0` removes the CSS-min-derived `ags-capture.panel-width` and `ags-btop-studio` rail widths
 from every manifest because the apps are corrected to their pre-v2 natural layout in parallel.
 Since `v0.12.0` `paper` declares an explicit `mode.light` branch instead of guessing from the
-palette, while `terminal` is mode-agnostic. Each class
+palette, while `terminal` is mode-agnostic. Since `v0.15.0` `glass` and `paper` opt in to the
+`contracts v0.9.0` `[host]` policy for panel radius/border width; `terminal` and `flat` remain
+explicitly opted out. `[host]` is a policy object, not a token group, and
+`mode override > host > skin fallback` is the precedence. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
@@ -105,15 +109,19 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
   states it — static, resolved config only; Jinja sources are the `templates` class, and rendered
   files and mutable preferences belong to the consumer.
 - `skins/schema.json` — `schema_major: 2`; the local envelope for the v2 Appearance vocabulary
-  (`surface`, `state`, `type`, `ink`, `layout.<app>` plus `mode` overrides), the 51-role
-  `palette.v1` list, and the delegation to the canonical `contracts` v0.7.0 schemas vendored at
+  (`surface`, `state`, `type`, `ink`, `layout.<app>`, `mode` overrides and the optional root
+  `host` policy), the 51-role `palette.v1` list, and the delegation to the canonical `contracts`
+  v0.9.0 schemas vendored at
   `skins/contracts/{appearance-manifest,appearance-json,appearance-artifact}.schema.json`. No
   cross-repo runtime import: the vendored bytes are pinned by tag and sha256 in
-  `skins/contracts/PIN` (`contracts=v0.7.0`, the Appearance plane v2 release). The frozen v1 skin
-  schemas are pinned at the same tag for provenance only. Manifests validate against
+  `skins/contracts/PIN` (`contracts=v0.9.0`, the host-defaults release). The generation manifest
+  schema is vendored for contract-byte parity only; the frozen v1 skin schemas are pinned at the
+  same tag for provenance only. Manifests validate against
   `appearance-manifest`; each manifest is resolved under both `dark` and `light` and the resulting
   `tokens.json` validates against `appearance-json`; `appearance-artifact` describes the generation
-  metadata. Layout values are namespaced unitless numbers and are declared TSX-owned: templates
+  metadata. `[host]` is a policy object, not a group: `inherit` is non-empty, unique and limited to
+  `surface.panel.radius`/`surface.panel.border-width`; `fallback` is `skin|error`. Layout values are
+  namespaced unitless numbers and are declared TSX-owned: templates
   MUST NOT expand `layout.<app>` into CSS. `make validate-skins` enforces the PIN hashes, template
   naming (`<configDir>.gtk.css.j2`; all eight targets are reported in the summary and the frozen
   `required_targets` set is matched exactly), canonical
@@ -135,7 +143,7 @@ make validate-content # the tarball holds a top-level default.png; every *.theme
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
-make validate-skins   # vendored v0.7.0 hashes, v2 manifests/modes/tokens.json, placeholders, palette.v1 roles, no layout CSS
+make validate-skins   # vendored v0.9.0 hashes, v2 manifests/host policy/modes/tokens.json, placeholders, palette.v1 roles, no layout CSS
 make test-skins       # pytest fixtures for the skins class (development dependency)
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
 make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
