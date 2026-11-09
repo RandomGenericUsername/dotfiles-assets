@@ -2,7 +2,7 @@
 id: req-020
 title: "Skins host defaults: opt-in [host] policy and contracts v0.9.0 re-vendor"
 kind: requirement
-status: proposed
+status: in-progress
 lane: 2 — bounded implementation
 links:
   openspec: none
