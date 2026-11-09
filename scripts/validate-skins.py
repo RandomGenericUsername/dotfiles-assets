@@ -41,6 +41,11 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.7.0):
      `^[a-z0-9][a-z0-9_-]*\\.gtk\\.css\\.j2$`, and the target reported in the
      summary is the prefix before `.gtk.css.j2`.
 
+  6. THE REQUIRED TARGET SET IS EXACT. `skins/schema.json` `frozen.
+     required_targets` names every consumer template the release must ship.
+     A missing `<configDir>.gtk.css.j2` fails, and an extra template not in
+     the frozen set fails too; a new consumer cannot land silently.
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. The manifest format is TOML (`tomllib`, Python >= 3.11), the contract is
 JSON, and the mini-validator below covers the exact JSON-Schema subset the
@@ -959,6 +964,37 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
             errors.append(
                 f"{TEMPLATES_DIR}/: no template named <configDir>{TEMPLATE_SUFFIX}"
             )
+
+    declared_targets = frozen.get("required_targets")
+    if (
+        not isinstance(declared_targets, list)
+        or not declared_targets
+        or not all(isinstance(item, str) for item in declared_targets)
+        or not all(
+            TEMPLATE_NAME.match(f"{item}{TEMPLATE_SUFFIX}")
+            for item in declared_targets
+        )
+    ):
+        errors.append(
+            f"{SCHEMA}: frozen.required_targets must be a non-empty list of "
+            f"<configDir> names matching {TEMPLATE_NAME.pattern}"
+        )
+    else:
+        required = set(declared_targets)
+        found = set(stats["targets"])
+        missing = sorted(required - found)
+        extra = sorted(found - required)
+        if missing:
+            errors.append(
+                f"{TEMPLATES_DIR}/: missing required target(s) {missing}; the "
+                f"frozen target set is {sorted(required)}"
+            )
+        if extra:
+            errors.append(
+                f"{TEMPLATES_DIR}/: unregistered target(s) {extra}; add them to "
+                f"{SCHEMA} frozen.required_targets"
+            )
+        notes.append(f"required targets: {','.join(sorted(required))}")
 
     used_paths: set[str] = set()
     for path in templates:

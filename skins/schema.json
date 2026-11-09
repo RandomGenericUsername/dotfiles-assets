@@ -113,6 +113,16 @@
       "paper",
       "terminal"
     ],
+    "required_targets": [
+      "ags",
+      "ags-btop-studio",
+      "ags-capture",
+      "ags-clipboard",
+      "ags-icme",
+      "ags-notifications",
+      "ags-wallpaper-selector",
+      "wlogout"
+    ],
     "token_groups": {
       "surface": [
         "panel",
