@@ -30,6 +30,7 @@
 - [req-017-layout-defaults](./req-017-layout-defaults/ticket.md) — Skins layout defaults preserve each app's pre-v2 window size, `v0.12.2` | `done` | lane 2 — bounded correction | worktree `.worktrees/req-017/`, branch `ticket/req-017-layout-defaults` | commits `ad3f39d` + `53daa8b` + close, gates green (`72 passed`), fast-forward merged to `master`, tag `v0.12.2`
 - [req-018-terminal-skin](./req-018-terminal-skin/ticket.md) — Skins terminal: fourth v2 built-in (dense monospace, square/hairline) + cleanup-candidate layout removal, `v0.13.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-018/`, branch `ticket/req-018-terminal-skin` | commits `0da25a9` + `7afea72` + close, gates green (`76 passed`), fast-forward merged to `master`, tag `v0.13.0`, pushed
 - [req-019-wlogout-skin-consumer](./req-019-wlogout-skin-consumer/ticket.md) — Skins wlogout consumer: required-target gate, paint/rhythm template, static appearance import, `v0.14.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-019/`, branch `ticket/req-019-wlogout-skin-consumer` | commits `5737594` + `4fd907e` + `7c00d92` + close, gates green (`89 passed`), tag `v0.14.0`
+- [req-020-host-defaults](./req-020-host-defaults/ticket.md) — Skins host defaults: opt-in `[host]` policy and contracts `v0.9.0` re-vendor, `v0.15.0` | `proposed` | lane 2 — bounded implementation | worktree `.worktrees/req-020/`, branch `ticket/req-020-host-defaults`
 
 ## Bugs
 
