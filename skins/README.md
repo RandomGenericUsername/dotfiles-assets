@@ -60,6 +60,7 @@ skins/
   manifests/flat.toml                     zero-chrome skin
   manifests/paper.toml                    palette-axis skin with explicit mode.light
   manifests/terminal.toml                 dense-monospace, square/hairline skin
+  manifests/terminal-host.toml            terminal paint/type + opt-in host geometry
   templates/ags.gtk.css.j2                bar settings + Bluetooth paint (target: ags)
   templates/ags-clipboard.gtk.css.j2      clipboard overlay (target: ags-clipboard)
   templates/ags-notifications.gtk.css.j2  notification cards (target: ags-notifications)
@@ -70,7 +71,7 @@ skins/
   templates/wlogout.gtk.css.j2            wlogout card fill/state + panel geometry (target: wlogout)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
-  tests/fixtures/positive/                positive fixture (terminal shape the validator must accept)
+  tests/fixtures/positive/                positive fixtures (terminal + terminal-host shapes, wlogout template)
   tests/fixtures/parity/                  glass-vs-source ownership/parity record
 ```
 
@@ -113,31 +114,32 @@ fonts and ink values render verbatim. The v1 `cell-pad` pair is gone: the
 contract stores one numeric `padding` per surface role, so an asymmetric
 component padding keeps its second value as a template literal.
 
-## The four manifests
+## The five manifests
 
 Numbers are stored unitless; the `px` shown in prose is what the template
-renders.
+renders. `terminal-host` carries the same token values as `terminal`; its only
+difference is the opt-in `[host]` policy.
 
-| Token | `glass` (default/fallback) | `flat` | `paper` | `terminal` |
-| --- | --- | --- | --- | --- |
-| `[host]` policy | panel radius + border | none (explicit) | panel radius + border | none (explicit) |
-| `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 | 0 / 1 / 9 |
-| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 |
-| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` |
-| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 | 2 / 1 / 3 / 10 / 600 |
-| `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 | 2 / 1 / 1 / 9 / 0.04 |
-| `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` | `@surface` |
-| `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` | `@surface_container` |
-| `surface.panel.border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.22)` |
-| `surface.panel.shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` | `none` |
-| `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` | `@primary_container` / `@on_primary_container` |
-| `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.5)` |
-| `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` | JetBrainsMono Nerd Font, monospace / 13 / 12 / 9 / 10 / 14 |
-| `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 | 312 / 4 |
+| Token | `glass` (default/fallback) | `flat` | `paper` | `terminal` | `terminal-host` |
+| --- | --- | --- | --- | --- | --- |
+| `[host]` policy | panel radius + border | none (explicit) | panel radius + border | none (explicit) | panel radius + border |
+| `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 | 0 / 1 / 9 | 0 / 1 / 9 (host when supplied) |
+| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 | 0 / 1 / 8 |
+| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` | same as `terminal` |
+| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 | 2 / 1 / 3 / 10 / 600 | same as `terminal` |
+| `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 | 2 / 1 / 1 / 9 / 0.04 | same as `terminal` |
+| `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` | `@surface` | `@surface` |
+| `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` | `@surface_container` | `@surface_container` |
+| `surface.panel.border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.22)` |
+| `surface.panel.shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` | `none` | `none` |
+| `state.selected` fill / ink | `@primary_container` / `@on_primary_container` | `@primary` / `@on_primary` | `@primary_container` / `@on_primary_container` | `@primary_container` / `@on_primary_container` | same as `terminal` |
+| `ink` / `ink-dim` / `accent` / `accent-muted` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.18)` | `@on_surface` / `@on_surface_variant` / same | same as `flat` | `@on_surface` / `alpha(@on_surface, 0.62)` / `@primary` / `alpha(@primary, 0.5)` | same as `terminal` |
+| `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` | JetBrainsMono Nerd Font, monospace / 13 / 12 / 9 / 10 / 14 | same as `terminal` |
+| `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 | 312 / 4 | 312 / 4 |
 
 ### Host defaults (`v0.9.0`)
 
-`glass` and `paper` opt in to the optional root policy:
+`glass`, `paper` and `terminal-host` opt in to the optional root policy:
 
 ```toml
 [host]
@@ -146,7 +148,10 @@ fallback = "skin"
 ```
 
 `terminal` and `flat` deliberately opt out: square/hairline and zero-chrome
-are explicit identities, so they carry no `[host]` block. `[host]` is not a
+are explicit identities, so they carry no `[host]` block. `terminal-host`
+(`v0.16.0`) is the opt-in counterpart: it carries terminal's token values but
+adds the `[host]` block, so a consumer that selects it follows Hyprland panel
+geometry while `terminal` keeps its explicit square frame. `[host]` is not a
 token group and does not change any token type.
 
 - **Allowlist only.** `inherit` must be non-empty, unique and may contain only
@@ -181,9 +186,10 @@ rhythm. The outer geometry comes from `surface.panel`: `border-width` and
 compositor/panel. `surface.control` is no longer used by this target.
 
 The result is a visibly filled card for `glass`
-(`alpha(@surface_container_high, 0.18)`), `paper` (`@surface_container_low`)
-and `terminal` (`@surface_container`); `flat` stays transparent because its own
-card token is transparent. Because `glass` and `paper` delegate
+(`alpha(@surface_container_high, 0.18)`), `paper` (`@surface_container_low`),
+`terminal` (`@surface_container`) and `terminal-host` (the same terminal card
+fill); `flat` stays transparent because its own card token is transparent.
+Because `glass`, `paper` and `terminal-host` delegate
 `surface.panel.radius`/`border-width` to `[host]`, their wlogout cards follow
 the live Hyprland values; `terminal` remains the explicit 0px/1px square
 identity. The static `templates/wlogout/style.css.tpl` remains structure-only
@@ -208,7 +214,7 @@ The static sheet remains structure-only and is unchanged from `v0.15.2`.
 ### Layout defaults preserve the apps' pre-v2 window sizes
 
 `v0.12.2` corrects two blocks that were extracted from CSS minima instead of
-the apps' default window size. All four skins carry the same values, so the
+the apps' default window size. All five skins carry the same values, so the
 default skin keeps the pre-v2 behaviour:
 
 | Block | Value | Source of truth |
@@ -275,6 +281,26 @@ produce a different terminal shape. Only palette-role expressions are used, so
 it still follows the palette family it is generated against. It declares no
 `[host]` policy: the square/hairline radius and border are explicit.
 
+## `terminal-host` is the opt-in Hyprland-following variant
+
+`terminal-host` (`v0.16.0`) is a separate manifest, not a mode or variant of
+`terminal`: its `groups` are byte-for-byte the same terminal values, and its
+only delta is the root `[host]` policy. Selecting it keeps the dense monospace
+paint, type and rhythm, but `surface.panel.radius` and
+`surface.panel.border-width` resolve from the live Hyprland
+`decoration:rounding` / `general:border_size` when available and fall back to
+the skin's `0` / `1` when not. `terminal` remains `[host]`-free, so its
+square/hairline identity is still available explicitly. Neither skin declares
+`mode` overrides.
+
+`make validate-skins` resolves every `[host]` manifest against deterministic
+probe values (`radius=13`, `border-width=2`): the inherited paths must equal
+those values, no other token may move, and no-host manifests must be
+byte-identical with or without the probe. A GTK3 `CssProvider`/style-context
+probe expands the wlogout card target for `terminal-host` with the host values,
+so the host radius is applied while the card fill stays identical to
+`terminal`.
+
 ## What the GTK templates do and do not control
 
 The templates use a `{{SKIN_*}}` placeholder for every role property the v2
@@ -332,13 +358,17 @@ make test-skins       # pytest fixtures, including parity, mode and negative cas
 each manifest against the vendored `appearance-manifest` schema (including the
 optional `[host]` allowlist and fallback), resolves it under both `dark` and
 `light`, validates each resolved `tokens.json` against `appearance-json`, and
-expands all eight templates for all four manifests × both modes. The frozen
+expands all eight templates for all five manifests × both modes (10
+manifest×mode documents). It also feeds deterministic host probe values
+through every `[host]` policy: inherited paths must equal the probe, non-inherited
+tokens must not move, and no-host manifests must be unchanged. The frozen
 `required_targets` set is compared exactly with the discovered template set, so
 a missing `wlogout.gtk.css.j2` (or any other required consumer) fails the gate
 instead of silently dropping a target. It checks the flattened placeholder
 vocabulary two ways, rejects literal hex, transitions/animations,
 structure/variant properties and layout placeholders, and verifies the unit
 rule (length → `<n>px`, letter-spacing → `<n>em`, font-weight unitless).
-`make test-skins` adds the positive frozen values, glass parity against today's
-declarations, paper light/dark expansion, state/role coverage, host
-positive/negative fixtures and the other negative fixtures.
+`make test-skins` adds the positive frozen values (including `terminal-host` =
+`terminal` tokens + `[host]`), glass parity against today's declarations, paper
+light/dark expansion, state/role coverage, host positive/negative fixtures, the
+GTK3 host-geometry probe and the other negative fixtures.

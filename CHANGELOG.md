@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.16.0 — terminal-host: opt-in Hyprland-following terminal skin
+
+### Added
+
+- **A fifth Appearance v2 manifest, `terminal-host`.** It carries the exact
+  `terminal` token values (opaque `@surface` panel, `@surface_container` cards,
+  zero panel/card/cell radii, 1px hairlines, tight paddings and the
+  JetBrainsMono 9–14px scale) and adds only the opt-in root policy:
+  ```toml
+  [host]
+  inherit = ["surface.panel.radius", "surface.panel.border-width"]
+  fallback = "skin"
+  ```
+  A consumer that selects it keeps the terminal paint/type/rhythm while panel
+  geometry follows the live Hyprland `decoration:rounding` /
+  `general:border_size`; without a host value the skin's `0`/`1` square
+  fallback applies.
+- **Host-resolution proof in `make validate-skins`.** For every manifest with a
+  `[host]` policy the gate resolves deterministic probe values
+  (`radius=13`, `border-width=2`): inherited paths must equal the probe, no
+  non-inherited token may move, and a manifest without `[host]` must resolve
+  byte-identically with or without host values. Five manifests × two modes ×
+  eight templates now expand as 10 manifest×mode documents.
+- **Fixture coverage.** `terminal-host` is in the frozen manifest set, has a
+  positive fixture identical to the shipped manifest, and is asserted to equal
+  `terminal`'s groups plus only the `[host]` block. A GTK3 `CssProvider`/
+  style-context probe applies the host radius and proves the wlogout card fill
+  is identical to `terminal`.
+
+### Changed
+
+- `skins/schema.json` `frozen.required_files` now names five manifests;
+  `status` records `v0.16.0`, and the notes name `terminal-host` as the opt-in
+  counterpart of the `[host]`-free `terminal`.
+- `skins/README.md`, the root `README.md` and `catalog.yaml` describe the fifth
+  manifest, the host-resolution gate and the 5 × 2 × 8 expansion matrix.
+
+### Notes
+
+- MINOR additive release: `schema_major` stays `2`; no token path, target,
+  template or required variable changed. `terminal.toml`, every existing skin
+  and every template are byte-unchanged. The original `terminal` stays
+  `[host]`-free and explicit.
+- Downstream **engine assets mirror** and **composition** pins move in their
+  own commits after this tag; the engine assets mirror is `v0.16.0`, and the
+  composition picks that mirror up later. No runtime, provisioning,
+  composition, app or live-state change is in this release.
+
 ## v0.15.3 — wlogout Phase 2c: card state fill correctness
 
 ### Fixed

@@ -32,7 +32,7 @@ TEMPLATE = TEMPLATES / "ags.gtk.css.j2"
 CONTRACTS = ROOT / "skins" / "contracts"
 FIXTURES = Path(__file__).parent / "fixtures" / "invalid"
 POSITIVE = Path(__file__).parent / "fixtures" / "positive"
-MANIFEST_NAMES = ("glass", "flat", "paper", "terminal")
+MANIFEST_NAMES = ("glass", "flat", "paper", "terminal", "terminal-host")
 
 VENDORED = {
     "appearance-manifest.schema.json": "skins/contracts/appearance-manifest.schema.json",
@@ -437,14 +437,17 @@ def test_corpus_passes_the_gate() -> None:
     errors, notes, stats = validate_skins.validate(ROOT)
     assert errors == []
     assert stats == {
-        "manifests": 4,
+        "manifests": 5,
         "templates": 8,
         "targets": sorted(APP_TEMPLATES),
         "tokens": 57,
         "roles": 51,
-        "expansions": 8,
+        "expansions": 10,
+        "host_resolutions": 6,
+        "host_manifests": ["glass", "paper", "terminal-host"],
     }
     assert any("palette roles ==" in note for note in notes)
+    assert any("host policy resolved for glass,paper,terminal-host" in note for note in notes)
     for target in APP_TEMPLATES:
         note = next(
             (item for item in notes if f"target={target} expanded for" in item),
@@ -734,6 +737,15 @@ def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
             "@primary_container",
             "@on_primary_container",
         ),
+        (
+            "terminal-host",
+            "@surface_container",
+            "1px solid alpha(@on_surface, 0.18)",
+            "0px",
+            "8px",
+            "@primary_container",
+            "@on_primary_container",
+        ),
     ],
 )
 def test_wlogout_button_uses_each_skins_card_fill_and_panel_geometry(
@@ -849,6 +861,73 @@ def test_wlogout_focused_card_keeps_card_background_with_gtk3(
     ), "focused card ring did not move to the focus ring"
 
 
+def test_terminal_host_applies_host_radius_and_keeps_terminal_card_fill_with_gtk3(
+    tmp_path: Path,
+) -> None:
+    """Host geometry is applied for terminal-host; card paint stays terminal's."""
+    gi = pytest.importorskip("gi")
+    try:
+        gi.require_version("Gtk", "3.0")
+    except ValueError:  # Gtk 4 already loaded in this interpreter
+        pytest.skip("GTK3 namespace unavailable")
+    from gi.repository import Gtk
+
+    initialised, _argv = Gtk.init_check()
+    if not initialised:
+        pytest.skip("no GDK display for the GTK3 style probe")
+
+    template = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    terminal_css = render(template, "terminal", "dark")
+    host = {
+        "surface.panel.radius": 13,
+        "surface.panel.border-width": 2,
+    }
+    host_tokens = validate_skins._resolve_manifest(
+        load_manifest("terminal-host"), "dark", host
+    )
+    terminal_host_css = validate_skins.expand_template(template, host_tokens)
+    assert "{{" not in terminal_host_css
+
+    # The host values reach the action cards only through panel geometry.
+    button = _wlogout_block(terminal_host_css, "button")
+    assert "border-radius: 13px;" in button
+    assert "border: 2px solid alpha(@on_surface, 0.18);" in button
+    assert "background-color: @surface_container;" in button
+    assert "padding: 8px;" in button
+
+    palette = "\n".join(
+        (
+            "@define-color surface #101820;",
+            "@define-color surface_container #202830;",
+            "@define-color on_surface #d0d8e0;",
+            "@define-color primary #88aaff;",
+            "@define-color primary_container #304860;",
+            "@define-color on_primary_container #d8e8f8;",
+        )
+    ) + "\n"
+    providers = []
+    for name, css in (("terminal", terminal_css), ("terminal-host", terminal_host_css)):
+        probe = tmp_path / f"{name}.css"
+        probe.write_text(palette + css)
+        provider = Gtk.CssProvider()
+        assert provider.load_from_path(str(probe)) is True, name
+        providers.append(provider)
+
+    window = Gtk.Window()
+    card = Gtk.Button(label="probe")
+    window.add(card)
+    context = card.get_style_context()
+    computed = []
+    for provider in providers:
+        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+        colour = context.get_background_color(Gtk.StateFlags.NORMAL)
+        computed.append((colour.red, colour.green, colour.blue, colour.alpha))
+    assert computed[0] == pytest.approx(computed[1]), (
+        "terminal-host changed the terminal card fill"
+    )
+    assert computed[0] == pytest.approx((0x20 / 255, 0x28 / 255, 0x30 / 255, 1.0))
+
+
 
 def test_missing_wlogout_template_fails_the_required_target_gate(tmp_path: Path) -> None:
     root = make_full_root(tmp_path, drop_template="wlogout")
@@ -900,6 +979,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "flat",
         "paper",
         "terminal",
+        "terminal-host",
     ]
     canonical = data["canonical"]
     assert canonical["repository"] == "contracts"
@@ -961,12 +1041,14 @@ def test_manifest_documents_validate_against_the_vendored_manifest_schema() -> N
 def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
     glass = load_manifest("glass")
     paper = load_manifest("paper")
+    terminal_host = load_manifest("terminal-host")
     expected = {
         "inherit": ["surface.panel.radius", "surface.panel.border-width"],
         "fallback": "skin",
     }
     assert glass["host"] == expected
     assert paper["host"] == expected
+    assert terminal_host["host"] == expected
 
     for name in MANIFEST_NAMES:
         manifest = load_manifest(name)
@@ -993,6 +1075,86 @@ def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
     assert policy["properties"]["fallback"]["enum"] == ["skin", "error"]
 
 
+def test_terminal_host_is_terminal_plus_only_the_host_policy() -> None:
+    terminal = load_manifest("terminal")
+    terminal_host = load_manifest("terminal-host")
+    assert terminal_host["name"] == "terminal-host"
+    assert terminal_host["groups"] == terminal["groups"]
+    assert "host" not in terminal
+    assert terminal_host["host"] == {
+        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
+        "fallback": "skin",
+    }
+    assert "mode" not in terminal_host
+
+
+def test_host_values_resolve_only_into_inherited_panel_geometry() -> None:
+    host = {
+        "surface.panel.radius": 13,
+        "surface.panel.border-width": 2,
+    }
+    for name in MANIFEST_NAMES:
+        manifest = load_manifest(name)
+        for mode in ("dark", "light"):
+            base = validate_skins._resolve_manifest(manifest, mode)
+            with_host = validate_skins._resolve_manifest(manifest, mode, host)
+            if "host" not in manifest:
+                assert with_host == base, f"{name}:{mode} must ignore host values"
+                continue
+
+            base_leaves = dict(validate_skins._leaves(base))
+            host_leaves = dict(validate_skins._leaves(with_host))
+            changed = {
+                path
+                for path, value in base_leaves.items()
+                if host_leaves.get(path) != value
+            }
+            mode_groups = manifest.get("mode", {}).get(mode, {})
+            if "surface" in mode_groups:
+                assert changed == set(), f"{name}:{mode} mode override must win"
+            else:
+                assert changed == set(host), f"{name}:{mode}: {changed}"
+
+    terminal_host = validate_skins._resolve_manifest(
+        load_manifest("terminal-host"), "dark", host
+    )
+    assert terminal_host["surface"]["panel"]["radius"] == 13
+    assert terminal_host["surface"]["panel"]["border-width"] == 2
+
+    # The original terminal is explicit: even with host values supplied it
+    # keeps its square/hairline panel geometry.
+    terminal = validate_skins._resolve_manifest(load_manifest("terminal"), "dark", host)
+    assert terminal["surface"]["panel"]["radius"] == 0
+    assert terminal["surface"]["panel"]["border-width"] == 1
+
+    # paper's light surface override wins over the host policy.
+    paper_light = validate_skins._resolve_manifest(
+        load_manifest("paper"), "light", host
+    )
+    assert paper_light["surface"]["panel"]["radius"] == 6
+    assert paper_light["surface"]["panel"]["border-width"] == 1
+
+
+def test_host_fallback_skin_keeps_skin_values_when_the_host_is_silent() -> None:
+    manifest = load_manifest("terminal-host")
+    base = validate_skins._resolve_manifest(manifest, "dark")
+    silent = validate_skins._resolve_manifest(manifest, "dark", {})
+    partial = validate_skins._resolve_manifest(
+        manifest, "dark", {"surface.panel.radius": 9}
+    )
+    assert silent == base
+    assert partial["surface"]["panel"]["radius"] == 9
+    assert partial["surface"]["panel"]["border-width"] == 1
+
+    error_policy = dict(manifest)
+    error_policy["host"] = {
+        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
+        "fallback": "error",
+    }
+    with pytest.raises(ValueError, match="fallback = \"error\""):
+        validate_skins._resolve_manifest(error_policy, "dark", {})
+
+
 def test_positive_host_fixture_is_accepted(tmp_path: Path) -> None:
     fixture = POSITIVE / "host.toml"
     with fixture.open("rb") as handle:
@@ -1002,7 +1164,7 @@ def test_positive_host_fixture_is_accepted(tmp_path: Path) -> None:
     root = make_full_root(tmp_path, manifest_override=("glass", fixture))
     errors, _notes, stats = validate_skins.validate(root)
     assert errors == []
-    assert stats["manifests"] == 4
+    assert stats["manifests"] == 5
 
 
 def test_resolved_tokens_validate_for_every_manifest_and_mode() -> None:
@@ -1324,6 +1486,42 @@ def test_terminal_expands_with_its_dense_monospace_shape() -> None:
     assert render(TEMPLATE.read_text(), "terminal", "light") == css
 
 
+def test_positive_terminal_host_fixture_is_accepted(tmp_path: Path) -> None:
+    fixture = POSITIVE / "terminal-host.toml"
+    with fixture.open("rb") as handle:
+        fixture_data = tomllib.load(handle)
+    assert fixture_data == load_manifest("terminal-host")
+
+    root = make_full_root(tmp_path, manifest_override=("terminal-host", fixture))
+    errors, _notes, stats = validate_skins.validate(root)
+    assert errors == []
+    assert stats["manifests"] == 5
+
+
+def test_terminal_host_expands_like_terminal_until_the_host_supplies_geometry() -> None:
+    template = TEMPLATE.read_text()
+    terminal = render(template, "terminal")
+    terminal_host_fallback = render(template, "terminal-host")
+    assert terminal_host_fallback == terminal
+
+    host = {
+        "surface.panel.radius": 13,
+        "surface.panel.border-width": 2,
+    }
+    tokens = validate_skins._resolve_manifest(
+        load_manifest("terminal-host"), "dark", host
+    )
+    terminal_host = validate_skins.expand_template(template, tokens)
+    assert "{{" not in terminal_host
+    assert "border-radius: 13px;" in terminal_host
+    assert "border: 2px solid alpha(@on_surface, 0.22);" in terminal_host
+    # The host only moves panel geometry: card paint and type are identical.
+    assert "background-color: @surface_container;" in terminal_host
+    assert "border-radius: 0px;" in terminal_host
+    assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal_host
+    assert terminal_host.count("border-radius: 13px;") == 1
+
+
 def test_positive_terminal_fixture_is_accepted(tmp_path: Path) -> None:
     fixture = POSITIVE / "terminal.toml"
     with fixture.open("rb") as handle:
@@ -1333,7 +1531,7 @@ def test_positive_terminal_fixture_is_accepted(tmp_path: Path) -> None:
     root = make_full_root(tmp_path, manifest_override=("terminal", fixture))
     errors, _notes, stats = validate_skins.validate(root)
     assert errors == []
-    assert stats["manifests"] == 4
+    assert stats["manifests"] == 5
 
 
 def test_positive_wlogout_fixture_matches_and_expands() -> None:

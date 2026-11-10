@@ -5,7 +5,7 @@
   "title": "dotfiles-assets appearance manifest v2",
   "schema_major": 2,
   "contract": "skins",
-  "status": "populated (v0.15.3)",
+  "status": "populated (v0.16.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
@@ -113,7 +113,8 @@
       "glass",
       "flat",
       "paper",
-      "terminal"
+      "terminal",
+      "terminal-host"
     ],
     "required_targets": [
       "ags",
@@ -238,7 +239,8 @@
       "surface/state/ink values are palette-role expressions or transparent; a literal hex colour is never a skin value.",
       "GTK 4.24 ignores transitions, so the format forbids them rather than shipping dead declarations.",
       "layout.<app> is a metric namespace consumed by skinValue(); templates MUST NOT expand it into CSS.",
-      "The wlogout target maps wide action-card buttons to surface.card fill/border/padding and surface.panel border-width/radius; glass/paper therefore follow delegated host geometry while terminal and flat stay explicit. Hover/focus keep the card fill and change only state ring/ink; active keeps state.selected fill/ink/ring.",
+      "The wlogout target maps wide action-card buttons to surface.card fill/border/padding and surface.panel border-width/radius; glass/paper/terminal-host therefore follow delegated host geometry while terminal and flat stay explicit. Hover/focus keep the card fill and change only state ring/ink; active keeps state.selected fill/ink/ring.",
+      "terminal-host is the opt-in Hyprland-following variant of terminal: its base tokens are identical to terminal, and only surface.panel.radius/border-width are delegated through [host]. terminal stays [host]-free and explicit.",
       "An override group replaces the base group as a whole; there is no deep merge."
     ]
   },

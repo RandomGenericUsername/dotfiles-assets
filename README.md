@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.15.3`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.16.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -32,8 +32,9 @@ six tool directories — the compositor, editor, prompt and wlogout layout (one 
 SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
-binaries; `skins/` holds four `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
-with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline), eight `<configDir>.gtk.css.j2` templates (the bar's
+binaries; `skins/` holds five `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
+with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline and
+`terminal-host`, the opt-in Hyprland-following terminal variant), eight `<configDir>.gtk.css.j2` templates (the bar's
 settings/Bluetooth set plus clipboard, notifications, wallpaper selector, capture, icme, btop
 studio and the wlogout paint/rhythm sheet; targets `ags`, `ags-clipboard`, `ags-notifications`,
 `ags-wallpaper-selector`, `ags-capture`, `ags-icme`, `ags-btop-studio`, `wlogout`, rendered as
@@ -53,10 +54,12 @@ from every manifest because the apps are corrected to their pre-v2 natural layou
 Since `v0.12.0` `paper` declares an explicit `mode.light` branch instead of guessing from the
 palette, while `terminal` is mode-agnostic. Since `v0.15.0` `glass` and `paper` opt in to the
 `contracts v0.9.0` `[host]` policy for panel radius/border width; `terminal` and `flat` remain
-explicitly opted out. `[host]` is a policy object, not a token group, and
+explicitly opted out. Since `v0.16.0` `terminal-host` is the opt-in variant: it carries the same
+terminal tokens and adds the same `[host]` policy, while the original `terminal` stays
+`[host]`-free. `[host]` is a policy object, not a token group, and
 `mode override > host > skin fallback` is the precedence. Since `v0.15.2` the wlogout generated
 sheet fills each action-card `button` from `surface.card` and takes its border width/radius from
-`surface.panel`, so `glass`/`paper` follow the delegated host geometry while `terminal` stays
+`surface.panel`, so `glass`/`paper`/`terminal-host` follow the delegated host geometry while `terminal` stays
 square and `flat` stays transparent. Since `v0.15.3` hover and focus keep that card fill and move
 only the state ring/ink, so a focused card no longer turns transparent; `:active` keeps the
 selected fill/ink/ring as the deliberate press paint. The static wlogout sheet remains structure-only. Each class

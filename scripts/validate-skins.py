@@ -15,8 +15,8 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.9.0):
      `icons/mappings/vocabulary.json`.
 
   2. EVERY MANIFEST IS A V2 APPEARANCE MANIFEST. The required manifests exist
-     (currently `glass`, `flat`, `paper` and `terminal`), no extra manifest hides
-     beside them, `name` equals the file stem,
+     (currently `glass`, `flat`, `paper`, `terminal` and `terminal-host`), no
+     extra manifest hides beside them, `name` equals the file stem,
      and the document validates against the vendored `appearance-manifest`
      schema (nested `surface`, `state`, `type`, `ink`, `layout.<app>`, optional
      `mode.dark`/`mode.light` overrides and the optional root `host` policy).
@@ -31,6 +31,11 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.9.0):
      override (a provided group replaces the base group as a whole) and
      validates the result against the vendored `appearance-json` schema. The
      resolved document is `version: 2` plus the five fully resolved groups.
+     The gate then feeds deterministic host probe values through every `[host]`
+     policy: an inherited path must resolve to the supplied value, no other
+     token may move, and a manifest with no `[host]` policy must be unchanged.
+     This is how `terminal-host` follows Hyprland panel geometry while
+     `terminal` stays explicit.
 
   4. PLACEHOLDER COVERAGE IS TWO-WAY AND THE UNIT RULE HOLDS. Every
      `{{SKIN_*}}` in a template is the flattened path of a v2 token
@@ -130,6 +135,15 @@ ROLE_REFERENCE = re.compile(r"@([a-z][a-z0-9_]*)")
 GROUPS = ("surface", "state", "type", "ink", "layout")
 CSS_GROUPS = ("surface", "state", "type", "ink")
 MODES = ("dark", "light")
+#: The only token paths the canonical `[host]` policy may delegate.
+HOST_INHERITABLE = ("surface.panel.radius", "surface.panel.border-width")
+#: Deterministic probe values the gate feeds through every `[host]` policy. They
+#: are deliberately different from every skin fallback so a no-op resolution
+#: cannot pass by accident.
+HOST_PROBE = {
+    "surface.panel.radius": 13,
+    "surface.panel.border-width": 2,
+}
 FORBIDDEN_TOP_KEYS = {
     "structure",
     "variant",
@@ -659,8 +673,18 @@ def _validate_manifest(
     return data
 
 
-def _resolve_manifest(manifest: dict, mode: str) -> dict:
-    """Resolve base groups plus the selected mode override (whole-group replace)."""
+def _resolve_manifest(
+    manifest: dict, mode: str, host: dict[str, object] | None = None
+) -> dict:
+    """Resolve base groups, the selected mode override, then the host policy.
+
+    Precedence is `mode override > host > skin fallback`: a group replaced by
+    the selected `mode.<mode>` branch keeps the override value; otherwise an
+    inherited `surface.panel.*` path takes the supplied host value; a path not
+    in `inherit`, or a missing host value under `fallback = "skin"`, keeps the
+    skin value. `fallback = "error"` fails closed when an inherited value is
+    missing.
+    """
     base = manifest.get("groups", {})
     overrides = manifest.get("mode", {}).get(mode, {})
     resolved: dict = {"version": 2}
@@ -669,6 +693,26 @@ def _resolve_manifest(manifest: dict, mode: str) -> dict:
             resolved[group] = copy.deepcopy(overrides[group])
         else:
             resolved[group] = copy.deepcopy(base.get(group))
+
+    policy = manifest.get("host")
+    if isinstance(policy, dict) and host is not None:
+        inherited = policy.get("inherit") if isinstance(policy.get("inherit"), list) else []
+        fallback = policy.get("fallback", "skin")
+        for path in inherited:
+            if path not in HOST_INHERITABLE:
+                continue
+            group, role, token = path.split(".")
+            if isinstance(overrides, dict) and group in overrides:
+                continue
+            supplied = host.get(path)
+            if supplied is None:
+                if fallback == "error":
+                    raise ValueError(
+                        f"{manifest.get('name')!r}: host value {path!r} is required "
+                        f"by fallback = \"error\""
+                    )
+                continue
+            resolved[group][role][token] = supplied
     return resolved
 
 
@@ -849,6 +893,80 @@ def _check_template(
     return used
 
 
+def _leaf(document: dict, path: str):
+    node = document
+    for part in path.split("."):
+        node = node[part]
+    return node
+
+
+def _check_host_resolution(
+    manifest: dict,
+    mode: str,
+    resolved: dict,
+    host_resolved: dict,
+    errors: list[str],
+    stats: dict,
+) -> None:
+    """Prove a supplied host value lands only on the inherited panel paths.
+
+    A manifest with no `[host]` policy is immune: feeding the probe values must
+    leave its resolved document byte-for-byte equal. A manifest with a policy
+    changes exactly the paths the selected mode does not override, and each of
+    those paths equals the supplied value (the `fallback = "skin"` branch is
+    covered by the base resolution).
+    """
+    name = str(manifest.get("name"))
+    policy = manifest.get("host")
+    if not isinstance(policy, dict):
+        if host_resolved != resolved:
+            errors.append(
+                f"{name} ({mode}): host values changed a manifest with no [host] "
+                f"policy; `{name}` must stay explicit"
+            )
+        return
+
+    stats["host_resolutions"] += 1
+    inherited = policy.get("inherit") if isinstance(policy.get("inherit"), list) else []
+    overrides = manifest.get("mode", {}).get(mode, {})
+    expected: set[str] = set()
+    for path in inherited:
+        if path not in HOST_PROBE:
+            continue
+        group = path.split(".")[0]
+        if isinstance(overrides, dict) and group in overrides:
+            continue
+        expected.add(path)
+        try:
+            actual = _leaf(host_resolved, path)
+        except (KeyError, TypeError):
+            errors.append(f"{name} ({mode}): resolved document lost {path!r}")
+            continue
+        if actual != HOST_PROBE[path]:
+            errors.append(
+                f"{name} ({mode}): inherited {path} resolved to {actual!r}, "
+                f"expected host value {HOST_PROBE[path]!r}"
+            )
+
+    base_leaves = dict(_leaves(resolved))
+    host_leaves = dict(_leaves(host_resolved))
+    changed = {
+        path for path, value in base_leaves.items() if host_leaves.get(path) != value
+    }
+    unexpected = sorted(changed - expected)
+    missing = sorted(expected - changed)
+    if unexpected:
+        errors.append(
+            f"{name} ({mode}): host policy changed non-inherited token(s) "
+            f"{unexpected}; only {sorted(HOST_INHERITABLE)} may follow the host"
+        )
+    if missing:
+        errors.append(
+            f"{name} ({mode}): host policy did not apply inherited token(s) "
+            f"{missing}"
+        )
+
+
 def _check_css_token_paths(
     schema: dict, resolved_docs: list[tuple[str, str, dict]], errors: list[str]
 ) -> None:
@@ -879,6 +997,8 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
         "tokens": 0,
         "roles": 0,
         "expansions": 0,
+        "host_resolutions": 0,
+        "host_manifests": [],
     }
 
     schema_path = root / SCHEMA
@@ -953,12 +1073,33 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
     resolved_docs: list[tuple[str, str, dict]] = []
     for manifest in manifest_data:
         name = str(manifest.get("name"))
+        if isinstance(manifest.get("host"), dict):
+            stats["host_manifests"].append(name)
         for mode in MODES:
             resolved = _resolve_manifest(manifest, mode)
             _validate_value(
                 resolved_schema, resolved, f"{name} ({mode} tokens.json)", errors
             )
+            host_resolved = _resolve_manifest(manifest, mode, HOST_PROBE)
+            _validate_value(
+                resolved_schema,
+                host_resolved,
+                f"{name} ({mode} tokens.json + host)",
+                errors,
+            )
+            _check_host_resolution(
+                manifest, mode, resolved, host_resolved, errors, stats
+            )
             resolved_docs.append((name, mode, resolved))
+    stats["host_manifests"] = sorted(stats["host_manifests"])
+    if stats["host_manifests"]:
+        notes.append(
+            "host policy resolved for "
+            f"{','.join(stats['host_manifests'])} with probe "
+            f"radius={HOST_PROBE['surface.panel.radius']} "
+            f"border-width={HOST_PROBE['surface.panel.border-width']}; "
+            "manifests without [host] stayed explicit"
+        )
     stats["expansions"] = len(resolved_docs)
     if resolved_docs:
         _check_css_token_paths(schema, resolved_docs, errors)
@@ -1069,7 +1210,8 @@ def main() -> int:
         f"validate-skins: root={root} manifests={stats['manifests']} "
         f"templates={stats['templates']} targets={targets} "
         f"tokens={stats['tokens']} roles={stats['roles']} "
-        f"modes={len(MODES)} expansions={stats['expansions']}"
+        f"modes={len(MODES)} expansions={stats['expansions']} "
+        f"host={','.join(stats['host_manifests']) or '-'}"
     )
     for note in notes:
         print(f"validate-skins: note: {note}")
