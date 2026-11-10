@@ -32,6 +32,7 @@
 - [req-019-wlogout-skin-consumer](./req-019-wlogout-skin-consumer/ticket.md) — Skins wlogout consumer: required-target gate, paint/rhythm template, static appearance import, `v0.14.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-019/`, branch `ticket/req-019-wlogout-skin-consumer` | commits `5737594` + `4fd907e` + `7c00d92` + close, gates green (`89 passed`), tag `v0.14.0`
 - [req-020-host-defaults](./req-020-host-defaults/ticket.md) — Skins host defaults: opt-in `[host]` policy and contracts `v0.9.0` re-vendor, `v0.15.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-020/`, branch `ticket/req-020-host-defaults` | tag: v0.15.0
 - [req-021-wlogout-card-mapping](./req-021-wlogout-card-mapping/ticket.md) — wlogout Phase 2b: card fill and panel-aligned button geometry, `v0.15.2` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-021/`, branch `ticket/req-021-wlogout-card-mapping` | commits `1c6eedb` + `440990f` + close, gates green (`102 passed, 1 skipped`, `gates-ci` PASS), tag `v0.15.2` (base `v0.15.1`)
+- [req-022-wlogout-card-state](./req-022-wlogout-card-state/ticket.md) — wlogout Phase 2c: hover/focus retain card fill, active keeps selected paint, `v0.15.3` | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-022/`, branch `ticket/req-022-wlogout-card-state`
 
 ## Bugs
 
