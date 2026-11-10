@@ -1,0 +1,94 @@
+/*
+ * skins/templates/gtk3.gtk.css.j2 — GTK3 global paint sheet (target: gtk3).
+ *
+ * GTK3 DIALECT. This file is parsed by every GTK3 application that imports the
+ * shared gtk.css, so it stays deliberately small and conservative: only
+ * `@define-color` aliases and generic paint selectors (`window`, `headerbar`,
+ * `button`, `entry`, `popover`, `.card`, `*:focus`) with their hover/active/
+ * focus states. GTK3 rejects CSS custom properties and colour-mixing
+ * functions; the sheet therefore uses only `@define-color` and alpha
+ * compositing (the latter can arrive inside a resolved paint token). There are
+ * no structure/layout/size properties (no width/height/min/max/margin/
+ * font-size), no transitions and no literal hex colours.
+ *
+ * Paint comes from the v2 surface/state/ink tokens; geometry comes from the
+ * same surface roles. `layout.<app>` stays TSX-owned and is never expanded
+ * here. The consumer imports the palette first, so every `@role` in a resolved
+ * value is already defined when this sheet loads.
+ */
+
+@define-color skin_panel_bg {{SKIN_SURFACE_PANEL_BG}};
+@define-color skin_panel_border {{SKIN_SURFACE_PANEL_BORDER}};
+@define-color skin_card_bg {{SKIN_SURFACE_CARD_BG}};
+@define-color skin_card_border {{SKIN_SURFACE_CARD_BORDER}};
+@define-color skin_control_bg {{SKIN_SURFACE_CONTROL_BG}};
+@define-color skin_control_border {{SKIN_SURFACE_CONTROL_BORDER}};
+@define-color skin_ink {{SKIN_INK_INK}};
+@define-color skin_ink_dim {{SKIN_INK_INK_DIM}};
+@define-color skin_accent {{SKIN_INK_ACCENT}};
+@define-color skin_hover_fill {{SKIN_STATE_HOVER_FILL}};
+@define-color skin_hover_ink {{SKIN_STATE_HOVER_INK}};
+@define-color skin_hover_ring {{SKIN_STATE_HOVER_RING}};
+@define-color skin_selected_fill {{SKIN_STATE_SELECTED_FILL}};
+@define-color skin_selected_ink {{SKIN_STATE_SELECTED_INK}};
+@define-color skin_selected_ring {{SKIN_STATE_SELECTED_RING}};
+@define-color skin_focus_ring {{SKIN_STATE_FOCUS_RING}};
+@define-color skin_disabled_ink {{SKIN_STATE_DISABLED_INK}};
+
+window {
+  background-color: @skin_panel_bg;
+  color: @skin_ink;
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
+  font-weight: {{SKIN_TYPE_FONT_WEIGHT}};
+}
+
+headerbar {
+  background-color: @skin_card_bg;
+  color: @skin_ink;
+  border-bottom: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid @skin_card_border;
+}
+
+button {
+  background-color: @skin_control_bg;
+  color: @skin_ink;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid @skin_control_border;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+button:hover {
+  background-color: @skin_hover_fill;
+  color: @skin_hover_ink;
+  border-color: @skin_hover_ring;
+}
+
+button:active {
+  background-color: @skin_selected_fill;
+  color: @skin_selected_ink;
+  border-color: @skin_selected_ring;
+}
+
+button:focus {
+  border-color: @skin_focus_ring;
+}
+
+entry {
+  background-color: @skin_control_bg;
+  color: @skin_ink;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid @skin_control_border;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+popover,
+.card {
+  background-color: @skin_card_bg;
+  color: @skin_ink;
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid @skin_card_border;
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
+}
+
+*:focus {
+  outline-color: @skin_focus_ring;
+}

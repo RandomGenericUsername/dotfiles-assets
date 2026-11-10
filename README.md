@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.16.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.17.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -16,7 +16,7 @@ templates/   Jinja sources + one *.vars.schema.json per template
 configs/     static config corpus (compositor, editor, prompt, wlogout layout)
 content/     binary/large content (wallpapers, authored themes)
 desktop/     applications/*.desktop + scripts/ + desktop.yaml (requires/optional)
-skins/       v2 Appearance manifests + <configDir>.gtk.css.j2 templates + vendored/pinned canonical schemas
+skins/       v2 Appearance manifests + CSS targets (<configDir>.gtk.css.j2) + non-CSS artifacts (<consumer>.<format>.j2) + vendored/pinned canonical schemas
 ```
 
 `catalog.yaml` is what is inside each class, with a `schema_major` per schema-bearing class. It
@@ -34,12 +34,14 @@ unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries; `skins/` holds five `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
 with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline and
-`terminal-host`, the opt-in Hyprland-following terminal variant), eight `<configDir>.gtk.css.j2` templates (the bar's
-settings/Bluetooth set plus clipboard, notifications, wallpaper selector, capture, icme, btop
-studio and the wlogout paint/rhythm sheet; targets `ags`, `ags-clipboard`, `ags-notifications`,
-`ags-wallpaper-selector`, `ags-capture`, `ags-icme`, `ags-btop-studio`, `wlogout`, rendered as
-`<configDir>.css`), and the pinned byte copies of the
-canonical `contracts` v0.9.0 schemas under `skins/contracts/` — `appearance-manifest`,
+`terminal-host`, the opt-in Hyprland-following terminal variant), eleven templates: eight
+app-owned `<configDir>.gtk.css.j2` sheets (the bar's settings/Bluetooth set plus clipboard,
+notifications, wallpaper selector, capture, icme, btop studio and the wlogout paint/rhythm sheet;
+targets `ags`, `ags-clipboard`, `ags-notifications`, `ags-wallpaper-selector`, `ags-capture`,
+`ags-icme`, `ags-btop-studio`, `wlogout`, rendered as `<configDir>.css`), two global CSS targets
+`gtk3`/`gtk4` (conservative GTK3/GTK4 dialect sheets) and one non-CSS artifact `rofi.rasi.j2`
+(consumer `rofi`, format `rasi`, rendered `rofi.rasi`), and the pinned byte copies of the
+canonical `contracts` v0.10.0 schemas under `skins/contracts/` — `appearance-manifest`,
 `appearance-json` (the resolved `tokens.json`) and `appearance-artifact`, plus the generation
 manifest schema for contract-byte parity and the frozen v1 skin schemas for provenance. The v2
 groups are `surface.{panel,card,cell,control,pill}`,
@@ -53,10 +55,14 @@ preserves the apps' pre-v2 window sizes (`ags-icme` 1280×800, `ags-wallpaper-se
 from every manifest because the apps are corrected to their pre-v2 natural layout in parallel.
 Since `v0.12.0` `paper` declares an explicit `mode.light` branch instead of guessing from the
 palette, while `terminal` is mode-agnostic. Since `v0.15.0` `glass` and `paper` opt in to the
-`contracts v0.9.0` `[host]` policy for panel radius/border width; `terminal` and `flat` remain
+`contracts v0.10.0` `[host]` policy for panel radius/border width; `terminal` and `flat` remain
 explicitly opted out. Since `v0.16.0` `terminal-host` is the opt-in variant: it carries the same
 terminal tokens and adds the same `[host]` policy, while the original `terminal` stays
-`[host]`-free. `[host]` is a policy object, not a token group, and
+`[host]`-free. Since `v0.17.0` the shared template set also ships global `gtk3`/`gtk4` CSS targets
+and the `rofi` `rasi` artifact: GTK3 forbids custom properties/colour-mixing, both GTK sheets stay
+on a conservative selector allowlist with no layout/size properties, and rasi carries solid
+hyphenated palette roles plus px geometry only (no alpha, no underscore role names, typography
+deferred). btop and kitty remain palette-only, so no `theme`/`conf` template ships. `[host]` is a policy object, not a token group, and
 `mode override > host > skin fallback` is the precedence. Since `v0.15.2` the wlogout generated
 sheet fills each action-card `button` from `surface.card` and takes its border width/radius from
 `surface.panel`, so `glass`/`paper`/`terminal-host` follow the delegated host geometry while `terminal` stays
@@ -119,25 +125,27 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `skins/schema.json` — `schema_major: 2`; the local envelope for the v2 Appearance vocabulary
   (`surface`, `state`, `type`, `ink`, `layout.<app>`, `mode` overrides and the optional root
   `host` policy), the 51-role `palette.v1` list, and the delegation to the canonical `contracts`
-  v0.9.0 schemas vendored at
+  v0.10.0 schemas vendored at
   `skins/contracts/{appearance-manifest,appearance-json,appearance-artifact}.schema.json`. No
   cross-repo runtime import: the vendored bytes are pinned by tag and sha256 in
-  `skins/contracts/PIN` (`contracts=v0.9.0`, the host-defaults release). The generation manifest
-  schema is vendored for contract-byte parity only; the frozen v1 skin schemas are pinned at the
-  same tag for provenance only. Manifests validate against
+  `skins/contracts/PIN` (`contracts=v0.10.0`, the format-aware artifact release). The generation
+  manifest schema is vendored for contract-byte parity only; the frozen v1 skin schemas are pinned
+  at the same tag for provenance only. Manifests validate against
   `appearance-manifest`; each manifest is resolved under both `dark` and `light` and the resulting
   `tokens.json` validates against `appearance-json`; `appearance-artifact` describes the generation
   metadata. `[host]` is a policy object, not a group: `inherit` is non-empty, unique and limited to
   `surface.panel.radius`/`surface.panel.border-width`; `fallback` is `skin|error`. Layout values are
   namespaced unitless numbers and are declared TSX-owned: templates
   MUST NOT expand `layout.<app>` into CSS. `make validate-skins` enforces the PIN hashes, template
-  naming (`<configDir>.gtk.css.j2`; all eight targets are reported in the summary and the frozen
-  `required_targets` set is matched exactly), canonical
+  discovery by family/format (`<configDir>.gtk.css.j2` and `<consumer>.<format>.j2`, unknown suffix
+  fails closed), the exact `required_targets` set (including `gtk3`/`gtk4`) and `required_artifacts`
+  set (`rofi`/`rasi`), canonical
   numeric types (a `"12px"` string fails), role-only values, no literal hex/transition/structure,
-  two-way flattened placeholder coverage, no layout token in CSS, and the unit-rule expansion
-  (length → `<n>px`, letter-spacing → `<n>em`, font-weight unitless) of every template through
-  every manifest × mode; `skins/README.md` documents the values, the template naming rule, the
-  manifests, the mode overrides and the overflow-HIDDEN rule.
+  two-way flattened placeholder coverage, no layout token in any format, the GTK3/GTK4 selector
+  allowlist and layout-property ban, rasi solid-role/no-alpha/no-underscore laws, and the
+  per-format expansion of every template through every manifest × mode; `skins/README.md`
+  documents the values, the template naming rule, the manifests, the mode overrides, the
+  per-format rules and the overflow-HIDDEN rule.
 
 ## Gates
 
@@ -151,7 +159,7 @@ make validate-content # the tarball holds a top-level default.png; every *.theme
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
-make validate-skins   # vendored v0.9.0 hashes, v2 manifests/host policy/modes/tokens.json, placeholders, palette.v1 roles, no layout CSS
+make validate-skins   # vendored v0.10.0 hashes, v2 manifests/host/modes/tokens.json, GTK3/GTK4/rasi format gates, palette.v1 roles, no layout output
 make test-skins       # pytest fixtures for the skins class (development dependency)
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
 make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic

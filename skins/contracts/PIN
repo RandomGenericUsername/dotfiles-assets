@@ -4,23 +4,24 @@
 # any vendored file MUST update its sha256 here, and the copy must be re-taken
 # from the tag named below. Do not edit a vendored schema by hand.
 #
-# v0.9.0 adds the optional host-defaults policy to the Appearance plane. The
-# canonical set for this class is the three appearance schemas:
-# `appearance-manifest` (the v2 TOML/JSON manifest envelope, now with the
-# optional root `host` policy), `appearance-json` (the resolved tokens.json
-# document; mode and host values already applied) and `appearance-artifact`
-# (appearance.json metadata). The generation manifest schema is vendored for
-# contract-byte parity; this class emits skin/appearance documents, not
-# generations. The three frozen v1 skin schemas are vendored at the same tag for
-# provenance; this class no longer emits v1 manifests. All lengths are unitless
-# JSON numbers rendered as CSS px, letter-spacing renders as em and font-weight
-# stays unitless.
-contracts=v0.9.0
-source-commit=5c9fd615cae8d6596799bbafaeea93a05b3c3c11
+# v0.10.0 adds the optional `appearance.artifacts` family for non-CSS consumers
+# to the generation manifest (consumer + path + format; format is rasi|conf|theme
+# and CSS stays exclusively in `targets`). The three appearance schemas are the
+# canonical set for this class: `appearance-manifest` (the v2 TOML/JSON manifest
+# envelope with the optional root `host` policy), `appearance-json` (the resolved
+# tokens.json document; mode and host values already applied) and
+# `appearance-artifact` (appearance.json metadata). The generation manifest
+# schema is vendored for contract-byte parity; this class emits skin/appearance
+# documents, not generations, and never writes an artifact path. The three
+# frozen v1 skin schemas are vendored at the same tag for provenance; this class
+# no longer emits v1 manifests. All lengths are unitless JSON numbers rendered
+# as CSS px, letter-spacing renders as em and font-weight stays unitless.
+contracts=v0.10.0
+source-commit=8af8aca54e7107617c4d31655a6eed2665f9b751
 sha256  93a9c03c3dcbdf4b0e0b2fa17dfdebb86b4413c1452490caa4ab683e6e3582f0  appearance-manifest.schema.json
 sha256  3601b764bd7dea0bb7c5e30e010d10303dd6e70cd6423530f2c2df0622311751  appearance-json.schema.json
 sha256  dda28261b7a74372c8643a582eb8a20d63811e8732cd96e2e97b911f33939ac2  appearance-artifact.schema.json
-sha256  16a42f407f5e8c4d93eea3f03879a9e5b5def5b9be929cfba71da65b487325c4  generation-manifest.schema.json
+sha256  abf303424dae04c4a055df7d30f41dbe505f2fabb0616228dfd9ddb78be94f5a  generation-manifest.schema.json
 sha256  6383165244ecb85c91f51bad7194d68a27881f85cada9a41c97585310a2947b5  skin-token.schema.json
 sha256  82d1229cf78cd4cfec54a25677838a912de1d1ecf81d454c9318ed3af2fa64c8  skin-manifest.schema.json
 sha256  fbe980af1f5b4bea961d1addc512e32039dd2d3ae25464d6d528c2445ac04ad4  skin-json.schema.json

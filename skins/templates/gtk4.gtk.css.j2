@@ -1,0 +1,107 @@
+/*
+ * skins/templates/gtk4.gtk.css.j2 — GTK4/libadwaita global paint sheet
+ * (target: gtk4).
+ *
+ * GTK4 DIALECT. GTK4 and libadwaita applications read named colours rather
+ * than a GTK3 widget sheet, so this template publishes the standard
+ * `window_*`, `view_*`, `headerbar_*`, `popover_*`, `card_*` and `accent_*`
+ * names alongside the local skin aliases. The selector surface stays
+ * conservative for the same reason as GTK3: this is a global sheet parsed by
+ * every GTK4 app, not an app-owned widget tree. GTK4's custom-property and
+ * colour-mixing dialect is legal but unnecessary here; the named-colour form is
+ * preferred and uses only `@define-color` and alpha compositing.
+ *
+ * No structure/layout/size properties, no transitions and no literal hex
+ * colours. Paint comes from surface/state/ink; geometry from the surface roles;
+ * `layout.<app>` stays TSX-owned and is never expanded here.
+ */
+
+@define-color window_bg_color {{SKIN_SURFACE_PANEL_BG}};
+@define-color window_fg_color {{SKIN_INK_INK}};
+@define-color view_bg_color {{SKIN_SURFACE_CARD_BG}};
+@define-color view_fg_color {{SKIN_INK_INK}};
+@define-color headerbar_bg_color {{SKIN_SURFACE_CARD_BG}};
+@define-color headerbar_fg_color {{SKIN_INK_INK}};
+@define-color popover_bg_color {{SKIN_SURFACE_CARD_BG}};
+@define-color popover_fg_color {{SKIN_INK_INK}};
+@define-color card_bg_color {{SKIN_SURFACE_CARD_BG}};
+@define-color card_fg_color {{SKIN_INK_INK}};
+@define-color accent_bg_color {{SKIN_INK_ACCENT}};
+@define-color accent_color {{SKIN_INK_ACCENT}};
+
+@define-color skin_panel_bg {{SKIN_SURFACE_PANEL_BG}};
+@define-color skin_panel_border {{SKIN_SURFACE_PANEL_BORDER}};
+@define-color skin_card_bg {{SKIN_SURFACE_CARD_BG}};
+@define-color skin_card_border {{SKIN_SURFACE_CARD_BORDER}};
+@define-color skin_control_bg {{SKIN_SURFACE_CONTROL_BG}};
+@define-color skin_control_border {{SKIN_SURFACE_CONTROL_BORDER}};
+@define-color skin_hover_fill {{SKIN_STATE_HOVER_FILL}};
+@define-color skin_hover_ink {{SKIN_STATE_HOVER_INK}};
+@define-color skin_hover_ring {{SKIN_STATE_HOVER_RING}};
+@define-color skin_selected_fill {{SKIN_STATE_SELECTED_FILL}};
+@define-color skin_selected_ink {{SKIN_STATE_SELECTED_INK}};
+@define-color skin_selected_ring {{SKIN_STATE_SELECTED_RING}};
+@define-color skin_focus_ring {{SKIN_STATE_FOCUS_RING}};
+
+window {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
+  font-weight: {{SKIN_TYPE_FONT_WEIGHT}};
+}
+
+headerbar {
+  background-color: @headerbar_bg_color;
+  color: @headerbar_fg_color;
+  border-bottom: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid @skin_card_border;
+}
+
+button {
+  background-color: @skin_control_bg;
+  color: @view_fg_color;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid @skin_control_border;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+button:hover {
+  background-color: @skin_hover_fill;
+  color: @skin_hover_ink;
+  border-color: @skin_hover_ring;
+}
+
+button:active,
+button:checked {
+  background-color: @skin_selected_fill;
+  color: @skin_selected_ink;
+  border-color: @skin_selected_ring;
+}
+
+button:focus {
+  border-color: @skin_focus_ring;
+}
+
+entry {
+  background-color: @skin_control_bg;
+  color: @view_fg_color;
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid @skin_control_border;
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+entry:focus-within {
+  border-color: @skin_focus_ring;
+}
+
+popover,
+.card {
+  background-color: @popover_bg_color;
+  color: @popover_fg_color;
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid @skin_card_border;
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
+}
+
+*:focus {
+  outline-color: @skin_focus_ring;
+}

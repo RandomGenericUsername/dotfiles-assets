@@ -19,7 +19,7 @@
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
-#   make validate-skins  vendored v0.7.0 schemas + v2 manifests + both modes/tokens.json + placeholder coverage
+#   make validate-skins  vendored v0.10.0 schemas + v2 manifests + both modes/tokens.json + GTK3/GTK4/rasi format gates
 #   make test-skins      pytest fixtures for the skins class (dev dependency)
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
 #   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
@@ -54,7 +54,7 @@ help:
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
-	  'validate-skins    vendored v0.7.0 schemas + v2 manifests + dark/light tokens.json + template naming/coverage + palette.v1 roles' \
+	  'validate-skins    vendored v0.10.0 schemas + v2 manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi artifact + palette.v1 roles' \
 	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
 	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic' \
@@ -135,12 +135,14 @@ validate-desktop:
 # matches its PIN hashes; each manifest validates against appearance-manifest; each
 # manifest resolves under both modes and the resulting tokens.json validates against
 # appearance-json; every role is palette.v1 (no aliases); no value is a literal hex,
-# transition or structure token; the template set is named <configDir>.gtk.css.j2
-# (targets printed in the summary); every flattened {{SKIN_*}} placeholder names a v2
-# token and no layout token appears in CSS; and every template expands for every
-# manifest x mode with the unit rule (length -> <n>px, letter-spacing -> <n>em,
-# font-weight unitless). It is stdlib-only so a fresh clone runs it; `test-skins`
-# adds the negative fixtures.
+# transition or structure token; templates are discovered by family and format
+# (<configDir>.gtk.css.j2 CSS targets, <consumer>.<format>.j2 artifacts) with an
+# unknown suffix failing closed; the frozen required_targets (including gtk3/gtk4)
+# and required_artifacts (rofi/rasi) sets are matched exactly; every flattened
+# {{SKIN_*}} placeholder names a v2 token and no layout token appears in any format;
+# and every template expands for every manifest x mode with the per-format unit rule
+# plus the GTK3/GTK4 selector/dialect and rasi solid-role laws. It is stdlib-only so
+# a fresh clone runs it; `test-skins` adds the GTK/rofi and negative fixtures.
 validate-skins:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-skins.py"
 

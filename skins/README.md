@@ -1,11 +1,13 @@
-# `skins/` — v2 Appearance manifests and the GTK paint templates
+# `skins/` — v2 Appearance manifests, CSS targets and non-CSS artifacts
 
 A **skin** is appearance: surface paint/geometry, interaction state, type, ink
 and mode overrides. It is not a variant and it is not structure: which widget
 sits where, and which named variant a host selects, belong to the app. This
-class now targets the **Appearance token model v2** from `contracts=v0.9.0`;
+class now targets the **Appearance token model v2** from `contracts=v0.10.0`;
 the optional root `[host]` policy is a delegation object, not a token group.
-The frozen v1 skin schemas stay vendored for provenance only.
+The `v0.10.0` release also adds the optional `appearance.artifacts` family for
+non-CSS consumers; this class ships `rofi` as `rasi` and keeps `conf`/`theme`
+reserved. The frozen v1 skin schemas stay vendored for provenance only.
 
 ## The v2 token groups
 
@@ -69,18 +71,38 @@ skins/
   templates/ags-icme.gtk.css.j2           icon color mapping editor (target: ags-icme)
   templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
   templates/wlogout.gtk.css.j2            wlogout card fill/state + panel geometry (target: wlogout)
+  templates/gtk3.gtk.css.j2               global GTK3 paint, conservative selectors (target: gtk3)
+  templates/gtk4.gtk.css.j2               global GTK4/libadwaita named colours (target: gtk4)
+  templates/rofi.rasi.j2                  rofi solid roles + px geometry (artifact: rofi, rasi)
   tests/                                  pytest fixtures mirroring the validator
-  tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
+  tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name, format dialect)
   tests/fixtures/positive/                positive fixtures (terminal + terminal-host shapes, wlogout template)
   tests/fixtures/parity/                  glass-vs-source ownership/parity record
 ```
 
+## Template families: targets vs artifacts
+
+The shared template set has two families, mapped by filename suffix:
+
+- **CSS targets:** `<configDir>.gtk.css.j2` renders `<configDir>.css`. Every
+  target lands in `appearance.targets`.
+- **Non-CSS artifacts:** `<consumer>.<format>.j2` renders `<consumer>.<format>`
+  where `format` is `rasi`, `conf` or `theme`. Every artifact lands in
+  `appearance.artifacts`. The suffix is part of the filename, so an unknown
+  `*.j2` fails closed instead of being silently ignored.
+
+This tag ships `rasi` (`rofi.rasi.j2`). `conf` (kitty) and `theme` (btop) remain
+reserved: btop and kitty stay palette-only until a colour/unit rule makes a
+skin projection honest. `skins/schema.json` freezes the exact
+`required_targets` (including `gtk3`/`gtk4`) and `required_artifacts`
+(`rofi`/`rasi`); a missing or unregistered template fails `validate-skins`.
+
 ## Template set: `<configDir>.gtk.css.j2` → `<configDir>.css`
 
-Every file in `skins/templates/` must be named `<configDir>.gtk.css.j2`; the
-target is the prefix, so `templates/ags.gtk.css.j2` renders `ags.css` and the
-bar consumes it through its config directory. The set covers every AGS app
-and the wlogout CSS consumer:
+The eight app-owned sheets keep the original naming; the two global GTK sheets
+use the same suffix with `gtk3`/`gtk4` consumer aliases (the real config dirs
+contain dots, which the `configDir` grammar excludes). The target is the
+prefix, so `templates/ags.gtk.css.j2` renders `ags.css`.
 
 | Template | Target `configDir` | Canonical source |
 | --- | --- | --- |
@@ -92,6 +114,12 @@ and the wlogout CSS consumer:
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
 | `wlogout.gtk.css.j2` | `wlogout` | logout action cards: `surface.card` fill/border/padding with `surface.panel` radius/border-width; hover/focus keep the card fill and move only state ring/ink; the static source owns structure only and imports this sheet last |
+| `gtk3.gtk.css.j2` | `gtk3` | global GTK3 paint: `@define-color`/alpha only, no custom properties or colour-mixing, allowlisted selectors, no layout/size |
+| `gtk4.gtk.css.j2` | `gtk4` | global GTK4/libadwaita named colours (`window_*`, `view_*`, `accent_*`, …), conservative selectors, no layout/size |
+
+| Artifact template | Consumer / format | Output |
+| --- | --- | --- |
+| `rofi.rasi.j2` | `rofi` / `rasi` | `rofi.rasi`: solid hyphenated palette roles + px geometry; no alpha, no underscore role names, no typography (Pango units deferred) |
 
 ## Placeholder flattening and the value convention
 
@@ -329,8 +357,8 @@ The canonical documents live in the separate `contracts` repository. This
 repository vendors byte-for-byte copies under `skins/contracts/` so the gate
 validates the same bytes a consumer will parse.
 
-- `skins/contracts/PIN` records `contracts=v0.9.0`, the peeled source commit
-  `5c9fd615cae8d6596799bbafaeea93a05b3c3c11` and one `sha256` line per vendored
+- `skins/contracts/PIN` records `contracts=v0.10.0`, the peeled source commit
+  `8af8aca54e7107617c4d31655a6eed2665f9b751` and one `sha256` line per vendored
   file. Editing a vendored schema by hand is a defect; re-vendor from the
   canonical tag and update the PIN in the same change.
 - The three appearance schemas are the delegates. The canonical
@@ -350,25 +378,29 @@ validates the same bytes a consumer will parse.
 ## Validation
 
 ```bash
-make validate-skins   # vendored hashes + v2 manifests + both modes + tokens.json + template naming/expansion
-make test-skins       # pytest fixtures, including parity, mode and negative cases
+make validate-skins   # vendored hashes + v2 manifests + both modes + tokens.json + family/format/expansion gates
+make test-skins       # pytest fixtures, including GTK3/GTK4 parse, rofi dump+stderr, parity, mode and negative cases
 ```
 
 `make validate-skins` is stdlib-only and part of `make gates`. It validates
 each manifest against the vendored `appearance-manifest` schema (including the
 optional `[host]` allowlist and fallback), resolves it under both `dark` and
 `light`, validates each resolved `tokens.json` against `appearance-json`, and
-expands all eight templates for all five manifests × both modes (10
-manifest×mode documents). It also feeds deterministic host probe values
-through every `[host]` policy: inherited paths must equal the probe, non-inherited
-tokens must not move, and no-host manifests must be unchanged. The frozen
-`required_targets` set is compared exactly with the discovered template set, so
-a missing `wlogout.gtk.css.j2` (or any other required consumer) fails the gate
-instead of silently dropping a target. It checks the flattened placeholder
-vocabulary two ways, rejects literal hex, transitions/animations,
-structure/variant properties and layout placeholders, and verifies the unit
-rule (length → `<n>px`, letter-spacing → `<n>em`, font-weight unitless).
+expands all eleven templates for all five manifests × both modes (10
+manifest×mode documents per template). It also feeds deterministic host probe
+values through every `[host]` policy: inherited paths must equal the probe,
+non-inherited tokens must not move, and no-host manifests must be unchanged.
+The frozen `required_targets`/`required_artifacts` sets are compared exactly
+with the discovered template families, so a missing `gtk3`, `gtk4` or `rofi`
+template (or any other required consumer) fails the gate instead of silently
+dropping a target. It checks the flattened placeholder vocabulary two ways,
+rejects literal hex, transitions/animations, structure/variant properties and
+layout placeholders in the rendered bytes, enforces the GTK3 dialect ban
+(custom properties/colour-mixing), the GTK3/GTK4 selector allowlist and
+layout/size-property ban, and the rasi solid-role/no-alpha/no-underscore rules.
 `make test-skins` adds the positive frozen values (including `terminal-host` =
 `terminal` tokens + `[host]`), glass parity against today's declarations, paper
-light/dark expansion, state/role coverage, host positive/negative fixtures, the
-GTK3 host-geometry probe and the other negative fixtures.
+light/dark expansion, state/role coverage, host positive/negative fixtures,
+GTK3/GTK4 provider parse probes, the rofi `-dump-theme`+stderr probe (and its
+negative fixtures proving exit 0 alone is not validation), the GTK3
+host-geometry probe and the other negative fixtures.

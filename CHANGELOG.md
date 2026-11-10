@@ -1,5 +1,74 @@
 # Changelog
 
+## v0.17.0 — format-aware skin templates: GTK3, GTK4 and the rofi rasi artifact
+
+### Added
+
+- **Two global GTK CSS targets, shared by every skin.**
+  `skins/templates/gtk3.gtk.css.j2` (target `gtk3`) and
+  `skins/templates/gtk4.gtk.css.j2` (target `gtk4`) publish surface paint,
+  state paint and the surface geometry from the same v2 tokens. Both stay on a
+  conservative selector allowlist (`window`, `headerbar`, `button`, `entry`,
+  `popover`, `.card`, `*:focus` and their hover/active/focus variants), carry
+  no layout/size/structure properties and no transitions, and use only named
+  colours plus alpha compositing. GTK3 rejects custom properties and
+  colour-mixing; GTK4 publishes the libadwaita `window_*`, `view_*`,
+  `headerbar_*`, `popover_*`, `card_*` and `accent_*` names alongside the local
+  skin aliases. The real config dirs contain dots, so the consumers are the
+  schema-safe aliases `gtk3`/`gtk4`.
+- **One non-CSS artifact: `skins/templates/rofi.rasi.j2`** (consumer `rofi`,
+  format `rasi`, output `rofi.rasi`). It carries solid hyphenated palette roles
+  and px geometry only: no alpha compositing, no underscore role names, no
+  literal hex and no typography (rofi takes Pango points, not the skin's px
+  scale, so type is deferred). btop and kitty remain palette-only and ship no
+  template; `conf`/`theme` stay reserved formats.
+- **Format-aware fixture coverage.** `make test-skins` now proves every skin's
+  GTK3/GTK4 sheet parses through a `Gtk.CssProvider` (child interpreter so the
+  two GTK versions do not collide), runs `rofi -dump-theme` and asserts stderr
+  has no `Failed to parse theme`, and adds negative fixtures for GTK3
+  `var()`/`color-mix()`, a GTK4 out-of-allowlist selector and layout property,
+  and rasi `alpha()`/underscore-role/literal-hex input. The rasi negatives also
+  assert rofi still exits 0 while warning, which is why the gate checks stderr
+  rather than the exit code.
+
+### Changed
+
+- **Re-vendored `contracts v0.10.0`.** `skins/contracts/` is a byte copy of
+  the format-aware artifact release: `appearance-manifest`, `appearance-json`,
+  `appearance-artifact`, the generation manifest with the optional
+  `appearance.artifacts` family, and the frozen v1 skin schemas. The PIN names
+  `contracts=v0.10.0` and source commit
+  `8af8aca54e7107617c4d31655a6eed2665f9b751`; `skins/schema.json`
+  `canonical.tag` moves to the same tag.
+- `skins/schema.json` `frozen.required_targets` adds `gtk3` and `gtk4`, and
+  the new `frozen.required_artifacts` requires `{consumer: rofi, format:
+  rasi}`. Template discovery is fail-closed for both families: an unknown
+  `*.j2` suffix, a missing required target/artifact, or an unregistered extra
+  template fails `make validate-skins`.
+- `scripts/validate-skins.py` now maps suffixes to `(family, format, output)`,
+  renders rasi paint as solid hyphenated roles, scans the rendered bytes for
+  literal hex/structure/transitions/layout, enforces the GTK3 dialect and the
+  GTK3/GTK4 selector + layout-property allowlists, and enforces the rasi
+  no-alpha/no-underscore laws.
+- `skins/README.md`, the root `README.md`, `catalog.yaml` and
+  `templates/README.md` describe the eleven-template two-family set and the
+  v0.10.0 pin.
+
+### Notes
+
+- MINOR additive release: `schema_major` stays `2`; no token path, manifest
+  value or existing app template changed. All five skins now expand eleven
+  shared templates. The new shared templates change every skin entry hash once
+  on the next generation; there is no manifest migration.
+- btop (`.theme`) and kitty (`.conf`) are deliberately not shipped: btop needs
+  literal hex, which the skin plane forbids, and kitty has no palette variables
+  plus an unresolved px→pt rule. Both remain palette-only.
+- Downstream pins move in their own commits: runtime already consumes
+  `contracts v0.10.0`/format-aware templates (`v1.3.0`); provisioning needs the
+  `gtk3`/`gtk4`/`rofi` `appearance` links and static import order; composition
+  pins assets/provisioning later. No runtime, provisioning, composition, app
+  or live-state change is in this release.
+
 ## v0.16.0 — terminal-host: opt-in Hyprland-following terminal skin
 
 ### Added

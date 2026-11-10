@@ -1,0 +1,77 @@
+/*
+ * skins/templates/rofi.rasi.j2 — rofi launcher skin fragment
+ * (artifact: consumer rofi, format rasi).
+ *
+ * RASI DIALECT. rofi has no alpha compositing and no CSS colour functions, and
+ * a role reference must be a hyphenated palette variable (never an underscore
+ * role name). Every paint placeholder below resolves through the rasi renderer
+ * to a solid palette role; geometry resolves to `<n>px`. Typography is
+ * deliberately deferred in Phase 3A (rofi takes Pango points, not the skin's
+ * px scale), so this fragment carries no font/size/letter-spacing token.
+ *
+ * The static rofi config imports the palette first and this fragment last, so
+ * every role reference is already in scope. There is no literal hex, no alpha
+ * compositing, no underscore role name, no structure token and no transition
+ * here.
+ */
+
+window {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}};
+  border-color: {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_PANEL_PADDING}};
+}
+
+mainbox {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
+  spacing: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+inputbar {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}};
+  border-color: {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
+  spacing: {{SKIN_SURFACE_CONTROL_PADDING}};
+}
+
+entry {
+  text-color: {{SKIN_INK_INK}};
+  placeholder-color: {{SKIN_INK_INK_DIM}};
+  cursor-color: {{SKIN_INK_ACCENT}};
+}
+
+element {
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}};
+}
+
+element normal.normal {
+  background-color: transparent;
+  text-color: {{SKIN_INK_INK}};
+}
+
+element alternate.normal {
+  background-color: transparent;
+  text-color: {{SKIN_INK_INK_DIM}};
+}
+
+element selected.normal {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  text-color: {{SKIN_STATE_SELECTED_INK}};
+  border: {{SKIN_SURFACE_CELL_BORDER_WIDTH}};
+  border-color: {{SKIN_STATE_SELECTED_RING}};
+}
+
+element-text {
+  background-color: transparent;
+  text-color: inherit;
+}
+
+element-icon {
+  background-color: transparent;
+}

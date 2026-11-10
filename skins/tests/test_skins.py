@@ -7,8 +7,11 @@ Run with the repository's development dependencies:
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
 that prove the gate actually bites. The model is the v2 Appearance token set
-from ``contracts`` v0.9.0, not the frozen v1 skin vocabulary. The optional
-root ``[host]`` policy is a delegation object, not a token group.
+from ``contracts`` v0.10.0, not the frozen v1 skin vocabulary. The optional
+root ``[host]`` policy is a delegation object, not a token group. The shared
+template set has CSS targets (``<configDir>.gtk.css.j2``) and non-CSS
+artifacts (``<consumer>.<format>.j2``); this tag ships the ``gtk3``/``gtk4``
+targets and the ``rofi``/``rasi`` artifact.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ import importlib.util
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -329,6 +333,13 @@ APP_TEMPLATES = {
 }
 
 PIN = CONTRACTS / "PIN"
+REQUIRED_TARGETS = set(APP_TEMPLATES) | {"gtk3", "gtk4"}
+REQUIRED_ARTIFACTS = [{"consumer": "rofi", "format": "rasi"}]
+FORMAT_TEMPLATES = {
+    "gtk3": ("gtk3.gtk.css.j2", "css"),
+    "gtk4": ("gtk4.gtk.css.j2", "css"),
+    "rofi": ("rofi.rasi.j2", "rasi"),
+}
 
 _SPEC = importlib.util.spec_from_file_location(
     "validate_skins", ROOT / "scripts" / "validate-skins.py"
@@ -356,8 +367,15 @@ def resolved(name: str, mode: str = "dark") -> dict:
     return validate_skins._resolve_manifest(load_manifest(name), mode)
 
 
-def render(template: str, name: str = "glass", mode: str = "dark") -> str:
-    rendered = validate_skins.expand_template(template, resolved(name, mode))
+def render(
+    template: str,
+    name: str = "glass",
+    mode: str = "dark",
+    template_format: str = "css",
+) -> str:
+    rendered = validate_skins.expand_template(
+        template, resolved(name, mode), template_format
+    )
     assert "{{" not in rendered, "unexpanded placeholder in template"
     return rendered
 
@@ -394,6 +412,7 @@ def make_full_root(
     tmp_path: Path,
     *,
     drop_template: str | None = None,
+    drop_artifact: str | None = None,
     manifest_override: tuple[str, Path] | None = None,
     schema_override: Path | None = None,
 ) -> Path:
@@ -401,7 +420,7 @@ def make_full_root(
 
     ``make_root`` deliberately copies one template so a single negative fixture
     is isolated. Required-target coverage needs the whole set, optionally minus
-    one target to prove the gate bites.
+    one target or artifact to prove the gate bites.
     """
     root = tmp_path / "repo"
     (root / "skins" / "manifests").mkdir(parents=True)
@@ -413,8 +432,10 @@ def make_full_root(
     if manifest_override is not None:
         stem, source = manifest_override
         shutil.copy2(source, root / "skins" / "manifests" / f"{stem}.toml")
-    for path in TEMPLATES.glob("*.gtk.css.j2"):
+    for path in TEMPLATES.glob("*.j2"):
         if drop_template is not None and path.name == f"{drop_template}.gtk.css.j2":
+            continue
+        if drop_artifact is not None and path.name == f"{drop_artifact}.rasi.j2":
             continue
         shutil.copy2(path, root / "skins" / "templates" / path.name)
     vocabulary = root / "icons" / "mappings" / "vocabulary.json"
@@ -438,8 +459,9 @@ def test_corpus_passes_the_gate() -> None:
     assert errors == []
     assert stats == {
         "manifests": 5,
-        "templates": 8,
-        "targets": sorted(APP_TEMPLATES),
+        "templates": 11,
+        "targets": sorted(REQUIRED_TARGETS),
+        "artifacts": ["rofi:rasi"],
         "tokens": 57,
         "roles": 51,
         "expansions": 10,
@@ -448,15 +470,23 @@ def test_corpus_passes_the_gate() -> None:
     }
     assert any("palette roles ==" in note for note in notes)
     assert any("host policy resolved for glass,paper,terminal-host" in note for note in notes)
-    for target in APP_TEMPLATES:
+    for target in REQUIRED_TARGETS:
         note = next(
-            (item for item in notes if f"target={target} expanded for" in item),
+            (item for item in notes if f"targets={target} format=css expanded for" in item),
             "",
         )
         assert note, target
         for manifest_name in MANIFEST_NAMES:
             for mode in ("dark", "light"):
                 assert f"{manifest_name}:{mode}" in note, f"{target}: {note}"
+    rofi_note = next(
+        (item for item in notes if "artifacts=rofi format=rasi expanded for" in item),
+        "",
+    )
+    assert rofi_note
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            assert f"{manifest_name}:{mode}" in rofi_note
 
 
 def test_template_target_is_the_filename_prefix() -> None:
@@ -464,9 +494,10 @@ def test_template_target_is_the_filename_prefix() -> None:
     assert TEMPLATE.name[: -len(".gtk.css.j2")] == "ags"
     assert validate_skins.TEMPLATE_NAME.match(TEMPLATE.name)
     assert not (TEMPLATE.parent / "ags-bar.gtk.css.j2").exists()
-    assert sorted(path.name[: -len(".gtk.css.j2")] for path in TEMPLATES.glob("*.j2")) == sorted(
-        APP_TEMPLATES
-    )
+    assert sorted(
+        path.name[: -len(".gtk.css.j2")]
+        for path in TEMPLATES.glob("*.gtk.css.j2")
+    ) == sorted(REQUIRED_TARGETS)
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
@@ -517,8 +548,210 @@ def test_app_template_does_not_expand_layout_tokens(target: str) -> None:
             assert not LAYOUT_PLACEHOLDER.search(css), f"{target}: {manifest_name}:{mode}"
 
 
-def test_required_targets_match_the_template_matrix() -> None:
-    assert set(schema()["frozen"]["required_targets"]) == set(APP_TEMPLATES)
+@pytest.mark.parametrize("name", sorted(FORMAT_TEMPLATES))
+def test_format_template_expands_for_every_manifest_and_mode(name: str) -> None:
+    filename, template_format = FORMAT_TEMPLATES[name]
+    text = (TEMPLATES / filename).read_text()
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            expanded = render(text, manifest_name, mode, template_format)
+            assert "{{" not in expanded, f"{filename}: {manifest_name}:{mode}"
+            assert not validate_skins.PLACEHOLDER.findall(expanded)
+
+
+@pytest.mark.parametrize("name", sorted(FORMAT_TEMPLATES))
+def test_format_template_has_no_literal_hex_structure_or_layout(name: str) -> None:
+    filename, _template_format = FORMAT_TEMPLATES[name]
+    text = (TEMPLATES / filename).read_text()
+    assert not HEX.search(text), f"{filename}: literal hex colour"
+    assert not re.search(r"\btransition\s*:", text), f"{filename}: transition"
+    assert not re.search(r"\banimation\s*:", text), f"{filename}: animation"
+    assert not LAYOUT_PLACEHOLDER.search(text), f"{filename}: layout placeholder"
+    for key in ("structure", "variant"):
+        assert not re.search(rf"\b{key}\s*:", text), f"{filename}: {key} property"
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            expanded = render(text, manifest_name, mode, _template_format)
+            assert not HEX.search(expanded), f"{filename}: rendered hex"
+            assert not LAYOUT_PLACEHOLDER.search(expanded), f"{filename}: rendered layout"
+            assert not re.search(r"\btransition\s*:", expanded), filename
+            assert not re.search(r"\banimation\s*:", expanded), filename
+            assert not re.search(r"\b(?:structure|variant)\s*:", expanded), filename
+
+
+def test_gtk3_template_is_gtk3_dialect_and_conservative() -> None:
+    text = (TEMPLATES / "gtk3.gtk.css.j2").read_text()
+    code = validate_skins._strip_comments(text)
+    assert not re.search(r"\bvar\s*\(", code)
+    assert not re.search(r"\bcolor-mix\s*\(", code)
+    assert validate_skins._selectors(text)
+    assert set(validate_skins._selectors(text)) <= validate_skins.GTK_SELECTORS
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            css = render(text, manifest_name, mode)
+            assert not re.search(r"\bvar\s*\(", css)
+            assert not re.search(r"\bcolor-mix\s*\(", css)
+            assert set(validate_skins._selectors(css)) <= validate_skins.GTK_SELECTORS
+            for line in css.splitlines():
+                assert not validate_skins.GTK_LAYOUT_PROPERTY.match(line), line
+
+
+def test_gtk4_template_is_conservative_and_uses_named_colours() -> None:
+    text = (TEMPLATES / "gtk4.gtk.css.j2").read_text()
+    assert "@define-color window_bg_color" in text
+    assert "@define-color accent_bg_color" in text
+    assert set(validate_skins._selectors(text)) <= validate_skins.GTK_SELECTORS
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            css = render(text, manifest_name, mode)
+            assert set(validate_skins._selectors(css)) <= validate_skins.GTK_SELECTORS
+            for line in css.splitlines():
+                assert not validate_skins.GTK_LAYOUT_PROPERTY.match(line), line
+
+
+def test_rofi_template_is_solid_roles_and_geometry_only() -> None:
+    text = (TEMPLATES / "rofi.rasi.j2").read_text()
+    code = validate_skins._strip_comments(text)
+    assert not validate_skins.RASI_ALPHA.search(code)
+    assert not validate_skins.RASI_UNDERSCORE_ROLE.search(code)
+    assert "SKIN_TYPE_" not in text, "typography is deferred in Phase 3A"
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            rasi = render(text, manifest_name, mode, "rasi")
+            assert not validate_skins.RASI_ALPHA.search(rasi)
+            assert not validate_skins.RASI_UNDERSCORE_ROLE.search(rasi)
+            assert not HEX.search(rasi)
+            assert "SKIN_TYPE_" not in rasi
+            roles = set(schema()["palette"]["roles"])
+            hyphenated = {role.replace("_", "-") for role in roles}
+            assert set(validate_skins.RASI_ROLE.findall(rasi)) <= hyphenated
+
+
+def test_rofi_dump_theme_has_no_parse_warning(tmp_path: Path) -> None:
+    rofi = shutil.which("rofi")
+    if rofi is None:
+        pytest.skip("rofi is not installed")
+    text = (TEMPLATES / "rofi.rasi.j2").read_text()
+    for manifest_name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            path = tmp_path / f"{manifest_name}-{mode}.rasi"
+            path.write_text(render(text, manifest_name, mode, "rasi"))
+            result = subprocess.run(
+                [rofi, "-dump-theme", "-theme", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            assert result.returncode == 0, (manifest_name, mode, result.stderr)
+            assert "Failed to parse theme" not in result.stderr, (
+                manifest_name,
+                mode,
+                result.stderr,
+            )
+            assert result.stdout.strip(), (manifest_name, mode)
+
+
+@pytest.mark.parametrize(
+    ("fixture", "needle"),
+    [
+        ("rofi-alpha", "Failed to parse theme"),
+        ("rofi-underscore", "Failed to parse theme"),
+    ],
+)
+def test_rofi_negative_fixture_warns_while_exiting_zero(
+    tmp_path: Path, fixture: str, needle: str
+) -> None:
+    rofi = shutil.which("rofi")
+    if rofi is None:
+        pytest.skip("rofi is not installed")
+    source = FIXTURES / "format" / fixture / "rofi.rasi.j2"
+    path = tmp_path / "bad.rasi"
+    path.write_text(source.read_text())
+    result = subprocess.run(
+        [rofi, "-dump-theme", "-theme", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert needle in result.stderr, result.stderr
+
+
+def _gtk_parse_probe(template_name: str, gtk_version: str) -> subprocess.CompletedProcess[str]:
+    """Parse every skin's rendered sheet with a GTK provider in a child process.
+
+    GTK3 and GTK4 cannot both be loaded in one interpreter, and the pytest
+    virtualenv may not have `gi`. Prefer the current interpreter, then the
+    system interpreter, and skip only when neither can import `gi`.
+    """
+    script = f"""
+import importlib.util, json, pathlib, sys, tempfile
+root = pathlib.Path({str(ROOT)!r})
+spec = importlib.util.spec_from_file_location("validate_skins", root / "scripts" / "validate-skins.py")
+v = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(v)
+roles = json.loads((root / "skins" / "schema.json").read_text())["palette"]["roles"]
+defs = "\\n".join(f"@define-color {{role}} #123456;" for role in roles)
+import gi
+gi.require_version("Gtk", {gtk_version!r})
+from gi.repository import Gtk
+template = (root / "skins" / "templates" / {template_name!r}).read_text()
+parsed = 0
+for name in ("glass", "flat", "paper", "terminal", "terminal-host"):
+    manifest = __import__("tomllib").loads((root / "skins" / "manifests" / f"{{name}}.toml").read_text())
+    for mode in ("dark", "light"):
+        resolved = v._resolve_manifest(manifest, mode)
+        css = v.expand_template(template, resolved, "css")
+        path = pathlib.Path(tempfile.mkdtemp()) / "gtk.css"
+        path.write_text(defs + "\\n" + css)
+        provider = Gtk.CssProvider()
+        result = provider.load_from_path(str(path))
+        if result is False:
+            sys.exit(f"{{name}}:{{mode}} GTK parse returned False")
+        parsed += 1
+print(f"parsed {{parsed}}/10")
+"""
+    candidates = [sys.executable, Path(sys.base_prefix) / "bin" / "python3", Path("/usr/bin/python3")]
+    seen: set[str] = set()
+    for candidate in candidates:
+        executable = str(candidate)
+        if executable in seen or not Path(executable).is_file():
+            continue
+        seen.add(executable)
+        check = subprocess.run(
+            [executable, "-c", "import gi"], capture_output=True, text=True, check=False
+        )
+        if check.returncode == 0:
+            return subprocess.run(
+                [executable, "-c", script],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+    pytest.skip("no interpreter with gi (PyGObject) is available for the GTK probe")
+
+
+@pytest.mark.parametrize(
+    ("template_name", "gtk_version"),
+    [("gtk3.gtk.css.j2", "3.0"), ("gtk4.gtk.css.j2", "4.0")],
+)
+def test_gtk_format_template_parses_every_skin(
+    template_name: str, gtk_version: str
+) -> None:
+    result = _gtk_parse_probe(template_name, gtk_version)
+    assert result.returncode == 0, result.stderr
+    assert "parsed 10/10" in result.stdout, result.stdout
+    assert "parser error" not in result.stderr.lower(), result.stderr
+
+
+def test_required_targets_and_artifacts_match_the_template_matrix() -> None:
+    assert set(schema()["frozen"]["required_targets"]) == REQUIRED_TARGETS
+    assert schema()["frozen"]["required_artifacts"] == REQUIRED_ARTIFACTS
+    assert sorted(
+        path.name for path in TEMPLATES.glob("*.rasi.j2")
+    ) == ["rofi.rasi.j2"]
+    assert not list(TEMPLATES.glob("*.conf.j2"))
+    assert not list(TEMPLATES.glob("*.theme.j2"))
 
 
 def test_wlogout_template_is_paint_and_rhythm_only() -> None:
@@ -935,6 +1168,41 @@ def test_missing_wlogout_template_fails_the_required_target_gate(tmp_path: Path)
     assert any("missing required target(s) ['wlogout']" in error for error in errors), errors
 
 
+def test_missing_gtk_target_fails_the_required_target_gate(tmp_path: Path) -> None:
+    root = make_full_root(tmp_path, drop_template="gtk3")
+    errors = errors_for(root)
+    assert any("missing required target(s) ['gtk3']" in error for error in errors), errors
+
+
+def test_missing_rofi_artifact_fails_the_required_artifact_gate(tmp_path: Path) -> None:
+    root = make_full_root(tmp_path, drop_artifact="rofi")
+    errors = errors_for(root)
+    assert any(
+        "missing required artifact(s) ['rofi:rasi']" in error for error in errors
+    ), errors
+
+
+def test_schema_without_required_artifacts_fails(tmp_path: Path) -> None:
+    data = schema()
+    del data["frozen"]["required_artifacts"]
+    bad_schema = tmp_path / "schema-no-artifacts.json"
+    bad_schema.write_text(json.dumps(data))
+    root = make_full_root(tmp_path, schema_override=bad_schema)
+    errors = errors_for(root)
+    assert any("frozen.required_artifacts" in error for error in errors), errors
+
+
+def test_unregistered_extra_artifact_fails(tmp_path: Path) -> None:
+    root = make_full_root(tmp_path)
+    (root / "skins" / "templates" / "kitty.conf.j2").write_text(
+        "font_family {{SKIN_TYPE_FONT_FAMILY}}\n"
+    )
+    errors = errors_for(root)
+    assert any(
+        "unregistered artifact(s) ['kitty:conf']" in error for error in errors
+    ), errors
+
+
 def test_schema_without_required_targets_fails(tmp_path: Path) -> None:
     data = schema()
     del data["frozen"]["required_targets"]
@@ -993,7 +1261,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.9.0"
+    assert canonical["tag"] == "v0.10.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "manifest": "skins/contracts/appearance-manifest.schema.json",
@@ -1011,7 +1279,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
     assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "5c9fd615cae8d6596799bbafaeea93a05b3c3c11"
+    assert metadata["source-commit"] == "8af8aca54e7107617c4d31655a6eed2665f9b751"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -1682,6 +1950,13 @@ def test_bad_manifest_fails(tmp_path: Path, fixture: str, needle: str) -> None:
         ("unknown-placeholder.gtk.css.j2", "is not a token"),
         ("layout-placeholder.gtk.css.j2", "layout token"),
         ("ags-bar.css.j2", "template name"),
+        ("format/gtk3-var/gtk3.gtk.css.j2", "GTK3 var()"),
+        ("format/gtk3-mix/gtk3.gtk.css.j2", "GTK3 color-mix()"),
+        ("format/gtk4-selector/gtk4.gtk.css.j2", "outside the conservative GTK allowlist"),
+        ("format/gtk4-size/gtk4.gtk.css.j2", "layout/size property"),
+        ("format/rofi-alpha/rofi.rasi.j2", "must not contain alpha()"),
+        ("format/rofi-underscore/rofi.rasi.j2", "hyphenated role names"),
+        ("format/rofi-hex/rofi.rasi.j2", "literal hex colour"),
     ],
 )
 def test_bad_template_fails(tmp_path: Path, fixture: str, needle: str) -> None:
