@@ -307,13 +307,11 @@ APP_TEMPLATES = {
         ],
         "tokens": {
             "SKIN_SURFACE_PANEL_BG",
-            "SKIN_SURFACE_CONTROL_BG",
-            "SKIN_SURFACE_CONTROL_BORDER",
-            "SKIN_SURFACE_CONTROL_BORDER_WIDTH",
-            "SKIN_SURFACE_CONTROL_RADIUS",
-            "SKIN_SURFACE_CONTROL_PADDING",
-            "SKIN_SURFACE_CONTROL_FONT_SIZE",
-            "SKIN_SURFACE_CONTROL_FONT_WEIGHT",
+            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
+            "SKIN_SURFACE_PANEL_RADIUS",
+            "SKIN_SURFACE_CARD_BG",
+            "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_PADDING",
             "SKIN_STATE_HOVER_FILL",
             "SKIN_STATE_HOVER_INK",
             "SKIN_STATE_HOVER_RING",
@@ -590,21 +588,153 @@ def test_static_wlogout_stylesheet_does_not_own_skin_paint_or_rhythm() -> None:
     assert body.rstrip().endswith('@import url("appearance.css");')
 
 
-def test_wlogout_template_expands_panel_control_state_and_type() -> None:
+def _gtk3_parsing_errors(css_path: Path) -> list[str]:
+    gi = pytest.importorskip("gi")
+    try:
+        gi.require_version("Gtk", "3.0")
+    except ValueError:  # Gtk 4 already loaded in this interpreter
+        pytest.skip("GTK3 namespace unavailable")
+    from gi.repository import Gtk
+
+    provider = Gtk.CssProvider()
+    problems: list[str] = []
+    provider.connect(
+        "parsing-error",
+        lambda _provider, _section, error: problems.append(error.message),
+    )
+    assert provider.load_from_path(str(css_path)) is True
+    return problems
+
+
+def _write_wlogout_render_tree(tmp_path: Path) -> tuple[Path, Path]:
+    """Write the static sheet with real palette/wallpaper/icon paths."""
+    colors = tmp_path / "colors.gtk.css"
+    roles = (
+        "surface",
+        "surface_container",
+        "surface_container_high",
+        "surface_container_low",
+        "surface_container_lowest",
+        "on_surface",
+        "primary",
+        "primary_container",
+        "on_primary_container",
+        "shadow",
+    )
+    colors.write_text(
+        "\n".join(f"@define-color {role} #202830;" for role in roles) + "\n"
+    )
+
+    icons = tmp_path / "state" / "dotfiles" / "current" / "icons"
+    icons.mkdir(parents=True)
+    for tile in ("lock", "logout", "suspend", "hibernate", "shutdown", "reboot"):
+        shutil.copy2(
+            ROOT / "icons" / "templates" / "wlogout" / tile / "default" / "icon.svg",
+            icons / f"{tile}.svg",
+        )
+
+    static = (ROOT / "templates" / "wlogout" / "style.css.tpl").read_text()
+    static_css = (
+        static.replace("{{COLORS_FILE_PATH}}", str(colors))
+        .replace("{{CURRENT_WALLPAPER_SYMLINK}}", str(icons / "lock.svg"))
+        .replace("{{STATE_ROOT}}", str(tmp_path / "state"))
+    )
+    assert "{{" not in static_css, "unexpanded static wlogout variable"
+    sheet = tmp_path / "style.css"
+    sheet.write_text(static_css)
+    return sheet, tmp_path / "appearance.css"
+
+
+def test_wlogout_static_and_combined_parse_with_gtk3(tmp_path: Path) -> None:
+    sheet, appearance = _write_wlogout_render_tree(tmp_path)
+    appearance.write_text("")
+    assert _gtk3_parsing_errors(sheet) == []
+
+    template = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    for name in MANIFEST_NAMES:
+        appearance.write_text(render(template, name, "dark"))
+        assert _gtk3_parsing_errors(sheet) == [], name
+
+
+def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
+    text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    button = re.search(r"(?ms)^button\s*\{(.*?)^\}", text)
+    assert button is not None
+    body = button.group(1)
+    for placeholder in (
+        "{{SKIN_SURFACE_CARD_BG}}",
+        "{{SKIN_SURFACE_CARD_BORDER}}",
+        "{{SKIN_SURFACE_PANEL_BORDER_WIDTH}}",
+        "{{SKIN_SURFACE_PANEL_RADIUS}}",
+        "{{SKIN_SURFACE_CARD_PADDING}}",
+    ):
+        assert placeholder in body, f"button missing {placeholder}"
+    assert "SKIN_SURFACE_CONTROL" not in text, "buttons are cards, not controls"
+    for state in ("HOVER", "FOCUS", "SELECTED"):
+        assert f"{{{{SKIN_STATE_{state}_FILL}}}}" in text
+        assert f"{{{{SKIN_STATE_{state}_INK}}}}" in text
+        assert f"{{{{SKIN_STATE_{state}_RING}}}}" in text
+    for token in ("FONT_FAMILY", "SIZE_TITLE", "FONT_WEIGHT", "LETTER_SPACING"):
+        assert f"{{{{SKIN_TYPE_{token}}}}}" in text
+
+
+@pytest.mark.parametrize(
+    ("name", "fill", "border", "radius", "padding"),
+    [
+        (
+            "glass",
+            "alpha(@surface_container_high, 0.18)",
+            "1.5px solid alpha(@on_surface, 0.10)",
+            "12px",
+            "10px",
+        ),
+        ("flat", "transparent", "0px solid transparent", "0px", "10px"),
+        (
+            "paper",
+            "@surface_container_low",
+            "1px solid alpha(@on_surface, 0.10)",
+            "6px",
+            "10px",
+        ),
+        (
+            "terminal",
+            "@surface_container",
+            "1px solid alpha(@on_surface, 0.18)",
+            "0px",
+            "8px",
+        ),
+    ],
+)
+def test_wlogout_button_uses_each_skins_card_fill_and_panel_geometry(
+    name: str, fill: str, border: str, radius: str, padding: str
+) -> None:
+    css = render((TEMPLATES / "wlogout.gtk.css.j2").read_text(), name, "dark")
+    assert f"background-color: {fill};" in css, name
+    assert f"border: {border};" in css, name
+    assert f"border-radius: {radius};" in css, name
+    assert f"padding: {padding};" in css, name
+
+
+def test_wlogout_template_expands_card_panel_state_and_type() -> None:
     text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
     glass = render(text, "glass", "dark")
     assert "background-color: alpha(@surface, 0.94);" in glass
-    assert "border: 1px solid alpha(@on_surface, 0.26);" in glass
-    assert "border-radius: 7px;" in glass
+    assert "background-color: alpha(@surface_container_high, 0.18);" in glass
+    assert "border: 1.5px solid alpha(@on_surface, 0.10);" in glass
+    assert "border-radius: 12px;" in glass
+    assert "padding: 10px;" in glass
     assert "font-size: 12.5px;" in glass
     assert "font-family: inherit;" in glass
     assert "letter-spacing: 0em;" in glass
 
     terminal = render(text, "terminal", "dark")
-    assert "background-color: @surface;" in terminal
-    assert "border: 1px solid alpha(@on_surface, 0.30);" in terminal
+    assert "background-color: @surface_container;" in terminal
+    assert "border: 1px solid alpha(@on_surface, 0.18);" in terminal
+    assert "border-radius: 0px;" in terminal
+    assert "padding: 8px;" in terminal
     assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal
     assert "font-size: 13px;" in terminal
+
 
 
 def test_missing_wlogout_template_fails_the_required_target_gate(tmp_path: Path) -> None:

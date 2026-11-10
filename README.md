@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.15.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.15.2`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -54,7 +54,10 @@ Since `v0.12.0` `paper` declares an explicit `mode.light` branch instead of gues
 palette, while `terminal` is mode-agnostic. Since `v0.15.0` `glass` and `paper` opt in to the
 `contracts v0.9.0` `[host]` policy for panel radius/border width; `terminal` and `flat` remain
 explicitly opted out. `[host]` is a policy object, not a token group, and
-`mode override > host > skin fallback` is the precedence. Each class
+`mode override > host > skin fallback` is the precedence. Since `v0.15.2` the wlogout generated
+sheet fills each action-card `button` from `surface.card` and takes its border width/radius from
+`surface.panel`, so `glass`/`paper` follow the delegated host geometry while `terminal` stays
+square and `flat` stays transparent. The static wlogout sheet remains structure-only. Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names

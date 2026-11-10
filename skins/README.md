@@ -67,7 +67,7 @@ skins/
   templates/ags-capture.gtk.css.j2        capture bar/overlay/panel (target: ags-capture)
   templates/ags-icme.gtk.css.j2           icon color mapping editor (target: ags-icme)
   templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
-  templates/wlogout.gtk.css.j2            wlogout paint/rhythm (target: wlogout)
+  templates/wlogout.gtk.css.j2            wlogout card fill + panel geometry (target: wlogout)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
   tests/fixtures/positive/                positive fixture (terminal shape the validator must accept)
@@ -90,7 +90,7 @@ and the wlogout CSS consumer:
 | `ags-capture.gtk.css.j2` | `ags-capture` | capture bar/overlay/panel |
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
-| `wlogout.gtk.css.j2` | `wlogout` | logout menu paint/rhythm/type; the static source owns structure only and imports this sheet last |
+| `wlogout.gtk.css.j2` | `wlogout` | logout action cards: `surface.card` fill/border/padding with `surface.panel` radius/border-width; the static source owns structure only and imports this sheet last |
 
 ## Placeholder flattening and the value convention
 
@@ -170,6 +170,25 @@ token group and does not change any token type.
 `make validate-skins` enforces the allowlist through the vendored
 `appearance-manifest` schema (including `items`, `minItems` and
 `uniqueItems`); `make test-skins` adds positive/negative host fixtures.
+
+### wlogout action cards align to the panel (`v0.15.2`)
+
+wlogout's `button` widgets are wide action cards, not compact controls. The
+generated `wlogout.gtk.css.j2` therefore maps the base card to `surface.card`:
+`bg` becomes the fill, `border` the border colour and `padding` the card
+rhythm. The outer geometry comes from `surface.panel`: `border-width` and
+`radius` keep the action cards on the same rounding/frame as the
+compositor/panel. `surface.control` is no longer used by this target.
+
+`button:hover` / `:focus` / `:active` still use the matching `state.*` paint and
+`button span` still uses `type.*` typography. The result is a visibly filled
+card for `glass` (`alpha(@surface_container_high, 0.18)`), `paper`
+(`@surface_container_low`) and `terminal` (`@surface_container`); `flat` stays
+transparent because its own card token is transparent. Because `glass` and
+`paper` delegate `surface.panel.radius`/`border-width` to `[host]`, their
+wlogout cards follow the live Hyprland values; `terminal` remains the explicit
+0px/1px square identity. The static `templates/wlogout/style.css.tpl` remains
+structure-only and unchanged from `v0.15.1`.
 
 ### Layout defaults preserve the apps' pre-v2 window sizes
 

@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.15.2 — wlogout Phase 2b: card fill and panel-aligned geometry
+
+### Changed
+
+- **W-2.11/W-2.12: wlogout buttons are filled action cards.** The generated
+  `skins/templates/wlogout.gtk.css.j2` now maps `button` background, border
+  colour and padding to `surface.card` (`bg`, `border`, `padding`) and its
+  border width/radius to `surface.panel` (`border-width`, `radius`). Buttons are
+  no longer mapped to the often-transparent `surface.control`.
+- **W-2.13: states and typography are unchanged.** `button:hover`,
+  `button:focus` and `button:active` keep the matching `state.*` fill/ink/ring;
+  `button span` keeps `type.*` family/weight/letter-spacing/size-title.
+- **W-2.15: host-aligned outer geometry.** `glass`/`paper` delegate
+  `surface.panel.radius` and `border-width` through `[host]`, so their wlogout
+  cards follow the live Hyprland rounding/border size; `terminal` stays
+  explicit at 0px/1px and `flat` stays transparent with 0px/0px. Expansion
+  tests pin all four skins.
+- **W-2.14: the static sheet does not move.** `templates/wlogout/style.css.tpl`
+  is byte-identical to `v0.15.1`: palette import, wallpaper, icons, sizing,
+  motion and the last `appearance.css` import remain structure-only. The
+  existing forbidden-declaration grep still returns zero.
+
+### Added
+
+- **W-2.16 test coverage.** Template/expansion tests assert the card fill and
+  panel border/radius placeholders for every skin, plus a conditional GTK3
+  `CssProvider` test that parses the static and combined sheets and collects
+  zero `parsing-error` signals. Broadway wlogout combined smoke and the GTK3
+  probes are recorded in `tickets/req-021-wlogout-card-mapping/ticket.md`.
+
+### Notes
+
+- PATCH correctness release: `schema_major` stays `2`; no token path, target or
+  required variable changed. The generated wlogout sheet bytes change for every
+  skin, so its appearance hash churns once on the next generation; there is no
+  migration.
+- Downstream **engine assets mirror** and **composition** pins move in their
+  own commits after this tag. No runtime, provisioning, composition, app or
+  live-state change is in this release.
+
 ## v0.15.1 — wlogout static sheet stops owning skin paint
 
 ### Fixed

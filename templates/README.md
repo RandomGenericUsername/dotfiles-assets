@@ -22,7 +22,7 @@ templates/
   supplied values against.
 - A schema with no sibling template is a defect too: it describes a contract nothing renders.
 
-## What ships at `v0.15.1` — 9 templates, 9 schemas, 22 required variables, 1 optional
+## What ships at `v0.15.2` — 9 templates, 9 schemas, 22 required variables, 1 optional
 
 | Group | Template | Required | Optional | What it is |
 | --- | --- | --- | --- | --- |
