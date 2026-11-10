@@ -540,6 +540,56 @@ def test_wlogout_template_is_paint_and_rhythm_only() -> None:
         assert banned not in text, f"wlogout template contains structural token {banned!r}"
 
 
+def test_static_wlogout_stylesheet_does_not_own_skin_paint_or_rhythm() -> None:
+    """The generated sheet owns paint/rhythm/type; the static sheet owns structure.
+
+    W-2.6 regression: importing `appearance.css` last is not enough while the
+    static sheet still declares the pre-skin colour, background, border,
+    radius, padding, font, shadow and opacity. Comments are stripped first so
+    prose naming a property does not count as a declaration.
+    """
+    static = (ROOT / "templates" / "wlogout" / "style.css.tpl").read_text()
+    body = re.sub(r"/\*.*?\*/", "", static, flags=re.DOTALL)
+
+    forbidden = re.compile(
+        r"(?mi)^\s*(?:"
+        r"border(?:-[a-z-]+)?|"
+        r"padding(?:-[a-z-]+)?|"
+        r"color|"
+        r"background-color|"
+        r"box-shadow|"
+        r"opacity|"
+        r"font(?:-(?:family|size|weight))?"
+        r")\s*:"
+    )
+    offenders = [match.group(0).strip() for match in forbidden.finditer(body)]
+    assert offenders == [], f"static wlogout sheet still owns paint/rhythm: {offenders}"
+
+    for name in ("SYSTEM_FONT_FAMILY", "FONT_SIZE_PX"):
+        assert name not in static, f"static wlogout sheet still reads {name}"
+
+    # App-owned structure must survive the paint removal.
+    for needle in (
+        '@import url("{{COLORS_FILE_PATH}}");',
+        'background-image: url("{{CURRENT_WALLPAPER_SYMLINK}}");',
+        "background-size: cover;",
+        "background-position: center;",
+        "background-repeat: no-repeat;",
+        "background-size: 20%;",
+        "background-size: 30%;",
+        "-gtk-icon-effect: none;",
+        "animation: gradient_f",
+        "transition:",
+        "background-image: image(url(\"{{STATE_ROOT}}/dotfiles/current/icons/lock.svg\"));",
+        "background-image: image(url(\"{{STATE_ROOT}}/dotfiles/current/icons/reboot.svg\"));",
+    ):
+        assert needle in static, f"static wlogout sheet dropped app-owned structure: {needle}"
+
+    # The palette fallback stays first; the generated skin stays last.
+    assert body.lstrip().startswith('@import url("{{COLORS_FILE_PATH}}");')
+    assert body.rstrip().endswith('@import url("appearance.css");')
+
+
 def test_wlogout_template_expands_panel_control_state_and_type() -> None:
     text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
     glass = render(text, "glass", "dark")

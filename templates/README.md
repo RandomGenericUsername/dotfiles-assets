@@ -22,12 +22,12 @@ templates/
   supplied values against.
 - A schema with no sibling template is a defect too: it describes a contract nothing renders.
 
-## What ships at `v0.6.0` — 9 templates, 9 schemas, 24 required variables, 1 optional
+## What ships at `v0.15.1` — 9 templates, 9 schemas, 22 required variables, 1 optional
 
 | Group | Template | Required | Optional | What it is |
 | --- | --- | --- | --- | --- |
 | `zsh/` | `.zshrc.j2` | 11 | 0 | the interactive shell: starship, oh-my-zsh, distro plugin paths, nvm/pyenv, the runtime palette `cat`, the `.zshrc.local` overlay |
-| `wlogout/` | `style.css.tpl` | 5 | 0 | the logout stylesheet: palette import, runtime current/wallpaper + icons, font tunables, and the generated `appearance.css` import LAST |
+| `wlogout/` | `style.css.tpl` | 3 | 0 | the logout stylesheet: palette import, runtime current/wallpaper + icons, and the generated `appearance.css` import LAST; skin paint/rhythm/type are generated, not static |
 | `kitty/` | `kitty.conf.j2` | 1 | 0 | kitty's config: one absolute include of the runtime palette |
 | `btop/` | `btop.conf.j2` | 1 | 0 | btop's config: the selected theme **filename** + `save_config_on_exit = false` |
 | `display-manager/` | `sddm.conf.j2` | 1 | 1 | SDDM + Pixie, Wayland greeter; optional `[Wayland] CompositorCommand` (default `weston --shell=kiosk`) |

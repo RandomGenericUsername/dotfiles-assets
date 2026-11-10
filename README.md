@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.15.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.15.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -28,7 +28,7 @@ directories plus one group map and its vocabulary; `content/` holds the unmodifi
 and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
 six tool directories — the compositor, editor, prompt and wlogout layout (one file,
 `hyprland.lua`, carries a single host path the consumer renders; the rest are literal);
-`templates/` holds nine Jinja sources with nine vars schemas (24 required variables and one optional
+`templates/` holds nine Jinja sources with nine vars schemas (22 required variables and one optional
 SDDM greeter compositor command, defaulting to `weston --shell=kiosk`), each imported with its body
 unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`

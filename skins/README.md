@@ -90,7 +90,7 @@ and the wlogout CSS consumer:
 | `ags-capture.gtk.css.j2` | `ags-capture` | capture bar/overlay/panel |
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
-| `wlogout.gtk.css.j2` | `wlogout` | logout menu paint/rhythm |
+| `wlogout.gtk.css.j2` | `wlogout` | logout menu paint/rhythm/type; the static source owns structure only and imports this sheet last |
 
 ## Placeholder flattening and the value convention
 

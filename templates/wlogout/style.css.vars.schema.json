@@ -1,9 +1,9 @@
 {
-  "$comment": "The render context for templates/wlogout/style.css.tpl. Five names, all absolute paths or tunables the consumer resolves; the template reads them in `{{ }}` interpolations only.",
+  "$comment": "The render context for templates/wlogout/style.css.tpl. Three absolute paths the consumer resolves; the template reads them in `{{ }}` interpolations only.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/RandomGenericUsername/dotfiles-assets/templates/wlogout/style.css.vars.schema.json",
   "title": "wlogout/style.css.tpl — render context",
-  "description": "Every value the wlogout stylesheet reads: the palette import, the runtime state-root pointers for icons and the current wallpaper, and the two font tunables. The rendered sheet imports the generated skin appearance last; that import is relative and needs no render variable.",
+  "description": "Every value the wlogout stylesheet reads: the palette import plus the runtime state-root pointers for icons and the current wallpaper. Skin paint/rhythm and typography come from the generated appearance sheet, which is imported last; that import is relative and needs no render variable.",
   "schema_major": 1,
   "template": "style.css.tpl",
   "type": "object",
@@ -22,29 +22,17 @@
       "type": "string",
       "minLength": 1,
       "description": "The runtime state root; the six button icons are read from <STATE_ROOT>/dotfiles/current/icons/. Absolute by construction."
-    },
-    "SYSTEM_FONT_FAMILY": {
-      "type": "string",
-      "minLength": 1,
-      "description": "CSS font-family list (a tunable, not a path). Must be non-empty: an empty value is an invalid CSS declaration."
-    },
-    "FONT_SIZE_PX": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Base font size in px. Integer because the template appends `px` itself (`{{FONT_SIZE_PX}}px`); a string carrying its own unit would render `14pxpx`."
     }
   },
   "required": [
     "COLORS_FILE_PATH",
     "CURRENT_WALLPAPER_SYMLINK",
-    "STATE_ROOT",
-    "SYSTEM_FONT_FAMILY",
-    "FONT_SIZE_PX"
+    "STATE_ROOT"
   ],
   "optional": [],
   "additionalProperties": false,
   "x-render-contract": {
-    "no_default_on_required": "No `default(` fallback on any of the five: an empty import path or icon root produces a stylesheet that loads and shows nothing — the failure this contract makes visible.",
+    "no_default_on_required": "No `default(` fallback on any of the three: an empty import path or icon root produces a stylesheet that loads and shows nothing — the failure this contract makes visible.",
     "destination": "The consumer renders this to style.css beside the copied layout; this repository never ships the rendered file (AD-11)."
   }
 }

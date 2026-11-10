@@ -36,9 +36,10 @@ owns where each path deploys, so no destination appears here (spine AD-2/AD-6).
 
 `wlogout` is the one **per-file** entry in this class, and it is deliberate. wlogout reads two
 files: `layout` (static, here) and `style.css` (**rendered**, not here). `style.css` is produced
-from a Jinja source whose variables are the palette file path, the runtime state root, the
-current wallpaper pointer, the font family and the font size — values that only exist on a
-provisioned host. The source therefore belongs to `templates/`, and the rendered `style.css`
+from a Jinja source whose variables are the palette file path, the runtime state root and the
+current wallpaper pointer — values that only exist on a provisioned host. Skin paint, rhythm and
+typography come from the generated appearance sheet imported last. The source therefore belongs
+to `templates/`, and the rendered `style.css`
 belongs to the consumer; this class ships exactly the half that is static. A directory copy
 would have to carry the template and the resolved result together, which is the boundary
 failure this split removes.

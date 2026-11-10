@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.15.1 — wlogout static sheet stops owning skin paint
+
+### Fixed
+
+- **W-2.6: wlogout follows the generated skin instead of staying glassy.**
+  `templates/wlogout/style.css.tpl` no longer declares pre-skin paint, rhythm or
+  typography: the `button` colour/background/border/radius/padding, the
+  hover/focus background/opacity/shadow, the `button span` size, and the `*` /
+  `window` font declarations are gone. The generated
+  `appearance/wlogout.css` remains the **last** import, so the terminal skin
+  now supplies its 2px control radius and monospace type, and glass/paper
+  supply their own generated values. App-owned structure is unchanged:
+  palette fallback import, wallpaper, icon URLs, icon
+  size/position/repeat, layout IDs, `-gtk-icon-effect` and motion
+  transitions/animations.
+- **Static-ownership regression test.** The skins fixture suite strips CSS
+  comments and fails if the static wlogout sheet regains any
+  `border`/`padding`/`color`/`background-color`/`box-shadow`/`opacity`/
+  `font-*` declaration, while asserting the structural rules and both import
+  positions survive.
+
+### Changed
+
+- **The static wlogout render context is three paths, not five.**
+  `templates/wlogout/style.css.vars.schema.json` drops `SYSTEM_FONT_FAMILY` and
+  `FONT_SIZE_PX`; typography is generated from the skin's `type.*` tokens, so
+  there is no second font source in the static sheet. Every path and
+  `schema_major` is unchanged; the other eight template contracts are
+  untouched.
+
+### Notes
+
+- PATCH correctness release: this is a template fix, not a runtime adapter or
+  live hotfix. `templates/README.md`, `configs/README.md`, `skins/README.md`,
+  `catalog.yaml` and the root `README.md` record the structure-only ownership
+  and the 22 required / 1 optional template-variable count.
+- Downstream **engine assets mirror** and **composition** pins move in their
+  own commits after this tag. No runtime, provisioning, composition, app or
+  live-state change is in this release.
+
 ## v0.15.0 — host-default skin policy, contracts `v0.9.0`
 
 ### Added
