@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.15.3 — wlogout Phase 2c: card state fill correctness
+
+### Fixed
+
+- **W-2.17: hover and focus keep the card surface.** The generated
+  `skins/templates/wlogout.gtk.css.j2` no longer replaces a wlogout button's
+  background with `state.hover.fill` / `state.focus.fill`. `terminal`, `glass`
+  and `paper` declare the focus fill as `transparent`, so a focused card used to
+  lose its fill. Base, `button:hover` and `button:focus` now all keep
+  `surface.card.bg`; hover/focus change only `state.hover.*` / `state.focus.*`
+  ring and ink. The wlogout target no longer references either fill token.
+- **W-2.18: active keeps the deliberate selected paint.** `button:active`
+  continues to use `state.selected.fill`/ink/ring; no change to the selected
+  values or the `type.*` label typography.
+
+### Added
+
+- **W-2.19 test coverage.** Per-skin expansion tests assert that hovered and
+  focused cards retain the card background and move ring/ink for
+  `terminal`/`glass`/`paper`/`flat`, that active uses the selected fill/ink/ring,
+  and that a GTK3 style-context probe computes the focused card background as
+  the terminal card value while its border moves to the focus ring.
+
+### Notes
+
+- PATCH correctness release: `schema_major` stays `2`; no token path, target or
+  required variable changed. The static `templates/wlogout/style.css.tpl`
+  remains structure-only and byte-identical to `v0.15.2`. The generated
+  wlogout sheet bytes change for every skin, so its appearance hash churns once
+  on the next generation; there is no migration.
+- Downstream **engine assets mirror** and **composition** pins move in their
+  own commits after this tag. No runtime, provisioning, composition, app or
+  live-state change is in this release.
+
 ## v0.15.2 — wlogout Phase 2b: card fill and panel-aligned geometry
 
 ### Changed

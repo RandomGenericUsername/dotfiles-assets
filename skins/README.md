@@ -67,7 +67,7 @@ skins/
   templates/ags-capture.gtk.css.j2        capture bar/overlay/panel (target: ags-capture)
   templates/ags-icme.gtk.css.j2           icon color mapping editor (target: ags-icme)
   templates/ags-btop-studio.gtk.css.j2    btop theme studio (target: ags-btop-studio)
-  templates/wlogout.gtk.css.j2            wlogout card fill + panel geometry (target: wlogout)
+  templates/wlogout.gtk.css.j2            wlogout card fill/state + panel geometry (target: wlogout)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name)
   tests/fixtures/positive/                positive fixture (terminal shape the validator must accept)
@@ -90,7 +90,7 @@ and the wlogout CSS consumer:
 | `ags-capture.gtk.css.j2` | `ags-capture` | capture bar/overlay/panel |
 | `ags-icme.gtk.css.j2` | `ags-icme` | icon color mapping editor |
 | `ags-btop-studio.gtk.css.j2` | `ags-btop-studio` | btop theme studio |
-| `wlogout.gtk.css.j2` | `wlogout` | logout action cards: `surface.card` fill/border/padding with `surface.panel` radius/border-width; the static source owns structure only and imports this sheet last |
+| `wlogout.gtk.css.j2` | `wlogout` | logout action cards: `surface.card` fill/border/padding with `surface.panel` radius/border-width; hover/focus keep the card fill and move only state ring/ink; the static source owns structure only and imports this sheet last |
 
 ## Placeholder flattening and the value convention
 
@@ -180,15 +180,30 @@ rhythm. The outer geometry comes from `surface.panel`: `border-width` and
 `radius` keep the action cards on the same rounding/frame as the
 compositor/panel. `surface.control` is no longer used by this target.
 
-`button:hover` / `:focus` / `:active` still use the matching `state.*` paint and
-`button span` still uses `type.*` typography. The result is a visibly filled
-card for `glass` (`alpha(@surface_container_high, 0.18)`), `paper`
-(`@surface_container_low`) and `terminal` (`@surface_container`); `flat` stays
-transparent because its own card token is transparent. Because `glass` and
-`paper` delegate `surface.panel.radius`/`border-width` to `[host]`, their
-wlogout cards follow the live Hyprland values; `terminal` remains the explicit
-0px/1px square identity. The static `templates/wlogout/style.css.tpl` remains
-structure-only and unchanged from `v0.15.1`.
+The result is a visibly filled card for `glass`
+(`alpha(@surface_container_high, 0.18)`), `paper` (`@surface_container_low`)
+and `terminal` (`@surface_container`); `flat` stays transparent because its own
+card token is transparent. Because `glass` and `paper` delegate
+`surface.panel.radius`/`border-width` to `[host]`, their wlogout cards follow
+the live Hyprland values; `terminal` remains the explicit 0px/1px square
+identity. The static `templates/wlogout/style.css.tpl` remains structure-only
+and unchanged from `v0.15.1`.
+
+### wlogout hover/focus keep the card surface (`v0.15.3`)
+
+`state.hover.fill` and `state.focus.fill` are compact-control state paints, not
+card surfaces. `terminal`, `glass` and `paper` declare the focus fill as
+`transparent`, so using it as the wlogout button background made a focused card
+lose its fill and show the wallpaper through it.
+
+The generated `wlogout.gtk.css.j2` now keeps `surface.card.bg` as the background
+for `button`, `button:hover` and `button:focus`. Hover and focus change only
+`state.hover.*`/`state.focus.*` **ring and ink**; their `fill` tokens are not
+referenced by this target. `button:active` keeps the deliberate
+`state.selected.fill`/ink/ring press paint, and `button span` keeps the `type.*`
+typography. A GTK3 style-context probe asserts that a focused terminal card
+still computes to `@surface_container` while its border moves to `@primary`.
+The static sheet remains structure-only and is unchanged from `v0.15.2`.
 
 ### Layout defaults preserve the apps' pre-v2 window sizes
 

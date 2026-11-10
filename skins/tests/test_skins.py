@@ -312,10 +312,8 @@ APP_TEMPLATES = {
             "SKIN_SURFACE_CARD_BG",
             "SKIN_SURFACE_CARD_BORDER",
             "SKIN_SURFACE_CARD_PADDING",
-            "SKIN_STATE_HOVER_FILL",
             "SKIN_STATE_HOVER_INK",
             "SKIN_STATE_HOVER_RING",
-            "SKIN_STATE_FOCUS_FILL",
             "SKIN_STATE_FOCUS_INK",
             "SKIN_STATE_FOCUS_RING",
             "SKIN_STATE_SELECTED_FILL",
@@ -656,11 +654,15 @@ def test_wlogout_static_and_combined_parse_with_gtk3(tmp_path: Path) -> None:
         assert _gtk3_parsing_errors(sheet) == [], name
 
 
+def _wlogout_block(css: str, selector: str) -> str:
+    match = re.search(rf"(?ms)^{re.escape(selector)}\s*\{{(.*?)^\}}", css)
+    assert match is not None, f"missing {selector} block"
+    return match.group(1)
+
+
 def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
     text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
-    button = re.search(r"(?ms)^button\s*\{(.*?)^\}", text)
-    assert button is not None
-    body = button.group(1)
+    body = _wlogout_block(text, "button")
     for placeholder in (
         "{{SKIN_SURFACE_CARD_BG}}",
         "{{SKIN_SURFACE_CARD_BORDER}}",
@@ -670,16 +672,31 @@ def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
     ):
         assert placeholder in body, f"button missing {placeholder}"
     assert "SKIN_SURFACE_CONTROL" not in text, "buttons are cards, not controls"
-    for state in ("HOVER", "FOCUS", "SELECTED"):
-        assert f"{{{{SKIN_STATE_{state}_FILL}}}}" in text
+    for selector in ("button:hover", "button:focus"):
+        state = _wlogout_block(text, selector)
+        assert "{{SKIN_SURFACE_CARD_BG}}" in state, f"{selector} drops the card background"
+    for state in ("HOVER", "FOCUS"):
+        assert f"{{{{SKIN_STATE_{state}_FILL}}}}" not in text, (
+            f"{state.lower()} fill must not replace a card surface"
+        )
         assert f"{{{{SKIN_STATE_{state}_INK}}}}" in text
         assert f"{{{{SKIN_STATE_{state}_RING}}}}" in text
+    for token in ("FILL", "INK", "RING"):
+        assert f"{{{{SKIN_STATE_SELECTED_{token}}}}}" in text
     for token in ("FONT_FAMILY", "SIZE_TITLE", "FONT_WEIGHT", "LETTER_SPACING"):
         assert f"{{{{SKIN_TYPE_{token}}}}}" in text
 
 
 @pytest.mark.parametrize(
-    ("name", "fill", "border", "radius", "padding"),
+    (
+        "name",
+        "fill",
+        "border",
+        "radius",
+        "padding",
+        "selected_fill",
+        "selected_ink",
+    ),
     [
         (
             "glass",
@@ -687,14 +704,26 @@ def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
             "1.5px solid alpha(@on_surface, 0.10)",
             "12px",
             "10px",
+            "@primary_container",
+            "@on_primary_container",
         ),
-        ("flat", "transparent", "0px solid transparent", "0px", "10px"),
+        (
+            "flat",
+            "transparent",
+            "0px solid transparent",
+            "0px",
+            "10px",
+            "@primary",
+            "@on_primary",
+        ),
         (
             "paper",
             "@surface_container_low",
             "1px solid alpha(@on_surface, 0.10)",
             "6px",
             "10px",
+            "@primary_container",
+            "@on_primary_container",
         ),
         (
             "terminal",
@@ -702,24 +731,47 @@ def test_wlogout_template_maps_card_fill_and_panel_geometry() -> None:
             "1px solid alpha(@on_surface, 0.18)",
             "0px",
             "8px",
+            "@primary_container",
+            "@on_primary_container",
         ),
     ],
 )
 def test_wlogout_button_uses_each_skins_card_fill_and_panel_geometry(
-    name: str, fill: str, border: str, radius: str, padding: str
+    name: str,
+    fill: str,
+    border: str,
+    radius: str,
+    padding: str,
+    selected_fill: str,
+    selected_ink: str,
 ) -> None:
     css = render((TEMPLATES / "wlogout.gtk.css.j2").read_text(), name, "dark")
-    assert f"background-color: {fill};" in css, name
-    assert f"border: {border};" in css, name
-    assert f"border-radius: {radius};" in css, name
-    assert f"padding: {padding};" in css, name
+    assert f"background-color: {fill};" in _wlogout_block(css, "button"), name
+    assert f"border: {border};" in _wlogout_block(css, "button"), name
+    assert f"border-radius: {radius};" in _wlogout_block(css, "button"), name
+    assert f"padding: {padding};" in _wlogout_block(css, "button"), name
+
+    for selector in ("button:hover", "button:focus"):
+        state = _wlogout_block(css, selector)
+        assert f"background-color: {fill};" in state, (
+            f"{name}: {selector} lost the card background"
+        )
+        assert "color: @on_surface;" in state, f"{name}: {selector} ink"
+        assert "border-color: @primary;" in state, f"{name}: {selector} ring"
+
+    active = _wlogout_block(css, "button:active")
+    assert f"background-color: {selected_fill};" in active, name
+    assert f"color: {selected_ink};" in active, name
+    assert "border-color: @primary;" in active, name
 
 
 def test_wlogout_template_expands_card_panel_state_and_type() -> None:
     text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
     glass = render(text, "glass", "dark")
     assert "background-color: alpha(@surface, 0.94);" in glass
-    assert "background-color: alpha(@surface_container_high, 0.18);" in glass
+    assert "background-color: alpha(@surface_container_high, 0.18);" in _wlogout_block(
+        glass, "button:focus"
+    )
     assert "border: 1.5px solid alpha(@on_surface, 0.10);" in glass
     assert "border-radius: 12px;" in glass
     assert "padding: 10px;" in glass
@@ -728,12 +780,73 @@ def test_wlogout_template_expands_card_panel_state_and_type() -> None:
     assert "letter-spacing: 0em;" in glass
 
     terminal = render(text, "terminal", "dark")
-    assert "background-color: @surface_container;" in terminal
+    assert "background-color: @surface_container;" in _wlogout_block(
+        terminal, "button:focus"
+    )
     assert "border: 1px solid alpha(@on_surface, 0.18);" in terminal
     assert "border-radius: 0px;" in terminal
     assert "padding: 8px;" in terminal
     assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal
     assert "font-size: 13px;" in terminal
+    assert "background-color: @primary_container;" in _wlogout_block(
+        terminal, "button:active"
+    )
+    assert "color: @on_primary_container;" in _wlogout_block(terminal, "button:active")
+
+
+def test_wlogout_focused_card_keeps_card_background_with_gtk3(
+    tmp_path: Path,
+) -> None:
+    """W-2.19: a focused card keeps the card background; only ring/ink move."""
+    gi = pytest.importorskip("gi")
+    try:
+        gi.require_version("Gtk", "3.0")
+    except ValueError:  # Gtk 4 already loaded in this interpreter
+        pytest.skip("GTK3 namespace unavailable")
+    from gi.repository import Gtk
+
+    initialised, _argv = Gtk.init_check()
+    if not initialised:
+        pytest.skip("no GDK display for the GTK3 style probe")
+
+    template = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    appearance = render(template, "terminal", "dark")
+    probe = tmp_path / "probe.css"
+    probe.write_text(
+        "\n".join(
+            (
+                "@define-color surface #101820;",
+                "@define-color surface_container #202830;",
+                "@define-color on_surface #d0d8e0;",
+                "@define-color primary #88aaff;",
+                "@define-color primary_container #304860;",
+                "@define-color on_primary_container #d8e8f8;",
+            )
+        )
+        + "\n"
+        + appearance
+    )
+    provider = Gtk.CssProvider()
+    assert provider.load_from_path(str(probe)) is True
+
+    window = Gtk.Window()
+    button = Gtk.Button(label="probe")
+    window.add(button)
+    context = button.get_style_context()
+    context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+    normal = context.get_background_color(Gtk.StateFlags.NORMAL)
+    focused = context.get_background_color(Gtk.StateFlags.FOCUSED)
+    assert (normal.red, normal.green, normal.blue, normal.alpha) == pytest.approx(
+        (focused.red, focused.green, focused.blue, focused.alpha)
+    ), "focused card lost the card background"
+    assert (normal.red, normal.green, normal.blue, normal.alpha) == pytest.approx(
+        (0x20 / 255, 0x28 / 255, 0x30 / 255, 1.0)
+    ), "focused card background is not the terminal card fill"
+    ring = context.get_border_color(Gtk.StateFlags.FOCUSED)
+    assert (ring.red, ring.green, ring.blue) == pytest.approx(
+        (0x88 / 255, 0xAA / 255, 0xFF / 255)
+    ), "focused card ring did not move to the focus ring"
 
 
 
