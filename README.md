@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.18.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.19.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -34,17 +34,19 @@ unchanged; `desktop/` holds six application entries and the
 `toggle-touchpad` helper, with `desktop/desktop.yaml` declaring each entry's `requires`/`optional`
 binaries; `skins/` holds five `schemaVersion = 2` Appearance manifests (`glass` default/fallback parity
 with today's ags-bar look, `flat`, `paper`, `terminal` dense-monospace square/hairline and
-`terminal-host`, the opt-in Hyprland-following terminal variant), eleven templates: eight
+`terminal-host`, the opt-in Hyprland-following terminal variant), twelve templates: eight
 app-owned `<configDir>.gtk.css.j2` sheets (the bar's settings/Bluetooth set plus clipboard,
 notifications, wallpaper selector, capture, icme, btop studio and the wlogout paint/rhythm sheet;
 targets `ags`, `ags-clipboard`, `ags-notifications`, `ags-wallpaper-selector`, `ags-capture`,
 `ags-icme`, `ags-btop-studio`, `wlogout`, rendered as `<configDir>.css`), two global CSS targets
-`gtk3`/`gtk4` (conservative GTK3/GTK4 dialect sheets) and one non-CSS artifact `rofi.rasi.j2`
-(consumer `rofi`, format `rasi`, rendered `rofi.rasi`), and the pinned byte copies of the
-canonical `contracts` v0.11.0 schemas under `skins/contracts/` — `appearance-manifest`,
+`gtk3`/`gtk4` (conservative GTK3/GTK4 dialect sheets) and two non-CSS artifacts `rofi.rasi.j2`
+(consumer `rofi`, format `rasi`, rendered `rofi.rasi`) and `kitty.conf.j2` (consumer `kitty`,
+format `conf`, rendered paint-free `kitty.conf`), and the pinned byte copies of the
+canonical `contracts` v0.12.0 schemas under `skins/contracts/` — `appearance-manifest`,
 `appearance-json` (the resolved `tokens.json`) and `appearance-artifact`, plus the generation
 manifest schema for contract-byte parity and the frozen v1 skin schemas for provenance. The v2
-groups are `surface.{panel,card,cell,control,pill}`,
+groups are `surface.{window,panel,card,cell,control,pill}`; `surface.window` is a
+required outer/toplevel role with a unitless `[0,1]` opacity and is never aliased from `panel`,
 `state.{hover,selected,focus,disabled}`, `type`, `ink`, `layout.<app>`, optional
 `mode.dark`/`mode.light` overrides and the optional root `[host]` policy; numeric lengths are unitless and the expander appends `px`,
 letter-spacing renders as `em`, and font-weight stays unitless. Per-role borders replace the v1
@@ -61,12 +63,15 @@ palette, while `terminal` is mode-agnostic. Since `v0.15.0` `glass` and `paper` 
 template set also ships global `gtk3`/`gtk4` CSS targets and the `rofi` `rasi` artifact: GTK3
 forbids custom properties/colour-mixing, both GTK sheets stay on a conservative selector allowlist
 with no layout/size properties, and rasi carries solid hyphenated palette roles plus px geometry
-only (no alpha, no underscore role names, typography deferred). btop and kitty remain palette-only,
-so no `theme`/`conf` template ships. `[host]` is a policy object, not a token group, and
-`mode override > host > skin fallback` is the precedence. Since `v0.18.0` the
-`contracts v0.11.0` allowlist delegates the panel plus the inner
-`card`/`control`/`cell` rectangle radii; `surface.pill.radius` stays
-explicit because a pill is a capsule, not a host rectangle. Since `v0.15.2`
+only (no alpha, no underscore role names, typography deferred). Since `v0.19.0` the shared
+template set also ships the paint-free `kitty` `conf` artifact: `font_family`, `font_size`,
+`window_padding_width` (0.75 px→pt, two-decimal round-half-up, clamped) and
+`background_opacity` only; kitty colours remain `colors.kitty`, and btop stays palette-only with no
+`theme` artifact. `[host]` is a policy object, not a token group, and
+`mode override > host > skin fallback` is the precedence. Since `v0.19.0` the
+`contracts v0.12.0` allowlist delegates the window and panel geometry plus the inner
+`card`/`control`/`cell` rectangle radii (seven paths); `surface.window.padding`/`opacity` and
+`surface.pill.radius` stay explicit because a pill is a capsule, not a host rectangle. Since `v0.15.2`
 the wlogout generated
 sheet fills each action-card `button` from `surface.card` and takes its border width/radius from
 `surface.panel`, so `glass`/`paper`/`terminal-host` follow the delegated host geometry while `terminal` stays
@@ -131,22 +136,24 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 - `skins/schema.json` — `schema_major: 2`; the local envelope for the v2 Appearance vocabulary
   (`surface`, `state`, `type`, `ink`, `layout.<app>`, `mode` overrides and the optional root
   `host` policy), the 51-role `palette.v1` list, and the delegation to the canonical `contracts`
-  v0.11.0 schemas vendored at
+  v0.12.0 schemas vendored at
   `skins/contracts/{appearance-manifest,appearance-json,appearance-artifact}.schema.json`. No
   cross-repo runtime import: the vendored bytes are pinned by tag and sha256 in
-  `skins/contracts/PIN` (`contracts=v0.11.0`, the rectangle-radii release). The generation
+  `skins/contracts/PIN` (`contracts=v0.12.0`, the required-window release). The generation
   manifest schema is vendored for contract-byte parity only; the frozen v1 skin schemas are pinned
   at the same tag for provenance only. Manifests validate against
   `appearance-manifest`; each manifest is resolved under both `dark` and `light` and the resulting
   `tokens.json` validates against `appearance-json`; `appearance-artifact` describes the generation
   metadata. `[host]` is a policy object, not a group: `inherit` is non-empty, unique and limited to
+  `surface.window.radius`/`surface.window.border-width`,
   `surface.panel.radius`/`surface.panel.border-width` plus the card/control/cell radii;
-  `surface.pill.radius` is deliberately not inheritable, and `fallback` is `skin|error`. Layout values are
+  window padding/opacity and `surface.pill.radius` are deliberately not inheritable, and
+  `fallback` is `skin|error`. Layout values are
   namespaced unitless numbers and are declared TSX-owned: templates
   MUST NOT expand `layout.<app>` into CSS. `make validate-skins` enforces the PIN hashes, template
   discovery by family/format (`<configDir>.gtk.css.j2` and `<consumer>.<format>.j2`, unknown suffix
   fails closed), the exact `required_targets` set (including `gtk3`/`gtk4`) and `required_artifacts`
-  set (`rofi`/`rasi`), canonical
+  set (`rofi`/`rasi`, `kitty`/`conf`), canonical
   numeric types (a `"12px"` string fails), role-only values, no literal hex/transition/structure,
   two-way flattened placeholder coverage, no layout token in any format, the GTK3/GTK4 selector
   allowlist and layout-property ban, rasi solid-role/no-alpha/no-underscore laws, and the
@@ -166,7 +173,7 @@ make validate-content # the tarball holds a top-level default.png; every *.theme
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; rofi appearance imported last
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
-make validate-skins   # vendored v0.11.0 hashes, v2 manifests/host/modes/tokens.json, GTK3/GTK4/rasi format gates, palette.v1 roles, no layout output
+make validate-skins   # vendored v0.12.0 hashes, v2 manifests/host/modes/tokens.json, GTK3/GTK4/rasi/conf format gates, palette.v1 roles, no layout output
 make test-skins       # pytest fixtures for the skins class (development dependency)
 make lint             # shellcheck over desktop/scripts/** + compileall scripts/
 make gates            # validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic

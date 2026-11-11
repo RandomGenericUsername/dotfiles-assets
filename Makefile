@@ -19,7 +19,7 @@
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
-#   make validate-skins  vendored v0.11.0 schemas + v2 manifests + both modes/tokens.json + GTK3/GTK4/rasi format gates
+#   make validate-skins  vendored v0.12.0 schemas + v2 manifests (required window role) + both modes/tokens.json + GTK3/GTK4/rasi/conf format gates
 #   make test-skins      pytest fixtures for the skins class (dev dependency)
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
 #   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
@@ -54,7 +54,7 @@ help:
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; rofi appearance imported last; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
-	  'validate-skins    vendored v0.11.0 schemas + v2 manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi artifact + palette.v1 roles' \
+	  'validate-skins    vendored v0.12.0 schemas + v2 window/panel manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi and kitty conf artifacts + palette.v1 roles' \
 	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
 	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic' \
@@ -140,10 +140,11 @@ validate-desktop:
 # transition or structure token; templates are discovered by family and format
 # (<configDir>.gtk.css.j2 CSS targets, <consumer>.<format>.j2 artifacts) with an
 # unknown suffix failing closed; the frozen required_targets (including gtk3/gtk4)
-# and required_artifacts (rofi/rasi) sets are matched exactly; every flattened
+# and required_artifacts (rofi/rasi, kitty/conf) sets are matched exactly; every flattened
 # {{SKIN_*}} placeholder names a v2 token and no layout token appears in any format;
 # and every template expands for every manifest x mode with the per-format unit rule
-# plus the GTK3/GTK4 selector/dialect and rasi solid-role laws. It is stdlib-only so
+# plus the GTK3/GTK4 selector/dialect, rasi solid-role and kitty conf
+# bare-point/no-paint laws. It is stdlib-only so
 # a fresh clone runs it; `test-skins` adds the GTK/rofi and negative fixtures.
 validate-skins:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-skins.py"

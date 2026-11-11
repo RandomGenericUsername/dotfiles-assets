@@ -1,5 +1,69 @@
 # Changelog
 
+## v0.19.0 — required surface.window and the paint-free kitty projection
+
+### Added
+
+- **`surface.window` in every skin.** All five manifests now carry the required
+  eight-token outer/toplevel role (`bg`, `border`, `border-width`, `radius`,
+  `padding`, `shadow`, `blur`, `opacity`). `glass` authors a panel-like
+  translucent window at opacity `0.94`; `paper` authors panel-like dark and
+  complete `mode.light` window groups at opacity `1.0`; `terminal` and
+  `terminal-host` author the opaque panel-like window at `1.0`; `flat` authors
+  transparent/no-chrome geometry at `1.0`. `surface.panel` remains the AGS
+  bar/settings and layer-shell overlay role; there is no alias or fallback.
+- **Seven-path host allowlist.** `glass`, `paper` and `terminal-host`
+  `[host].inherit` add `surface.window.radius` and
+  `surface.window.border-width` to the five delegated panel/card/control/cell
+  paths. Window padding/opacity and `surface.pill.radius` stay explicit;
+  `terminal` and `flat` remain `[host]`-free.
+- **Paint-free kitty `conf` artifact.** `skins/templates/kitty.conf.j2`
+  (consumer `kitty`, format `conf`, runtime `appearance/kitty.conf`) projects
+  `font_family` from the first usable `type.font-family`, `font_size` from
+  `type.size-body` and `window_padding_width` from `surface.window.padding`
+  through the documented 0.75 px→pt conversion with two-decimal round-half-up
+  and clamps (`6–36` / `0–32`), and `background_opacity` directly from
+  `surface.window.opacity`. It contains no paint placeholder and no literal
+  hex; colours stay `colors.kitty`. No btop `theme` artifact ships.
+- **Window/card tests.** The suite asserts the required eight-token window
+  group, missing group/token rejection, opacity bounds, outer-consumer remaps,
+  the kitty family/point/clamp rules, a `kitty +runpy` parse with zero bad
+  lines (explicit skip when kitty is absent), and that an unknown key warns.
+
+### Changed
+
+- **Re-vendored `contracts v0.12.0`.** `skins/contracts/` is a byte copy of the
+  required-window release: `appearance-manifest`/`appearance-json` add the
+  required window role and opacity type, and `generation-manifest` records the
+  seven host paths. The PIN names `contracts=v0.12.0`, source commit
+  `a03b5632828df8012c02a6117c3be438eca4264b`; `skins/schema.json`
+  `canonical.tag` moves to the same tag and `required_artifacts` adds
+  `{consumer: kitty, format: conf}`.
+- **Outer consumer remaps.** rofi `window` now uses `surface.window.*`;
+  wlogout's outer `window` uses `surface.window.bg` while its action cards keep
+  the agreed card fill/border/padding plus panel radius/border-width; GTK3 and
+  GTK4 `window`/`headerbar` use `surface.window.*`, while
+  `popover`/`.card`/`button`/`entry` stay card/control.
+- `scripts/validate-skins.py` adds the window role, seven-path host probe,
+  conf paint-free/point/opacity expansion and the kitty required artifact.
+- `skins/README.md`, `README.md`, `catalog.yaml` and the `Makefile` help text
+  describe `contracts v0.12.0`, the window role and the kitty artifact.
+
+All twelve templates expand for all five manifests × both modes. No runtime,
+provisioning, composition, app, AGS app or live state changed.
+
+### Downstream pins
+
+- `contracts v0.12.0` (this contract release).
+- `dotfiles-assets v0.19.0` (this release).
+- `dotfiles-runtime v1.5.0` — accept/emit the required window group and
+  `surface.window.opacity`, resolve the window host paths, and render `conf`
+  lengths as bare points.
+- `ags-platform v1.1.0` — parse the unchanged `schemaVersion: 2` document with
+  the new required role and opacity kind.
+- `dotfiles-provision v0.1.63` and `dotfiles-v3` composition `v0.1.68` — later
+  slices, after assets and runtime.
+
 ## v0.18.1 — rofi loads the generated appearance last
 
 ### Fixed

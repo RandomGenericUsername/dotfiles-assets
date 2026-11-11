@@ -3,19 +3,22 @@
 A **skin** is appearance: surface paint/geometry, interaction state, type, ink
 and mode overrides. It is not a variant and it is not structure: which widget
 sits where, and which named variant a host selects, belong to the app. This
-class now targets the **Appearance token model v2** from `contracts=v0.11.0`;
+class now targets the **Appearance token model v2** from `contracts=v0.12.0`;
 the optional root `[host]` policy is a delegation object, not a token group.
-The `v0.11.0` release expands its allowlist from the outer panel to the inner
-card/control/cell rectangle radii, while `surface.pill.radius` stays explicit.
-The earlier `v0.10.0` release added the optional `appearance.artifacts` family
-for non-CSS consumers; this class ships `rofi` as `rasi` and keeps
-`conf`/`theme` reserved. The frozen v1 skin schemas stay vendored for
+The `v0.12.0` release makes `surface.window` a required sixth surface role with
+a unitless `[0,1]` opacity and expands the host allowlist to seven paths
+(window/panel geometry plus the card/control/cell rectangle radii), while
+`surface.window.padding`/`opacity` and `surface.pill.radius` stay explicit. The
+`v0.10.0` release added the optional `appearance.artifacts` family for non-CSS
+consumers; this class ships `rofi` as `rasi` and `kitty` as paint-free `conf`,
+and keeps `theme` reserved. The frozen v1 skin schemas stay vendored for
 provenance only.
 
 ## The v2 token groups
 
 | Group | Tokens |
 | --- | --- |
+| `surface.window` | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur`, `opacity` |
 | `surface.panel` | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur` |
 | `surface.card` | `bg`, `border`, `border-width`, `radius`, `padding` |
 | `surface.cell` | `bg`, `border`, `border-width`, `radius`, `padding`, `hover-bg` |
@@ -29,6 +32,10 @@ provenance only.
 | `ink` | `ink`, `ink-dim`, `accent`, `accent-muted`, `ink-over` (always `auto`) |
 | `layout.<app>` | unitless numeric metrics, namespaced per app |
 
+`surface.window` is the outer/application toplevel role (rofi/wlogout/GTK outer
+slots and kitty's terminal window); it is never populated from `surface.panel`.
+`surface.panel` stays the AGS bar/layer-shell overlay role. `surface.window.opacity`
+is the only unitless `[0,1]` number; it is never derived from an `alpha()` paint.
 There are no `structure`, `variant`, `density` or `paint` groups. A key outside
 the five groups (plus the optional `mode` overrides and the optional root
 `host` policy) fails `make validate-skins`; the app owns everything the tokens
@@ -77,6 +84,7 @@ skins/
   templates/gtk3.gtk.css.j2               global GTK3 paint, conservative selectors (target: gtk3)
   templates/gtk4.gtk.css.j2               global GTK4/libadwaita named colours (target: gtk4)
   templates/rofi.rasi.j2                  rofi solid roles + px geometry (artifact: rofi, rasi)
+  templates/kitty.conf.j2                 kitty font/point/opacity projection (artifact: kitty, conf)
   tests/                                  pytest fixtures mirroring the validator
   tests/fixtures/invalid/                 negative fixtures (hex, transition, structure, role, numeric string, mode, layout, template name, format dialect)
   tests/fixtures/positive/                positive fixtures (terminal + terminal-host shapes, wlogout template)
@@ -94,11 +102,11 @@ The shared template set has two families, mapped by filename suffix:
   `appearance.artifacts`. The suffix is part of the filename, so an unknown
   `*.j2` fails closed instead of being silently ignored.
 
-This tag ships `rasi` (`rofi.rasi.j2`). `conf` (kitty) and `theme` (btop) remain
-reserved: btop and kitty stay palette-only until a colour/unit rule makes a
-skin projection honest. `skins/schema.json` freezes the exact
-`required_targets` (including `gtk3`/`gtk4`) and `required_artifacts`
-(`rofi`/`rasi`); a missing or unregistered template fails `validate-skins`.
+This tag ships `rasi` (`rofi.rasi.j2`) and `conf` (`kitty.conf.j2`). `theme`
+(btop) remains reserved: btop stays palette-only. `skins/schema.json` freezes the
+exact `required_targets` (including `gtk3`/`gtk4`) and `required_artifacts`
+(`rofi`/`rasi`, `kitty`/`conf`); a missing or unregistered template fails
+`validate-skins`.
 
 ## Template set: `<configDir>.gtk.css.j2` → `<configDir>.css`
 
@@ -123,6 +131,7 @@ prefix, so `templates/ags.gtk.css.j2` renders `ags.css`.
 | Artifact template | Consumer / format | Output |
 | --- | --- | --- |
 | `rofi.rasi.j2` | `rofi` / `rasi` | `rofi.rasi`: solid hyphenated palette roles + px geometry; no alpha, no underscore role names, no typography (Pango units deferred) |
+| `kitty.conf.j2` | `kitty` / `conf` | `kitty.conf`: paint-free `font_family`, `font_size` and `window_padding_width` in bare points (0.75 px→pt, two-decimal round-half-up, clamps 6–36 / 0–32) plus `background_opacity`; colours stay `colors.kitty` |
 
 The static `configs/rofi/launcher/config.rasi` imports the palette first and
 this artifact **last**, after its own fallback geometry: the generated
@@ -160,7 +169,9 @@ difference is the opt-in `[host]` policy.
 
 | Token | `glass` (default/fallback) | `flat` | `paper` | `terminal` | `terminal-host` |
 | --- | --- | --- | --- | --- | --- |
-| `[host]` policy | panel + card/control/cell radii/border | none (explicit) | panel + card/control/cell radii/border | none (explicit) | panel + card/control/cell radii/border |
+| `[host]` policy | window/panel + card/control/cell radii/border | none (explicit) | window/panel + card/control/cell radii/border | none (explicit) | window/panel + card/control/cell radii/border |
+| `surface.window` radius / border-width / padding / opacity | 12 / 1.5 / 11 / 0.94 | 0 / 0 / 11 / 1.0 | 6 / 1 / 11 / 1.0 | 0 / 1 / 9 / 1.0 | 0 / 1 / 9 / 1.0 (geometry host when supplied) |
+| `surface.window.bg` / `border` / `shadow` | `alpha(@surface, 0.94)` / `@primary` / `none` | `transparent` / `transparent` / `none` | `@surface_container_lowest` / `alpha(@on_surface, 0.22)` / `0 10px 28px rgba(0,0,0,0.22)` | `@surface` / `alpha(@on_surface, 0.22)` / `none` | same as `terminal` |
 | `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 | 0 / 1 / 9 | 0 / 1 / 9 (host when supplied) |
 | `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 | 0 / 1 / 8 (radius host when supplied) |
 | `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` | same as `terminal` (radius host when supplied) |
@@ -182,6 +193,8 @@ difference is the opt-in `[host]` policy.
 ```toml
 [host]
 inherit = [
+  "surface.window.radius",
+  "surface.window.border-width",
   "surface.panel.radius",
   "surface.panel.border-width",
   "surface.card.radius",
@@ -198,12 +211,14 @@ but adds the `[host]` block, so a consumer that selects it follows the host
 panel and rectangle geometry while `terminal` keeps its explicit square frame.
 `[host]` is not a token group and does not change any token type.
 
-- **Rectangle allowlist only.** `inherit` must be non-empty, unique and may
-  contain only `surface.panel.radius` (Hyprland `decoration:rounding`),
-  `surface.panel.border-width` (`general:border_size`) and the inner
-  `surface.card.radius`, `surface.control.radius` and `surface.cell.radius`.
-  Border width is delegable only on the panel. Gaps, padding, type, colours,
-  layout and structure are never host-injectable.
+- **Window/panel rectangle allowlist only.** `inherit` must be non-empty,
+  unique and may contain exactly `surface.window.radius`,
+  `surface.window.border-width`, `surface.panel.radius` (Hyprland
+  `decoration:rounding`), `surface.panel.border-width`
+  (`general:border_size`) and the inner `surface.card.radius`,
+  `surface.control.radius` and `surface.cell.radius`. Border width is delegable
+  only on the window and panel. Window padding/opacity, gaps, padding, type,
+  colours, layout and structure are never host-injectable.
 - **The pill stays explicit.** `surface.pill.radius` is deliberately absent:
   a pill is a capsule whose identity is the skin's decision, not a host
   rectangle. A manifest that lists it fails the vendored schema.
@@ -214,10 +229,11 @@ panel and rectangle geometry while `terminal` keeps its explicit square frame.
   every delegated rectangle.
 - **Fallback:** headless/invalid host values use the skin fallback by default.
   `fallback = "error"` fails the generation closed before publishing.
-- **Identity churn:** `glass`, `paper` and `terminal-host` gain the four inner
-  radius paths in `[host].inherit`, so their manifest bytes and
-  content-addressed skin hashes change. `terminal` and `flat` are byte-
-  identical. No token/path migration is needed; the template set is unchanged.
+- **Identity churn:** every skin gains an explicitly authored `surface.window`
+  group, and `glass`, `paper` and `terminal-host` add the seven-path window
+  geometry to `[host].inherit`, so every manifest byte and content-addressed
+  skin hash changes once. `terminal` and `flat` remain `[host]`-free. This is
+  the deliberate `contracts v0.12.0` migration, not drift.
 
 `make validate-skins` enforces the allowlist through the vendored
 `appearance-manifest` schema (including `items`, `minItems` and
@@ -225,9 +241,10 @@ panel and rectangle geometry while `terminal` keeps its explicit square frame.
 
 ### Rectangle radii delegate; the pill does not (`v0.18.0`)
 
-`surface.panel` remains the canonical outer-surface role (`rofi.window`,
-`wlogout` window, the AGS bar panel). The host rounding value now also feeds
-the inner rectangles when a skin lists them: `rofi.mainbox` → `card`,
+`surface.window` is the canonical outer/toplevel role (`rofi.window`,
+`wlogout` window, GTK `window`/`headerbar`, kitty). `surface.panel` remains the
+AGS bar/settings and layer-shell overlay role. The host rounding value also
+feeds the inner rectangles when a skin lists them: `rofi.mainbox` → `card`,
 `rofi.inputbar` → `control`, `rofi.element` → `cell`, and the GTK3/GTK4
 `popover`/`.card` and `button`/`entry` roles follow the same card/control
 tokens. The rofi host-probe test asserts all four rofi selectors follow the
@@ -337,14 +354,15 @@ apps' pre-v2 defaults; capture and btop are no longer skin tokens.
 `paper`'s **base** groups are the v1 paper values converted faithfully; they
 are the deliberate dark-paper branch (a dark palette + `paper` keeps them).
 `paper` also declares an explicit **`mode.light`** override: complete
-`surface`, `state` and `ink` groups with light-paper borders, wash and shadow.
+`surface` (including `surface.window`), `state` and `ink` groups with
+light-paper borders, wash and shadow.
 Generation selects exactly one mode before expansion, so a template never
 branches on mode, palette or skin. A light palette + `paper` reads light; a
 dark palette + `paper` keeps the base groups. This replaces the v1 behaviour
 where `paper` depended on whichever mode the palette happened to be. The
 complete `mode.light.surface` group is an explicit override, so it wins over
-the `[host]` policy for panel, card, control and cell radii and the panel
-border width in light mode.
+the `[host]` policy for window, panel, card, control and cell radii and the
+window/panel border width in light mode.
 
 ## `terminal` is mode-agnostic
 
@@ -363,17 +381,20 @@ it still follows the palette family it is generated against. It declares no
 `terminal-host` (`v0.16.0`) is a separate manifest, not a mode or variant of
 `terminal`: its `groups` are byte-for-byte the same terminal values, and its
 only delta is the root `[host]` policy. Selecting it keeps the dense monospace
-paint, type and rhythm, but `surface.panel.radius`,
+paint, type and rhythm, but `surface.window.radius`,
+`surface.window.border-width`, `surface.panel.radius`,
 `surface.panel.border-width` and the `surface.card/control/cell.radius`
 rectangles resolve from the live host `decoration:rounding` /
 `general:border_size` when available and fall back to the skin's square
-values when not; the pill stays explicit. `terminal` remains `[host]`-free, so
+values when not; window padding/opacity and the pill stay explicit. `terminal`
+remains `[host]`-free, so
 its square/hairline identity is still available explicitly. Neither skin
 declares `mode` overrides.
 
 `make validate-skins` resolves every `[host]` manifest against deterministic
-probe values (`panel radius=13`, `border-width=2`, `card=14`, `control=15`,
-`cell=16`): the inherited paths must equal those values, no other token may
+probe values (`window radius=17`, `window border-width=3`, `panel radius=13`,
+`border-width=2`, `card=14`, `control=15`, `cell=16`): the inherited paths must
+equal those values, no other token may
 move (including the pill), and no-host manifests must be byte-identical with
 or without the probe. The rofi render probe covers `window`→panel,
 `mainbox`→card, `inputbar`→control and `element`→cell; GTK covers
@@ -386,7 +407,8 @@ replace the action-card mapping and the card fill stays identical to
 ## What the GTK templates do and do not control
 
 The templates use a `{{SKIN_*}}` placeholder for every role property the v2
-model covers: panel/card/cell/control/pill paint, per-role borders and radii,
+model covers: window/panel/card/cell/control/pill paint, per-role borders and
+radii,
 role paddings, control/pill type and padding, hover/selected/focus/disabled
 state, the type scale and ink. Component geometry that has no token stays a
 literal copied from that app's `style.css` (for example the bar scrollbar's
@@ -411,14 +433,14 @@ The canonical documents live in the separate `contracts` repository. This
 repository vendors byte-for-byte copies under `skins/contracts/` so the gate
 validates the same bytes a consumer will parse.
 
-- `skins/contracts/PIN` records `contracts=v0.11.0`, the peeled source commit
-  `6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca` and one `sha256` line per vendored
+- `skins/contracts/PIN` records `contracts=v0.12.0`, the peeled source commit
+  `a03b5632828df8012c02a6117c3be438eca4264b` and one `sha256` line per vendored
   file. Editing a vendored schema by hand is a defect; re-vendor from the
   canonical tag and update the PIN in the same change.
 - The three appearance schemas are the delegates. The canonical
   `generation-manifest` schema is vendored at the same tag for contract-byte
   parity only: this class emits skin/appearance documents, not generations, and
-  its optional host snapshot records the same delegated rectangle paths. The
+  its optional host snapshot records the same seven delegated paths. The
   frozen v1 skin schemas remain for provenance.
 - `skins/schema.json` sets `schema_major: 2`, `canonical.vendored: true`,
   `canonical.tag`, `canonical.pin`, the three v2 delegates, the frozen v1
@@ -441,22 +463,27 @@ make test-skins       # pytest fixtures, including GTK3/GTK4 parse, rofi dump+st
 each manifest against the vendored `appearance-manifest` schema (including the
 optional `[host]` allowlist and fallback), resolves it under both `dark` and
 `light`, validates each resolved `tokens.json` against `appearance-json`, and
-expands all eleven templates for all five manifests × both modes (10
+expands all twelve templates for all five manifests × both modes (10
 manifest×mode documents per template). It also feeds deterministic host probe
 values through every `[host]` policy: inherited paths must equal the probe,
 non-inherited tokens must not move, and no-host manifests must be unchanged.
 The frozen `required_targets`/`required_artifacts` sets are compared exactly
-with the discovered template families, so a missing `gtk3`, `gtk4` or `rofi`
-template (or any other required consumer) fails the gate instead of silently
-dropping a target. It checks the flattened placeholder vocabulary two ways,
+with the discovered template families, so a missing `gtk3`, `gtk4`, `rofi` or
+`kitty` template (or any other required consumer) fails the gate instead of
+silently dropping a target. It checks the flattened placeholder vocabulary two ways,
 rejects literal hex, transitions/animations, structure/variant properties and
 layout placeholders in the rendered bytes, enforces the GTK3 dialect ban
 (custom properties/colour-mixing), the GTK3/GTK4 selector allowlist and
-layout/size-property ban, and the rasi solid-role/no-alpha/no-underscore rules.
-`make test-skins` adds the positive frozen values (including `terminal-host` =
-`terminal` tokens + `[host]`), glass parity against today's declarations, paper
+layout/size-property ban, the rasi solid-role/no-alpha/no-underscore rules and the
+conf bare-point/no-paint rules. `make test-skins` adds the positive frozen
+values (including `terminal-host` = `terminal` tokens + `[host]`), glass parity
+against today's declarations, paper
 light/dark expansion, state/role coverage, host positive/negative fixtures
-(including the all-five-path positive and the pill rejection), GTK3/GTK4
+(including the all-seven-path positive and the window padding/opacity and pill
+rejections), the required eight-token window group and its opacity bounds,
+GTK3/GTK4
 provider parse probes, the rofi `-dump-theme`+stderr probe (and its negative
-fixtures proving exit 0 alone is not validation), the rofi/GTK/wlogout
-host-geometry probes and the other negative fixtures.
+fixtures proving exit 0 alone is not validation), the `kitty +runpy`
+`load_config(... accumulate_bad_lines=[])` probe (with an explicit skip when
+kitty is absent and a negative proving unknown keys warn), the
+rofi/GTK/wlogout/window host-geometry probes and the other negative fixtures.
