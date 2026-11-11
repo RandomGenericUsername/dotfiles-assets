@@ -35,6 +35,7 @@
 - [req-022-wlogout-card-state](./req-022-wlogout-card-state/ticket.md) — wlogout Phase 2c: hover/focus retain card fill, active keeps selected paint, `v0.15.3` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-022/`, branch `ticket/req-022-wlogout-card-state` | commits `065f118` + `762ab8d` + close, gates green (`102 passed, 2 skipped`, `gates-ci` PASS), tag `v0.15.3` (base `v0.15.2`)
 - [req-023-terminal-host-skin](./req-023-terminal-host-skin/ticket.md) — terminal-host: opt-in Hyprland-following variant of terminal, `v0.16.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-023/`, branch `ticket/req-023-terminal-host-skin` | commits `5149a35` + `be472d5` + close, gates green (`109 passed, 3 skipped`, `gates-ci` PASS), tag `v0.16.0` (base `v0.15.3`)
 - [req-024-format-aware-skin-templates](./req-024-format-aware-skin-templates/ticket.md) — Format-aware skin templates: GTK3/GTK4 CSS targets + rofi rasi artifact, `contracts v0.10.0` re-vendor, `v0.17.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-024/`, branch `ticket/req-024-format-aware-skin-templates` | commits `0aea991` + `72c3154` + close, gates green (`134 passed, 3 skipped`, `gates-ci` PASS), tag `v0.17.0` (base `v0.16.0`)
+- [req-025-host-radius-guards](./req-025-host-radius-guards/ticket.md) — Host rounding guards: inner-radius rejection fixture + outer-only rofi render probe, `v0.17.1` | `in-progress` | lane 2 — bounded validation/docs | worktree `.worktrees/req-025/`, branch `ticket/req-025-host-radius-guards`
 
 ## Bugs
 
