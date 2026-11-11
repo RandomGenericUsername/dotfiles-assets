@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validate-skins -- the `skins` class contract, asserted against the corpus.
 
-WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.10.0):
+WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.11.0):
 
   1. THE LOCAL CONTRACT IS HONEST. `skins/schema.json` carries
      `schema_major: 2`, names the canonical `contracts` paths and proves its
@@ -23,12 +23,14 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.10.0):
      A `structure`, `variant`, `transition` or `animation` property fails;
      layout keys must be namespaced app names with numeric values. `host` is a
      policy object, not a token group: its `inherit` allowlist is non-empty,
-     unique and limited to `surface.panel.radius` and
-     `surface.panel.border-width`; `fallback` is `skin|error`. That allowlist
-     is OUTER-ONLY: `surface.panel` is the canonical outer-surface role (a
-     consumer's outermost window/panel), and Hyprland `decoration:rounding`
-     rounds a toplevel's bounding box, not a card, control, cell or pill inside
-     it. Inner radii are skin-owned design and are never host-inheritable.
+     unique and limited to the outer panel plus the inner rectangle radii:
+     `surface.panel.radius`, `surface.panel.border-width`,
+     `surface.card.radius`, `surface.control.radius` and
+     `surface.cell.radius`; `fallback` is `skin|error`. The allowlist is
+     RECTANGLE-ONLY: `surface.pill.radius` is deliberately absent because a
+     pill is a capsule whose identity stays explicit, and no padding, gap,
+     type, paint, colour, state, layout or non-panel border-width path is
+     delegable.
 
   3. EVERY MODE RESOLVES TO A VALID tokens.json. For each manifest the gate
      resolves the base groups plus the selected `mode.dark`/`mode.light`
@@ -38,8 +40,8 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.10.0):
      The gate then feeds deterministic host probe values through every `[host]`
      policy: an inherited path must resolve to the supplied value, no other
      token may move, and a manifest with no `[host]` policy must be unchanged.
-     This is how `terminal-host` follows Hyprland panel geometry while
-     `terminal` stays explicit.
+     This is how `glass`, `paper` and `terminal-host` follow the host panel and
+     rectangle radii while `terminal` and `flat` stay explicit.
 
   4. PLACEHOLDER COVERAGE IS TWO-WAY AND THE PER-FORMAT UNIT RULE HOLDS.
      Every `{{SKIN_*}}` in a template is the flattened path of a v2 token
@@ -187,17 +189,27 @@ GTK_LAYOUT_PROPERTY = re.compile(
 GROUPS = ("surface", "state", "type", "ink", "layout")
 CSS_GROUPS = ("surface", "state", "type", "ink")
 MODES = ("dark", "light")
-#: The only token paths the canonical `[host]` policy may delegate. The list is
-#: outer-surface only: `surface.panel` is the canonical outer window/panel role,
-#: and inner radii (card/control/cell/pill) are skin-owned design, never host
-#: values. Hyprland rounds a toplevel bounding box, not inner components.
-HOST_INHERITABLE = ("surface.panel.radius", "surface.panel.border-width")
+#: The only token paths the canonical `[host]` policy may delegate. It covers
+#: the outer panel plus the inner card/control/cell rectangle radii. The pill
+#: radius is deliberately absent (a capsule stays a skin identity), and no
+#: card/control/cell border width, padding, gap, type, paint, colour, state or
+#: layout path is delegable.
+HOST_INHERITABLE = (
+    "surface.panel.radius",
+    "surface.panel.border-width",
+    "surface.card.radius",
+    "surface.control.radius",
+    "surface.cell.radius",
+)
 #: Deterministic probe values the gate feeds through every `[host]` policy. They
 #: are deliberately different from every skin fallback so a no-op resolution
 #: cannot pass by accident.
 HOST_PROBE = {
     "surface.panel.radius": 13,
     "surface.panel.border-width": 2,
+    "surface.card.radius": 14,
+    "surface.control.radius": 15,
+    "surface.cell.radius": 16,
 }
 FORBIDDEN_TOP_KEYS = {
     "structure",
@@ -735,10 +747,10 @@ def _resolve_manifest(
 
     Precedence is `mode override > host > skin fallback`: a group replaced by
     the selected `mode.<mode>` branch keeps the override value; otherwise an
-    inherited `surface.panel.*` path takes the supplied host value; a path not
-    in `inherit`, or a missing host value under `fallback = "skin"`, keeps the
-    skin value. `fallback = "error"` fails closed when an inherited value is
-    missing.
+    inherited panel/card/control/cell path takes the supplied host value; a
+    path not in `inherit`, or a missing host value under `fallback = "skin"`,
+    keeps the skin value. `fallback = "error"` fails closed when an inherited
+    value is missing.
     """
     base = manifest.get("groups", {})
     overrides = manifest.get("mode", {}).get(mode, {})
@@ -1122,7 +1134,7 @@ def _check_host_resolution(
     errors: list[str],
     stats: dict,
 ) -> None:
-    """Prove a supplied host value lands only on the inherited panel paths.
+    """Prove a supplied host value lands only on the inherited rectangle paths.
 
     A manifest with no `[host]` policy is immune: feeding the probe values must
     leave its resolved document byte-for-byte equal. A manifest with a policy
@@ -1311,8 +1323,11 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
         notes.append(
             "host policy resolved for "
             f"{','.join(stats['host_manifests'])} with probe "
-            f"radius={HOST_PROBE['surface.panel.radius']} "
-            f"border-width={HOST_PROBE['surface.panel.border-width']}; "
+            f"panel-radius={HOST_PROBE['surface.panel.radius']} "
+            f"border-width={HOST_PROBE['surface.panel.border-width']} "
+            f"card-radius={HOST_PROBE['surface.card.radius']} "
+            f"control-radius={HOST_PROBE['surface.control.radius']} "
+            f"cell-radius={HOST_PROBE['surface.cell.radius']}; "
             "manifests without [host] stayed explicit"
         )
     stats["expansions"] = len(resolved_docs)
@@ -1493,7 +1508,7 @@ def main() -> int:
             print(f"  - {error}")
         return 1
     print(
-        "validate-skins: PASS -- vendored v0.10.0 hashes, v2 manifests, host "
+        "validate-skins: PASS -- vendored v0.11.0 hashes, v2 manifests, host "
         "policy, mode resolution, tokens.json schema, flattened placeholder "
         "coverage, role vocabulary, per-format unit rule and format-specific "
         "GTK3/GTK4/rasi laws agree"

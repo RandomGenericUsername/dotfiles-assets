@@ -7,10 +7,16 @@
 schemaVersion = 2
 name = "glass"
 
-# Host defaults: only the outer panel geometry follows the compositor. Every
-# other token stays explicit; a complete mode override still wins.
+# Host defaults: the panel plus the card/control/cell rectangle radii follow
+# the compositor. The pill stays explicit, and a complete mode override wins.
 [host]
-inherit = ["surface.panel.radius", "surface.panel.border-width"]
+inherit = [
+  "surface.panel.radius",
+  "surface.panel.border-width",
+  "surface.card.radius",
+  "surface.control.radius",
+  "surface.cell.radius",
+]
 fallback = "skin"
 
 [groups.surface.panel]

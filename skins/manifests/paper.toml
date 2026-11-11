@@ -7,11 +7,17 @@
 schemaVersion = 2
 name = "paper"
 
-# Host defaults: only the outer panel geometry follows the compositor. The
-# authored mode.light surface group remains an explicit override and wins over
-# the host in light mode.
+# Host defaults: the panel plus the card/control/cell rectangle radii follow
+# the compositor. The pill stays explicit; the authored mode.light surface
+# group remains an explicit override and wins over the host in light mode.
 [host]
-inherit = ["surface.panel.radius", "surface.panel.border-width"]
+inherit = [
+  "surface.panel.radius",
+  "surface.panel.border-width",
+  "surface.card.radius",
+  "surface.control.radius",
+  "surface.cell.radius",
+]
 fallback = "skin"
 
 [groups.surface.panel]
