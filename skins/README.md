@@ -3,11 +3,14 @@
 A **skin** is appearance: surface paint/geometry, interaction state, type, ink
 and mode overrides. It is not a variant and it is not structure: which widget
 sits where, and which named variant a host selects, belong to the app. This
-class now targets the **Appearance token model v2** from `contracts=v0.10.0`;
+class now targets the **Appearance token model v2** from `contracts=v0.11.0`;
 the optional root `[host]` policy is a delegation object, not a token group.
-The `v0.10.0` release also adds the optional `appearance.artifacts` family for
-non-CSS consumers; this class ships `rofi` as `rasi` and keeps `conf`/`theme`
-reserved. The frozen v1 skin schemas stay vendored for provenance only.
+The `v0.11.0` release expands its allowlist from the outer panel to the inner
+card/control/cell rectangle radii, while `surface.pill.radius` stays explicit.
+The earlier `v0.10.0` release added the optional `appearance.artifacts` family
+for non-CSS consumers; this class ships `rofi` as `rasi` and keeps
+`conf`/`theme` reserved. The frozen v1 skin schemas stay vendored for
+provenance only.
 
 ## The v2 token groups
 
@@ -150,11 +153,11 @@ difference is the opt-in `[host]` policy.
 
 | Token | `glass` (default/fallback) | `flat` | `paper` | `terminal` | `terminal-host` |
 | --- | --- | --- | --- | --- | --- |
-| `[host]` policy | panel radius + border | none (explicit) | panel radius + border | none (explicit) | panel radius + border |
+| `[host]` policy | panel + card/control/cell radii/border | none (explicit) | panel + card/control/cell radii/border | none (explicit) | panel + card/control/cell radii/border |
 | `surface.panel` radius / border-width / padding | 12 / 1.5 / 11 | 0 / 0 / 11 | 6 / 1 / 11 | 0 / 1 / 9 | 0 / 1 / 9 (host when supplied) |
-| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 | 0 / 1 / 8 |
-| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` | same as `terminal` |
-| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 | 2 / 1 / 3 / 10 / 600 | same as `terminal` |
+| `surface.card` radius / border-width / padding | 9 / 1 / 10 | 0 / 0 / 10 | 4 / 1 / 10 | 0 / 1 / 8 | 0 / 1 / 8 (radius host when supplied) |
+| `surface.cell` radius / border-width / padding / hover-bg | 7 / 0 / 8 / `alpha(@on_surface, 0.08)` | 0 / 0 / 7 / same | 3 / 0 / 8 / same | 0 / 0 / 5 / `alpha(@on_surface, 0.10)` | same as `terminal` (radius host when supplied) |
+| `surface.control` radius / border-width / padding / font-size / weight | 7 / 1 / 4 / 11 / 600 | 0 / 0 / 4 / 11 / 600 | 3 / 1 / 4 / 11 / 600 | 2 / 1 / 3 / 10 / 600 | same as `terminal` (radius host when supplied) |
 | `surface.pill` radius / border-width / padding / font-size / letter-spacing | 20 / 1 / 2 / 9.5 / 0.05 | 999 / 0 / 2 / 9.5 / 0.05 | 999 / 1 / 2 / 9.5 / 0.05 | 2 / 1 / 1 / 9 / 0.04 | same as `terminal` |
 | `surface.panel.bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` | `@surface` | `@surface` |
 | `surface.card.bg` | `alpha(@surface_container_high, 0.18)` | `transparent` | `@surface_container_low` | `@surface_container` | `@surface_container` |
@@ -165,70 +168,82 @@ difference is the opt-in `[host]` policy.
 | `type` font-family / title / body / caption / meta / display | `inherit` / 12.5 / 13 / 10.5 / 11 / 16 | system-ui / 15 / 13 / 10.5 / 11 / 16 | same as `flat` | JetBrainsMono Nerd Font, monospace / 13 / 12 / 9 / 10 / 14 | same as `terminal` |
 | `layout.ags` panel-width / bt-list-spacing | 312 / 4 | 312 / 4 | 312 / 6 | 312 / 4 | 312 / 4 |
 
-### Host defaults (`v0.9.0`)
+### Host defaults: rectangle radii (`v0.18.0`)
 
 `glass`, `paper` and `terminal-host` opt in to the optional root policy:
 
 ```toml
 [host]
-inherit = ["surface.panel.radius", "surface.panel.border-width"]
+inherit = [
+  "surface.panel.radius",
+  "surface.panel.border-width",
+  "surface.card.radius",
+  "surface.control.radius",
+  "surface.cell.radius",
+]
 fallback = "skin"
 ```
 
 `terminal` and `flat` deliberately opt out: square/hairline and zero-chrome
 are explicit identities, so they carry no `[host]` block. `terminal-host`
-(`v0.16.0`) is the opt-in counterpart: it carries terminal's token values but
-adds the `[host]` block, so a consumer that selects it follows Hyprland panel
-geometry while `terminal` keeps its explicit square frame. `[host]` is not a
-token group and does not change any token type.
+(`v0.16.0`) remains the opt-in counterpart: it carries terminal's token values
+but adds the `[host]` block, so a consumer that selects it follows the host
+panel and rectangle geometry while `terminal` keeps its explicit square frame.
+`[host]` is not a token group and does not change any token type.
 
-- **Allowlist only.** `inherit` must be non-empty, unique and may contain only
-  `surface.panel.radius` (Hyprland `decoration:rounding`) and
-  `surface.panel.border-width` (`general:border_size`). Gaps, padding, type,
-  colours, layout and structure are never host-injectable.
+- **Rectangle allowlist only.** `inherit` must be non-empty, unique and may
+  contain only `surface.panel.radius` (Hyprland `decoration:rounding`),
+  `surface.panel.border-width` (`general:border_size`) and the inner
+  `surface.card.radius`, `surface.control.radius` and `surface.cell.radius`.
+  Border width is delegable only on the panel. Gaps, padding, type, colours,
+  layout and structure are never host-injectable.
+- **The pill stays explicit.** `surface.pill.radius` is deliberately absent:
+  a pill is a capsule whose identity is the skin's decision, not a host
+  rectangle. A manifest that lists it fails the vendored schema.
 - **Precedence:** a value supplied by the selected `mode.<mode>` group wins
   over the host; otherwise an inherited token uses the live host value; a token
   not in `inherit` always uses the skin value. `paper`'s authored
-  `mode.light.surface` group is therefore explicit and wins in light mode.
+  `mode.light.surface` group is therefore explicit and wins in light mode for
+  every delegated rectangle.
 - **Fallback:** headless/invalid host values use the skin fallback by default.
   `fallback = "error"` fails the generation closed before publishing.
-- **Identity churn:** `glass`/`paper` gain the host block and `flat`/`terminal`
-  gain opt-out comments, so all four manifest files change bytes and all four
-  skin hashes change. Only `glass`/`paper` change delegation semantics, but
-  skin identity is content-addressed, so the first appearance/generation
-  identities after this release churn for every skin. No-path/token migration
-  is needed; this is a one-time content-addressed churn. The template set is
-  unchanged.
+- **Identity churn:** `glass`, `paper` and `terminal-host` gain the four inner
+  radius paths in `[host].inherit`, so their manifest bytes and
+  content-addressed skin hashes change. `terminal` and `flat` are byte-
+  identical. No token/path migration is needed; the template set is unchanged.
 
 `make validate-skins` enforces the allowlist through the vendored
 `appearance-manifest` schema (including `items`, `minItems` and
 `uniqueItems`); `make test-skins` adds positive/negative host fixtures.
 
-### Host rounding is outer-only (`v0.17.1`)
+### Rectangle radii delegate; the pill does not (`v0.18.0`)
 
-`surface.panel` is the **canonical outer-surface role**. A consumer that owns an
-outer window or panel maps that outermost geometry to
-`surface.panel.radius`/`surface.panel.border-width`; this covers rofi `window`,
-wlogout `window` and the AGS bar panel, and the historical role name does not
-mean "the bar panel only". Hyprland `decoration:rounding` rounds a toplevel
-window's bounding box, so host inheritance is **outer-only**: inner `card`,
-`control`, `cell` and `pill` radii are skin-owned design and are never
-host-inheritable. `terminal-host` deliberately keeps its square `0/2/0` inner
-identity while following the host frame; `glass` and `paper` author rounded
-inner roles. A user who wants rounded inner components selects a skin whose
-inner roles are rounded rather than making the host setting rewrite the skin.
+`surface.panel` remains the canonical outer-surface role (`rofi.window`,
+`wlogout` window, the AGS bar panel). The host rounding value now also feeds
+the inner rectangles when a skin lists them: `rofi.mainbox` → `card`,
+`rofi.inputbar` → `control`, `rofi.element` → `cell`, and the GTK3/GTK4
+`popover`/`.card` and `button`/`entry` roles follow the same card/control
+tokens. The rofi host-probe test asserts all four rofi selectors follow the
+probe for `glass`, `paper` and `terminal-host`, while `terminal` and `flat`
+keep their authored values. The GTK host probe covers card/control, and the
+wlogout probe covers the panel mapping.
 
-The guard slice is tests/docs only: `host-inner-radius.toml` proves
-`[host].inherit` with an inner radius fails, and the rofi host-probe test for
-`terminal-host`/`glass`/`paper` asserts `window` follows the probe radius while
-`mainbox`/`inputbar`/`element` keep their authored skin values. No production
-template or allowlist entry changed.
+`terminal-host` keeps its square `0/2/0` inner fallback but follows the host
+when it supplies values; `glass` and `paper` author rounded inner roles.
+`surface.pill.radius` is always the skin's authored value.
 
-**wlogout action cards are an outer-surface exception by mapping.** The
-generated `wlogout.gtk.css.j2` takes each `button` radius/border from
-`surface.panel` because those buttons are wide action cards, not compact
-controls (docs/108 `W-2.12`). That is a consumer-template mapping decision, not
-a precedent for host-inheriting every inner control.
+The guard inversion is tests/docs: the old invalid `host-inner-radius.toml`
+fixture is gone (inner radii are valid when listed), `host-pill-radius.toml`
+proves the pill is still rejected, and `host-rectangles.toml` is a positive
+all-five-path fixture. No production template or required target changed.
+
+**wlogout action cards use panel geometry by mapping.** The generated
+`wlogout.gtk.css.j2` takes each `button` radius/border from `surface.panel`
+because those buttons are wide action cards, not compact controls (docs/108
+`W-2.12`). The host probe therefore moves their frame with the panel even
+though `surface.card.radius` is now delegable elsewhere. That is a
+consumer-template mapping decision, not a rule that card/control/cell radii are
+unavailable to the host.
 
 ### wlogout action cards align to the panel (`v0.15.2`)
 
@@ -321,7 +336,8 @@ branches on mode, palette or skin. A light palette + `paper` reads light; a
 dark palette + `paper` keeps the base groups. This replaces the v1 behaviour
 where `paper` depended on whichever mode the palette happened to be. The
 complete `mode.light.surface` group is an explicit override, so it wins over
-the `[host]` policy for panel radius and border width in light mode.
+the `[host]` policy for panel, card, control and cell radii and the panel
+border width in light mode.
 
 ## `terminal` is mode-agnostic
 
@@ -340,19 +356,24 @@ it still follows the palette family it is generated against. It declares no
 `terminal-host` (`v0.16.0`) is a separate manifest, not a mode or variant of
 `terminal`: its `groups` are byte-for-byte the same terminal values, and its
 only delta is the root `[host]` policy. Selecting it keeps the dense monospace
-paint, type and rhythm, but `surface.panel.radius` and
-`surface.panel.border-width` resolve from the live Hyprland
-`decoration:rounding` / `general:border_size` when available and fall back to
-the skin's `0` / `1` when not. `terminal` remains `[host]`-free, so its
-square/hairline identity is still available explicitly. Neither skin declares
-`mode` overrides.
+paint, type and rhythm, but `surface.panel.radius`,
+`surface.panel.border-width` and the `surface.card/control/cell.radius`
+rectangles resolve from the live host `decoration:rounding` /
+`general:border_size` when available and fall back to the skin's square
+values when not; the pill stays explicit. `terminal` remains `[host]`-free, so
+its square/hairline identity is still available explicitly. Neither skin
+declares `mode` overrides.
 
 `make validate-skins` resolves every `[host]` manifest against deterministic
-probe values (`radius=13`, `border-width=2`): the inherited paths must equal
-those values, no other token may move, and no-host manifests must be
-byte-identical with or without the probe. A GTK3 `CssProvider`/style-context
-probe expands the wlogout card target for `terminal-host` with the host values,
-so the host radius is applied while the card fill stays identical to
+probe values (`panel radius=13`, `border-width=2`, `card=14`, `control=15`,
+`cell=16`): the inherited paths must equal those values, no other token may
+move (including the pill), and no-host manifests must be byte-identical with
+or without the probe. The rofi render probe covers `window`→panel,
+`mainbox`→card, `inputbar`→control and `element`→cell; GTK covers
+card/control and wlogout covers panel. A GTK3 `CssProvider`/style-context
+probe expands the wlogout card target for `terminal-host` with the full host
+probe, so the panel radius is applied while the delegated inner radii do not
+replace the action-card mapping and the card fill stays identical to
 `terminal`.
 
 ## What the GTK templates do and do not control
@@ -383,13 +404,14 @@ The canonical documents live in the separate `contracts` repository. This
 repository vendors byte-for-byte copies under `skins/contracts/` so the gate
 validates the same bytes a consumer will parse.
 
-- `skins/contracts/PIN` records `contracts=v0.10.0`, the peeled source commit
-  `8af8aca54e7107617c4d31655a6eed2665f9b751` and one `sha256` line per vendored
+- `skins/contracts/PIN` records `contracts=v0.11.0`, the peeled source commit
+  `6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca` and one `sha256` line per vendored
   file. Editing a vendored schema by hand is a defect; re-vendor from the
   canonical tag and update the PIN in the same change.
 - The three appearance schemas are the delegates. The canonical
   `generation-manifest` schema is vendored at the same tag for contract-byte
-  parity only: this class emits skin/appearance documents, not generations. The
+  parity only: this class emits skin/appearance documents, not generations, and
+  its optional host snapshot records the same delegated rectangle paths. The
   frozen v1 skin schemas remain for provenance.
 - `skins/schema.json` sets `schema_major: 2`, `canonical.vendored: true`,
   `canonical.tag`, `canonical.pin`, the three v2 delegates, the frozen v1
@@ -426,7 +448,8 @@ layout placeholders in the rendered bytes, enforces the GTK3 dialect ban
 layout/size-property ban, and the rasi solid-role/no-alpha/no-underscore rules.
 `make test-skins` adds the positive frozen values (including `terminal-host` =
 `terminal` tokens + `[host]`), glass parity against today's declarations, paper
-light/dark expansion, state/role coverage, host positive/negative fixtures,
-GTK3/GTK4 provider parse probes, the rofi `-dump-theme`+stderr probe (and its
-negative fixtures proving exit 0 alone is not validation), the GTK3
-host-geometry probe and the other negative fixtures.
+light/dark expansion, state/role coverage, host positive/negative fixtures
+(including the all-five-path positive and the pill rejection), GTK3/GTK4
+provider parse probes, the rofi `-dump-theme`+stderr probe (and its negative
+fixtures proving exit 0 alone is not validation), the rofi/GTK/wlogout
+host-geometry probes and the other negative fixtures.

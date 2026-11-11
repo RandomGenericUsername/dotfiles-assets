@@ -1,5 +1,59 @@
 # Changelog
 
+## v0.18.0 — rectangle radii: panel/card/control/cell delegated, pill explicit
+
+### Added
+
+- **Expanded host allowlist.** `glass`, `paper` and `terminal-host` now list
+  all five rectangle paths in `[host].inherit`:
+  `surface.panel.radius`, `surface.panel.border-width`,
+  `surface.card.radius`, `surface.control.radius` and
+  `surface.cell.radius`. The resolved geometry follows the host for those
+  tokens when supplied, with `mode override > host > skin fallback`
+  unchanged. `terminal` and `flat` remain `[host]`-free and keep their authored
+  values.
+- **Positive all-five-path fixture.** `skins/tests/fixtures/positive/host-rectangles.toml`
+  proves an inner radius that is listed is valid; the old invalid
+  `host-inner-radius.toml` fixture is removed because it now contradicts the
+  contract.
+- **Pill rejection fixture.** `skins/tests/fixtures/invalid/host-pill-radius.toml`
+  proves `surface.pill.radius` cannot be delegated even though it is a radius:
+  a pill is a capsule whose identity stays with the skin.
+- **Rectangle render probes.** The rofi host probe now asserts
+  `window`→panel, `mainbox`→card, `inputbar`→control and `element`→cell follow
+  the probe for opt-in skins, while `terminal`/`flat` keep authored values.
+  GTK3/GTK4 probes assert card/control delegation, and the wlogout probe
+  asserts its action cards stay on panel geometry even when the full host
+  probe supplies inner radii.
+
+### Changed
+
+- **Re-vendored `contracts v0.11.0`.** `skins/contracts/` is a byte copy of
+  the rectangle-radii release: `appearance-manifest` expands the host enum and
+  `generation-manifest` records the same five paths in its optional host
+  snapshot. The PIN names `contracts=v0.11.0` and source commit
+  `6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca`; `skins/schema.json`
+  `canonical.tag` moves to the same tag. The other five vendored schemas are
+  byte-identical to `v0.10.0`.
+- `scripts/validate-skins.py` `HOST_INHERITABLE`/`HOST_PROBE` cover the five
+  rectangle paths (probe panel 13, border 2, card 14, control 15, cell 16),
+  and its docstring replaces the old outer-only rule with the rectangle rule
+  and the explicit pill exclusion.
+- `skins/README.md`, `README.md`, `catalog.yaml` and the `Makefile` help text
+  describe `contracts v0.11.0`, the five-path allowlist and the pill exclusion.
+
+No production template, required target/artifact, runtime, provisioning,
+composition, app or live state changed. All eleven templates still expand for
+all five manifests × both modes.
+
+### Downstream pins
+
+- `contracts v0.11.0` (this contract release).
+- `dotfiles-assets v0.18.0` (this release).
+- `dotfiles-runtime v1.4.0` — resolve and record the additional delegated
+  rectangle radii, then re-pin `contracts v0.11.0`.
+- Engine/composition — later slice, after assets and runtime.
+
 ## v0.17.1 — host rounding guards: outer-only semantics and inner-radii fixtures
 
 ### Added

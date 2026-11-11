@@ -19,7 +19,7 @@
 #   make validate-templates  one vars schema per template; the schema equals the body it describes
 #   make validate-configs  deployment-fixed configs, one reviewed render token, wlogout Logout = uwsm stop, no mutable/rendered files
 #   make validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean
-#   make validate-skins  vendored v0.10.0 schemas + v2 manifests + both modes/tokens.json + GTK3/GTK4/rasi format gates
+#   make validate-skins  vendored v0.11.0 schemas + v2 manifests + both modes/tokens.json + GTK3/GTK4/rasi format gates
 #   make test-skins      pytest fixtures for the skins class (dev dependency)
 #   make lint            shellcheck over desktop/scripts/** + compileall scripts/
 #   make gates           validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic
@@ -54,7 +54,7 @@ help:
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
 	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
-	  'validate-skins    vendored v0.10.0 schemas + v2 manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi artifact + palette.v1 roles' \
+	  'validate-skins    vendored v0.11.0 schemas + v2 manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi artifact + palette.v1 roles' \
 	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
 	  'lint              shellcheck desktop/scripts/** + compileall scripts/' \
 	  'gates             validate + validate-icons + validate-content + validate-templates + validate-configs + validate-desktop + validate-skins + lint + hermetic' \
