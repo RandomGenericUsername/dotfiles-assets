@@ -2,7 +2,7 @@
 id: req-025
 title: "Host rounding guards: inner-radius rejection and outer-only render probe"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded validation/docs
 links:
   openspec: none
@@ -45,18 +45,18 @@ from that document: asset-side guards and documentation only (`HG-1.3`,
 
 ## Acceptance
 
-- [ ] `host-inner-radius.toml` fails `validate-skins` with the allowlist
+- [x] `host-inner-radius.toml` fails `validate-skins` with the allowlist
       message; the host allowlist is unchanged.
-- [ ] The rofi render probe covers `terminal-host`, `glass` and `paper`:
+- [x] The rofi render probe covers `terminal-host`, `glass` and `paper`:
       `window` follows the host radius, inner selectors keep skin radii.
-- [ ] Validator docstring and `skins/README.md` state outer-only host semantics
+- [x] Validator docstring and `skins/README.md` state outer-only host semantics
       and skin-owned inner radii.
-- [ ] The wlogout panel-radius action-card exception is documented as a mapping
+- [x] The wlogout panel-radius action-card exception is documented as a mapping
       decision, not an inner-control precedent.
-- [ ] No production template, schema allowlist or behavior change.
-- [ ] `make validate-skins`, `make test-skins`, `make lint` and `make gates-ci`
+- [x] No production template, schema allowlist or behavior change.
+- [x] `make validate-skins`, `make test-skins`, `make lint` and `make gates-ci`
       pass in the foreground.
-- [ ] `v0.17.1` annotated tag is pushed on the fast-forwarded `master` commit.
+- [x] `v0.17.1` annotated tag is pushed on the fast-forwarded `master` commit.
 
 ## Evidence / Verify
 
@@ -68,4 +68,66 @@ from that document: asset-side guards and documentation only (`HG-1.3`,
 
 ## Outcome (2026-11-11)
 
-Filled in the closing commit.
+**Worktree:** `.worktrees/req-025/` (base `v0.17.0`)
+**Branch:** `ticket/req-025-host-radius-guards`
+**Commits:** `c32989f` (ticket + INDEX plan), `158ab1b` (inner-radius fixture +
+rofi host-probe test), `678bab1` (validator docstring, skins README, release
+docs/version), this closing commit (ticket outcome + INDEX done).
+**Tag:** `v0.17.1` (annotated) on this closing commit; fast-forward to
+`master`, push `master` + tag.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/tests/fixtures/invalid/host-inner-radius.toml` | **new** negative fixture: glass with `[host].inherit = ["surface.card.radius"]` |
+| `skins/tests/test_skins.py` | fixture parameter asserts the exact allowlist message; new rofi host-probe render test for `terminal-host`/`glass`/`paper`; explicit `HOST_INHERITABLE` lock |
+| `scripts/validate-skins.py` | docstring and `HOST_INHERITABLE` comment state outer-only semantics and skin-owned inner radii; no logic change |
+| `skins/README.md` | outer-surface role, outer-only host rounding, inner-radii ownership, wlogout action-card exception |
+| `README.md`, `skins/schema.json`, `catalog.yaml`, `CHANGELOG.md` | v0.17.1 release metadata and summary |
+
+No production template, manifest, schema allowlist or validator behavior
+changed. `git diff v0.17.0 -- skins/templates skins/manifests skins/contracts`
+is empty.
+
+### Fixture evidence
+
+`host-inner-radius.toml` with `surface.card.radius` produces:
+
+```text
+skins/manifests/glass.toml: must be one of ['surface.panel.radius', 'surface.panel.border-width'], got 'surface.card.radius'
+```
+
+The allowlist remains exactly `surface.panel.radius` and
+`surface.panel.border-width`; the new test also asserts
+`validate_skins.HOST_INHERITABLE` equals that tuple.
+
+### Rofi host-probe evidence
+
+Probe host `radius=13`, `border-width=2`, rofi `window` → `13px`/`2px` for
+all three skins. Authored inner radii retained:
+
+| Skin | `mainbox` card | `inputbar` control | `element` cell |
+| --- | ---: | ---: | ---: |
+| `terminal-host` | 0px | 2px | 0px |
+| `glass` | 9px | 7px | 7px |
+| `paper` | 4px | 3px | 3px |
+
+### Gate evidence
+
+| Claim | Command | Result |
+| --- | --- | --- |
+| Skins gate | `make validate-skins` | **PASS** — 5 manifests, 11 templates, 10 targets, `artifacts=rofi:rasi`, 57 tokens, 10 expansions, host probe on `glass,paper,terminal-host` |
+| Skins fixtures | `make test-skins PYTEST="<assets>/.venv/bin/python -m pytest"` | **PASS** — `138 passed, 3 skipped` (the 3 skips are the pre-existing GTK probes that need `gi`) |
+| Lint | `PATH="<uv-shellcheck-bin>:$PATH" make lint` | **PASS** — compileall + shellcheck clean |
+| CI gate set (foreground) | `PATH="<uv-shellcheck-bin>:$PATH" make gates-ci` | **PASS** — rc `0`; every validator, lint and `hermetic: PASS` |
+
+### Downstream pins
+
+- **Composition should remain on assets `v0.17.0`.** No deployed artifact
+  changed: this release only adds fixtures/tests and documentation, and the
+  rendered templates, manifests and contracts are byte-identical to `v0.17.0`.
+  Bumping the composition pin would churn a pin without changing what is
+  deployed. Bump only if a consumer wants the guard tests/docs in its mirror.
+- No runtime, provisioning, composition, app or live-state change is in this
+  ticket.
