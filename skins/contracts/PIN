@@ -4,28 +4,32 @@
 # any vendored file MUST update its sha256 here, and the copy must be re-taken
 # from the tag named below. Do not edit a vendored schema by hand.
 #
-# v0.11.0 expands the appearance host allowlist from the outer panel to the
-# rectangle radii: surface.panel.radius, surface.panel.border-width,
-# surface.card.radius, surface.control.radius and surface.cell.radius.
-# surface.pill.radius stays explicit (a capsule is a skin identity), and no
-# padding, gap, type, paint, colour, state, layout or non-panel border-width
-# path is delegable. The three appearance schemas are the canonical set for
-# this class: `appearance-manifest` (the v2 TOML/JSON manifest envelope with
-# the optional root `host` policy), `appearance-json` (the resolved tokens.json
-# document; mode and host values already applied) and `appearance-artifact`
-# (appearance.json metadata). The generation manifest schema is vendored for
-# contract-byte parity and records the same five delegated paths in its
-# optional host snapshot; this class emits skin/appearance documents, not
-# generations, and never writes an artifact path. The three frozen v1 skin
-# schemas are vendored at the same tag for provenance; this class no longer
-# emits v1 manifests. All lengths are unitless JSON numbers rendered as CSS px,
-# letter-spacing renders as em and font-weight stays unitless.
-contracts=v0.11.0
-source-commit=6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca
-sha256  4b4da0b91a971023086255e4922ae3b791cce66f1e613bfa3ef5560c9e0228a7  appearance-manifest.schema.json
-sha256  3601b764bd7dea0bb7c5e30e010d10303dd6e70cd6423530f2c2df0622311751  appearance-json.schema.json
+# v0.12.0 makes `surface.window` a required sixth surface role (bg, border,
+# border-width, radius, padding, shadow, blur, opacity) and adds the unitless
+# `[0,1]` opacity value type. It expands the appearance host allowlist from the
+# five rectangle paths to seven: `surface.window.radius`,
+# `surface.window.border-width`, `surface.panel.radius`,
+# `surface.panel.border-width`, `surface.card.radius`, `surface.control.radius`
+# and `surface.cell.radius`. Window padding and opacity are never delegable,
+# `surface.pill.radius` stays explicit, and no gap, type, paint, colour, state
+# or layout path is delegable. The three appearance schemas are the canonical
+# set for this class: `appearance-manifest` (the v2 TOML/JSON manifest envelope
+# with the optional root `host` policy), `appearance-json` (the resolved
+# tokens.json document; mode and host values already applied) and
+# `appearance-artifact` (appearance.json metadata). The generation manifest
+# schema is vendored for contract-byte parity and records the same seven
+# delegated paths in its optional host snapshot; this class emits
+# skin/appearance documents, not generations, and never writes an artifact
+# path. The three frozen v1 skin schemas are vendored at the same tag for
+# provenance; this class no longer emits v1 manifests. All lengths are unitless
+# JSON numbers rendered as CSS px, letter-spacing renders as em and font-weight
+# stays unitless; only `surface.window.opacity` is a unitless [0,1] number.
+contracts=v0.12.0
+source-commit=a03b5632828df8012c02a6117c3be438eca4264b
+sha256  5712ea6480187c5035dd480ce3c4482ed526a3220dd75635f7186ff91aa905c2  appearance-manifest.schema.json
+sha256  f14320a1677b8aeb11a53800f97111e386644dc1dc17237baaad3b676bf72d92  appearance-json.schema.json
 sha256  dda28261b7a74372c8643a582eb8a20d63811e8732cd96e2e97b911f33939ac2  appearance-artifact.schema.json
-sha256  e3fe10bd27cd102056af2249a9631c6289a0a41cb35aca2a79bff63c7e97fd53  generation-manifest.schema.json
+sha256  f423a09a2a43237232b9968f216832f965d9c363893f16b34fe4e27337bde47b  generation-manifest.schema.json
 sha256  6383165244ecb85c91f51bad7194d68a27881f85cada9a41c97585310a2947b5  skin-token.schema.json
 sha256  82d1229cf78cd4cfec54a25677838a912de1d1ecf81d454c9318ed3af2fa64c8  skin-manifest.schema.json
 sha256  fbe980af1f5b4bea961d1addc512e32039dd2d3ae25464d6d528c2445ac04ad4  skin-json.schema.json

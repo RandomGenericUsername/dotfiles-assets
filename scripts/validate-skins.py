@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validate-skins -- the `skins` class contract, asserted against the corpus.
 
-WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.11.0):
+WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.12.0):
 
   1. THE LOCAL CONTRACT IS HONEST. `skins/schema.json` carries
      `schema_major: 2`, names the canonical `contracts` paths and proves its
@@ -45,12 +45,15 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.11.0):
 
   4. PLACEHOLDER COVERAGE IS TWO-WAY AND THE PER-FORMAT UNIT RULE HOLDS.
      Every `{{SKIN_*}}` in a template is the flattened path of a v2 token
-     (`surface.panel.bg` -> `SKIN_SURFACE_PANEL_BG`), every template expands
+     (`surface.window.bg` -> `SKIN_SURFACE_WINDOW_BG`), every template expands
      for every manifest × mode, no placeholder is left unresolved, and a
      layout token (`SKIN_LAYOUT_*`) is an error in every format. CSS lengths
      render as `<n>px`, letter-spacing as `<n>em`, font-weight stays unitless;
      rasi lengths do the same while rasi paint resolves to a solid hyphenated
-     palette role (never alpha, never an underscore).
+     palette role (never alpha, never an underscore). `conf` lengths render as
+     bare kitty points (0.75 px→pt, two-decimal round-half-up, clamped), the
+     font-family resolves to its first usable family and opacity stays a bare
+     [0,1] decimal; every paint token in a conf template fails closed.
 
   5. THE TEMPLATE SET NAMES ITS FAMILY AND FORMAT. CSS targets are named
      `<configDir>.gtk.css.j2` and render `<configDir>.css`. Non-CSS artifacts
@@ -62,7 +65,9 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.11.0):
      `frozen.required_targets` names every CSS consumer (including `gtk3` and
      `gtk4`) and `frozen.required_artifacts` names every non-CSS consumer
      (`rofi`/`rasi`). A missing template fails, and an extra template not in
-     the frozen sets fails too; a consumer cannot land silently. The global
+     the frozen sets fails too; a consumer cannot land silently. The required
+     six-role surface includes `window`; a manifest without it fails the
+     vendored schema and is never populated from `panel`. The global
      GTK sheets are restricted to a conservative selector allowlist and may not
      emit layout/size properties; GTK3 rejects custom properties and
      colour-mixing; rasi rejects alpha compositing and underscore role names.
@@ -95,6 +100,7 @@ import posixpath
 import re
 import sys
 import tomllib
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 SKINS_DIR = "skins"
@@ -159,6 +165,8 @@ DEFINE_COLOR = re.compile(r"@define-color\s+([A-Za-z0-9_-]+)")
 RASI_ALPHA = re.compile(r"\balpha\s*\(")
 RASI_ROLE = re.compile(r"@([a-z0-9-]+)")
 RASI_UNDERSCORE_ROLE = re.compile(r"@[A-Za-z0-9-]*_[A-Za-z0-9_-]*")
+#: A conf length must be a bare kitty point number, never a CSS unit.
+CONF_SUFFIX = re.compile(r"(?<![A-Za-z0-9_.-])\d+(?:\.\d+)?(?:px|pt)\b")
 GTK3_FORBIDDEN = (
     ("GTK3 var()", re.compile(r"\bvar\s*\(")),
     ("GTK3 color-mix()", re.compile(r"\bcolor-mix\s*\(")),
@@ -195,6 +203,8 @@ MODES = ("dark", "light")
 #: card/control/cell border width, padding, gap, type, paint, colour, state or
 #: layout path is delegable.
 HOST_INHERITABLE = (
+    "surface.window.radius",
+    "surface.window.border-width",
     "surface.panel.radius",
     "surface.panel.border-width",
     "surface.card.radius",
@@ -205,6 +215,8 @@ HOST_INHERITABLE = (
 #: are deliberately different from every skin fallback so a no-op resolution
 #: cannot pass by accident.
 HOST_PROBE = {
+    "surface.window.radius": 17,
+    "surface.window.border-width": 3,
     "surface.panel.radius": 13,
     "surface.panel.border-width": 2,
     "surface.card.radius": 14,
@@ -779,7 +791,13 @@ def _resolve_manifest(
                         f"by fallback = \"error\""
                     )
                 continue
-            resolved[group][role][token] = supplied
+            target_group = resolved.get(group)
+            if not isinstance(target_group, dict):
+                continue
+            target_role = target_group.get(role)
+            if not isinstance(target_role, dict):
+                continue
+            target_role[token] = supplied
     return resolved
 
 
@@ -857,13 +875,89 @@ def _rasi_token_value(path: str, value) -> str:
     return text
 
 
+#: CSS-wide families are not font names; non-portable system keywords cannot be
+#: passed to kitty. Both are dropped by the conf font-family rule.
+CONF_FONT_KEYWORDS = {
+    "inherit",
+    "initial",
+    "unset",
+    "revert",
+    "revert-layer",
+    "system-ui",
+    "ui-sans-serif",
+    "ui-monospace",
+    "ui-serif",
+}
+
+
+def _round_half_up(value, places: int = 2) -> Decimal:
+    """Round a number half away from zero (CSS/kitty rule), not banker's."""
+    quantum = Decimal(1).scaleb(-places)
+    return Decimal(str(value)).quantize(quantum, rounding=ROUND_HALF_UP)
+
+
+def _bare_decimal(value: Decimal) -> str:
+    """Render a decimal with trailing zeros stripped and no exponent."""
+    text = format(value.normalize(), "f")
+    return "0" if text in ("", "-0") else text
+
+
+def _conf_font_family(value) -> str:
+    """First usable CSS family per docs/113 §7.4; `monospace` if none remains."""
+    for part in str(value).split(","):
+        name = re.sub(r"\\(.)", r"\1", part.strip())
+        if len(name) >= 2 and name[0] == name[-1] and name[0] in {"\"", "'"}:
+            name = name[1:-1]
+        name = name.strip()
+        if not name or name.lower() in CONF_FONT_KEYWORDS:
+            continue
+        return name
+    return "monospace"
+
+
+def _conf_token_value(path: str, value) -> str:
+    """Render a resolved token for kitty: bare points, family and opacity only.
+
+    Lengths use the CSS reference pixel (1 px = 0.75 pt), round half up to two
+    decimals and apply the documented presentation clamps. Opacity is already
+    a [0,1] contract number and renders as a bare decimal. Paint is not
+    representable without a literal colour, so it fails closed.
+    """
+    if _is_paint_token(path):
+        raise ValueError(f"{path}: paint is not representable in conf")
+    if path.endswith(".opacity"):
+        return _bare_decimal(_round_half_up(value, 3))
+    if path == "type.font-family":
+        return _conf_font_family(value)
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        if path.endswith("font-weight"):
+            return _css_number(value)
+        if path.endswith("letter-spacing"):
+            return _css_number(value)
+        if path.endswith(("border-width", "radius", "padding", "font-size")) or path.startswith(
+            "type.size-"
+        ):
+            points = _round_half_up(Decimal(str(value)) * Decimal("0.75"), 2)
+            if path.startswith("type.size-") or path.endswith("font-size"):
+                points = max(Decimal("6"), min(Decimal("36"), points))
+            elif path.endswith("padding"):
+                points = max(Decimal("0"), min(Decimal("32"), points))
+            return _bare_decimal(points)
+        return _css_number(value)
+    return str(value)
+
+
 def _format_token_value(path: str, value, template_format: str) -> str:
     if template_format == CSS_FORMAT:
         return _css_token_value(path, value)
     if template_format == "rasi":
         return _rasi_token_value(path, value)
-    # conf/theme are reserved and not shipped by this class. If a template
-    # ever names one, paint is unrepresentable without literal hex.
+    if template_format == "conf":
+        return _conf_token_value(path, value)
+    # theme is reserved. If a template ever names it, paint is unrepresentable
+    # without a literal hex colour.
     if _is_paint_token(path):
         raise ValueError(f"{path}: paint is not representable in {template_format}")
     return _css_token_value(path, value)
@@ -904,6 +998,11 @@ def expand_template(template: str, resolved: dict, template_format: str = CSS_FO
 def _strip_comments(text: str) -> str:
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
     return re.sub(r"(?m)^\s*//.*$", "", text)
+
+
+def _strip_conf_comments(text: str) -> str:
+    """Kitty comments are `#`; strip them before the conf dialect laws."""
+    return re.sub(r"(?m)^\s*#.*$", "", text)
 
 
 def _selectors(text: str) -> list[str]:
@@ -947,6 +1046,18 @@ def _check_rendered_text(
                     f"{rel}: rendered rasi names @{role}, which is not a "
                     f"hyphenated palette.v1 role"
                 )
+    if template_format == "conf":
+        conf_code = _strip_conf_comments(code)
+        if CONF_SUFFIX.search(conf_code):
+            errors.append(
+                f"{rel}: rendered conf contains a px/pt suffix; kitty lengths "
+                f"must be bare point numbers"
+            )
+        if ROLE_REFERENCE.search(conf_code):
+            errors.append(
+                f"{rel}: rendered conf names a palette role; kitty colours stay "
+                f"in colors.kitty"
+            )
     if template_format == CSS_FORMAT and consumer in GTK_TARGETS:
         if consumer == "gtk3":
             for label, pattern in GTK3_FORBIDDEN:
@@ -1030,7 +1141,8 @@ def _check_expansion(
         f"expanded {len(resolved_docs)} manifest×mode document(s) through "
         f"{len(templates)} template(s) with the per-format unit rule "
         f"(CSS/rasi length -> <n>px, letter-spacing -> <n>em, font-weight "
-        f"unitless; rasi paint -> solid hyphenated roles)"
+        f"unitless; rasi paint -> solid hyphenated roles; conf lengths -> bare "
+        f"pt via 0.75 px->pt, opacity -> bare [0,1] decimal)"
     )
 
 
@@ -1060,6 +1172,12 @@ def _check_template(
         if RASI_UNDERSCORE_ROLE.search(code):
             errors.append(
                 f"{rel}: rasi template must use hyphenated role names, not underscores"
+            )
+    if template_format == "conf":
+        if CONF_SUFFIX.search(_strip_conf_comments(code)):
+            errors.append(
+                f"{rel}: conf template must not append a px/pt suffix; the conf "
+                f"renderer emits bare point numbers"
             )
     if template_format == CSS_FORMAT and consumer in GTK_TARGETS:
         if consumer == "gtk3":
@@ -1323,6 +1441,8 @@ def validate(root: Path) -> tuple[list[str], list[str], dict]:
         notes.append(
             "host policy resolved for "
             f"{','.join(stats['host_manifests'])} with probe "
+            f"window-radius={HOST_PROBE['surface.window.radius']} "
+            f"window-border-width={HOST_PROBE['surface.window.border-width']} "
             f"panel-radius={HOST_PROBE['surface.panel.radius']} "
             f"border-width={HOST_PROBE['surface.panel.border-width']} "
             f"card-radius={HOST_PROBE['surface.card.radius']} "
@@ -1508,10 +1628,10 @@ def main() -> int:
             print(f"  - {error}")
         return 1
     print(
-        "validate-skins: PASS -- vendored v0.11.0 hashes, v2 manifests, host "
+        "validate-skins: PASS -- vendored v0.12.0 hashes, v2 manifests, host "
         "policy, mode resolution, tokens.json schema, flattened placeholder "
         "coverage, role vocabulary, per-format unit rule and format-specific "
-        "GTK3/GTK4/rasi laws agree"
+        "GTK3/GTK4/rasi/conf laws agree"
     )
     return 0
 

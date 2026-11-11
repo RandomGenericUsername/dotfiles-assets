@@ -16,6 +16,16 @@ padding = 11
 shadow = "none"
 blur = "none"
 
+[groups.surface.window]
+bg = "transparent"
+border = "transparent"
+border-width = 0
+radius = 0
+padding = 11
+shadow = "none"
+blur = "none"
+opacity = 1.0
+
 [groups.surface.card]
 bg = "transparent"
 border = "transparent"

@@ -18,6 +18,8 @@ name = "terminal-host"
 # supplies no value.
 [host]
 inherit = [
+  "surface.window.radius",
+  "surface.window.border-width",
   "surface.panel.radius",
   "surface.panel.border-width",
   "surface.card.radius",
@@ -34,6 +36,16 @@ radius = 0
 padding = 9
 shadow = "none"
 blur = "none"
+
+[groups.surface.window]
+bg = "@surface"
+border = "alpha(@on_surface, 0.22)"
+border-width = 1
+radius = 0
+padding = 9
+shadow = "none"
+blur = "none"
+opacity = 1.0
 
 [groups.surface.card]
 bg = "@surface_container"

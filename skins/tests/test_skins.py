@@ -7,12 +7,14 @@ Run with the repository's development dependencies:
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
 that prove the gate actually bites. The model is the v2 Appearance token set
-from ``contracts`` v0.11.0, not the frozen v1 skin vocabulary. The optional
-root ``[host]`` policy is a delegation object, not a token group and delegates
-the panel plus the card/control/cell rectangle radii; the pill stays explicit. The shared
-template set has CSS targets (``<configDir>.gtk.css.j2``) and non-CSS
-artifacts (``<consumer>.<format>.j2``); this tag ships the ``gtk3``/``gtk4``
-targets and the ``rofi``/``rasi`` artifact.
+from ``contracts`` v0.12.0, not the frozen v1 skin vocabulary. The required
+six-role surface includes ``window`` (never aliased from ``panel``); the
+optional root ``[host]`` policy is a delegation object, not a token group and
+delegates window/panel geometry plus the card/control/cell rectangle radii;
+the pill stays explicit. The shared template set has CSS targets
+(``<configDir>.gtk.css.j2``) and non-CSS artifacts
+(``<consumer>.<format>.j2``); this tag ships the ``gtk3``/``gtk4`` targets and
+the ``rofi``/``rasi`` and ``kitty``/``conf`` artifacts.
 """
 
 from __future__ import annotations
@@ -311,7 +313,7 @@ APP_TEMPLATES = {
             "button span",
         ],
         "tokens": {
-            "SKIN_SURFACE_PANEL_BG",
+            "SKIN_SURFACE_WINDOW_BG",
             "SKIN_SURFACE_PANEL_BORDER_WIDTH",
             "SKIN_SURFACE_PANEL_RADIUS",
             "SKIN_SURFACE_CARD_BG",
@@ -335,11 +337,15 @@ APP_TEMPLATES = {
 
 PIN = CONTRACTS / "PIN"
 REQUIRED_TARGETS = set(APP_TEMPLATES) | {"gtk3", "gtk4"}
-REQUIRED_ARTIFACTS = [{"consumer": "rofi", "format": "rasi"}]
+REQUIRED_ARTIFACTS = [
+    {"consumer": "rofi", "format": "rasi"},
+    {"consumer": "kitty", "format": "conf"},
+]
 FORMAT_TEMPLATES = {
     "gtk3": ("gtk3.gtk.css.j2", "css"),
     "gtk4": ("gtk4.gtk.css.j2", "css"),
     "rofi": ("rofi.rasi.j2", "rasi"),
+    "kitty": ("kitty.conf.j2", "conf"),
 }
 
 ROFI_CONFIG = ROOT / "configs" / "rofi" / "launcher" / "config.rasi"
@@ -440,7 +446,11 @@ def make_full_root(
     for path in TEMPLATES.glob("*.j2"):
         if drop_template is not None and path.name == f"{drop_template}.gtk.css.j2":
             continue
-        if drop_artifact is not None and path.name == f"{drop_artifact}.rasi.j2":
+        if drop_artifact is not None and path.name in {
+            f"{drop_artifact}.rasi.j2",
+            f"{drop_artifact}.conf.j2",
+            f"{drop_artifact}.theme.j2",
+        }:
             continue
         shutil.copy2(path, root / "skins" / "templates" / path.name)
     vocabulary = root / "icons" / "mappings" / "vocabulary.json"
@@ -464,10 +474,10 @@ def test_corpus_passes_the_gate() -> None:
     assert errors == []
     assert stats == {
         "manifests": 5,
-        "templates": 11,
+        "templates": 12,
         "targets": sorted(REQUIRED_TARGETS),
-        "artifacts": ["rofi:rasi"],
-        "tokens": 57,
+        "artifacts": ["kitty:conf", "rofi:rasi"],
+        "tokens": 65,
         "roles": 51,
         "expansions": 10,
         "host_resolutions": 6,
@@ -635,6 +645,8 @@ def test_rofi_template_is_solid_roles_and_geometry_only() -> None:
 @pytest.mark.parametrize(
     (
         "name",
+        "window_radius",
+        "window_border",
         "panel_radius",
         "panel_border",
         "card_radius",
@@ -642,22 +654,24 @@ def test_rofi_template_is_solid_roles_and_geometry_only() -> None:
         "cell_radius",
     ),
     [
-        ("terminal-host", 13, 2, 14, 15, 16),
-        ("glass", 13, 2, 14, 15, 16),
-        ("paper", 13, 2, 14, 15, 16),
-        ("terminal", 0, 1, 0, 2, 0),
-        ("flat", 0, 0, 0, 0, 0),
+        ("terminal-host", 17, 3, 13, 2, 14, 15, 16),
+        ("glass", 17, 3, 13, 2, 14, 15, 16),
+        ("paper", 17, 3, 13, 2, 14, 15, 16),
+        ("terminal", 0, 1, 0, 1, 0, 2, 0),
+        ("flat", 0, 0, 0, 0, 0, 0, 0),
     ],
 )
 def test_rofi_host_probe_delegates_rectangle_radii_for_opt_in_skins(
     name: str,
+    window_radius: int,
+    window_border: int,
     panel_radius: int,
     panel_border: int,
     card_radius: int,
     control_radius: int,
     cell_radius: int,
 ) -> None:
-    """Opt-in skins follow the probe on every rectangle; terminal/flat stay authored."""
+    """Window owns rofi's outer slot; mainbox/inputbar/element stay card/control/cell."""
     text = (TEMPLATES / "rofi.rasi.j2").read_text()
     host = dict(validate_skins.HOST_PROBE)
     tokens = validate_skins._resolve_manifest(load_manifest(name), "dark", host)
@@ -668,8 +682,8 @@ def test_rofi_host_probe_delegates_rectangle_radii_for_opt_in_skins(
     mainbox = _wlogout_block(rasi, "mainbox")
     inputbar = _wlogout_block(rasi, "inputbar")
     element = _wlogout_block(rasi, "element")
-    assert f"border-radius: {panel_radius}px;" in window
-    assert f"border: {panel_border}px;" in window
+    assert f"border-radius: {window_radius}px;" in window
+    assert f"border: {window_border}px;" in window
     assert f"border-radius: {card_radius}px;" in mainbox
     assert f"border-radius: {control_radius}px;" in inputbar
     assert f"border-radius: {cell_radius}px;" in element
@@ -834,13 +848,15 @@ def test_rofi_static_config_imports_appearance_last() -> None:
         (
             "terminal-host",
             {
+                "surface.window.radius": 7,
+                "surface.window.border-width": 2,
                 "surface.panel.radius": 9,
                 "surface.panel.border-width": 2,
                 "surface.card.radius": 9,
                 "surface.control.radius": 9,
                 "surface.cell.radius": 9,
             },
-            (9, 9, 9, 9),
+            (7, 9, 9, 9),
         ),
         ("flat", None, (0, 0, 0, 0)),
         ("paper", None, (6, 4, 3, 3)),
@@ -861,6 +877,8 @@ def test_rofi_host_probe_leaves_the_pill_radius_explicit() -> None:
     """Delegating the four rectangles must not reach the pill token."""
     pill = load_manifest("terminal-host")["groups"]["surface"]["pill"]["radius"]
     host = {
+        "surface.window.radius": 7,
+        "surface.window.border-width": 2,
         "surface.panel.radius": 9,
         "surface.panel.border-width": 2,
         "surface.card.radius": 9,
@@ -951,7 +969,9 @@ def test_required_targets_and_artifacts_match_the_template_matrix() -> None:
     assert sorted(
         path.name for path in TEMPLATES.glob("*.rasi.j2")
     ) == ["rofi.rasi.j2"]
-    assert not list(TEMPLATES.glob("*.conf.j2"))
+    assert sorted(
+        path.name for path in TEMPLATES.glob("*.conf.j2")
+    ) == ["kitty.conf.j2"]
     assert not list(TEMPLATES.glob("*.theme.j2"))
 
 
@@ -1422,12 +1442,12 @@ def test_schema_without_required_artifacts_fails(tmp_path: Path) -> None:
 
 def test_unregistered_extra_artifact_fails(tmp_path: Path) -> None:
     root = make_full_root(tmp_path)
-    (root / "skins" / "templates" / "kitty.conf.j2").write_text(
+    (root / "skins" / "templates" / "btop.conf.j2").write_text(
         "font_family {{SKIN_TYPE_FONT_FAMILY}}\n"
     )
     errors = errors_for(root)
     assert any(
-        "unregistered artifact(s) ['kitty:conf']" in error for error in errors
+        "unregistered artifact(s) ['btop:conf']" in error for error in errors
     ), errors
 
 
@@ -1489,7 +1509,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.11.0"
+    assert canonical["tag"] == "v0.12.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "manifest": "skins/contracts/appearance-manifest.schema.json",
@@ -1507,7 +1527,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
     assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca"
+    assert metadata["source-commit"] == "a03b5632828df8012c02a6117c3be438eca4264b"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -1535,6 +1555,8 @@ def test_manifest_documents_validate_against_the_vendored_manifest_schema() -> N
 
 
 HOST_PATHS = [
+    "surface.window.radius",
+    "surface.window.border-width",
     "surface.panel.radius",
     "surface.panel.border-width",
     "surface.card.radius",
@@ -1616,6 +1638,8 @@ def test_host_values_resolve_only_into_inherited_rectangle_geometry() -> None:
     terminal_host = validate_skins._resolve_manifest(
         load_manifest("terminal-host"), "dark", host
     )
+    assert terminal_host["surface"]["window"]["radius"] == 17
+    assert terminal_host["surface"]["window"]["border-width"] == 3
     assert terminal_host["surface"]["panel"]["radius"] == 13
     assert terminal_host["surface"]["panel"]["border-width"] == 2
     assert terminal_host["surface"]["card"]["radius"] == 14
@@ -1626,6 +1650,8 @@ def test_host_values_resolve_only_into_inherited_rectangle_geometry() -> None:
     # The original terminal is explicit: even with host values supplied it
     # keeps its square/hairline geometry.
     terminal = validate_skins._resolve_manifest(load_manifest("terminal"), "dark", host)
+    assert terminal["surface"]["window"]["radius"] == 0
+    assert terminal["surface"]["window"]["border-width"] == 1
     assert terminal["surface"]["panel"]["radius"] == 0
     assert terminal["surface"]["panel"]["border-width"] == 1
     assert terminal["surface"]["card"]["radius"] == 0
@@ -1637,6 +1663,8 @@ def test_host_values_resolve_only_into_inherited_rectangle_geometry() -> None:
     paper_light = validate_skins._resolve_manifest(
         load_manifest("paper"), "light", host
     )
+    assert paper_light["surface"]["window"]["radius"] == 6
+    assert paper_light["surface"]["window"]["border-width"] == 1
     assert paper_light["surface"]["panel"]["radius"] == 6
     assert paper_light["surface"]["panel"]["border-width"] == 1
     assert paper_light["surface"]["card"]["radius"] == 4
@@ -1654,6 +1682,8 @@ def test_host_fallback_skin_keeps_skin_values_when_the_host_is_silent() -> None:
         {"surface.panel.radius": 9, "surface.card.radius": 10},
     )
     assert silent == base
+    assert partial["surface"]["window"]["radius"] == 0
+    assert partial["surface"]["window"]["border-width"] == 1
     assert partial["surface"]["panel"]["radius"] == 9
     assert partial["surface"]["panel"]["border-width"] == 1
     assert partial["surface"]["card"]["radius"] == 10
@@ -1769,7 +1799,7 @@ def test_state_role_and_surface_coverage() -> None:
 
     for state in ("hover", "selected", "focus", "disabled"):
         assert any(path.startswith(f"state.{state}.") for path in used_paths), state
-    for role in ("panel", "card", "cell", "control", "pill"):
+    for role in ("window", "panel", "card", "cell", "control", "pill"):
         assert any(path.startswith(f"surface.{role}.") for path in used_paths), role
     for token in ("ink", "ink-dim", "accent", "accent-muted", "ink-over"):
         assert f"ink.{token}" in used_paths, token
@@ -1803,6 +1833,16 @@ def test_frozen_glass_values() -> None:
     glass = load_manifest("glass")
     assert glass["schemaVersion"] == 2
     assert glass["name"] == "glass"
+    assert glass["groups"]["surface"]["window"] == {
+        "bg": "alpha(@surface, 0.94)",
+        "border": "@primary",
+        "border-width": 1.5,
+        "radius": 12,
+        "padding": 11,
+        "shadow": "none",
+        "blur": "none",
+        "opacity": 0.94,
+    }
     assert glass["groups"]["surface"]["panel"] == {
         "bg": "alpha(@surface, 0.94)",
         "border": "@primary",
@@ -2102,7 +2142,9 @@ def test_paper_declares_explicit_light_mode_overrides() -> None:
     light = paper["mode"]["light"]
 
     # A complete same-shape surface group, not a partial merge.
-    assert set(light["surface"]) == {"panel", "card", "cell", "control", "pill"}
+    assert set(light["surface"]) == {"window", "panel", "card", "cell", "control", "pill"}
+    assert light["surface"]["window"]["border"] == "alpha(@on_surface, 0.16)"
+    assert light["surface"]["window"]["opacity"] == 1.0
     assert light["surface"]["panel"]["border"] == "alpha(@on_surface, 0.16)"
     assert light["surface"]["card"]["border"] == "alpha(@on_surface, 0.10)"
     assert light["surface"]["cell"]["hover-bg"] == "alpha(@on_surface, 0.06)"
@@ -2168,6 +2210,209 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
     assert "border: 1px solid alpha(@on_surface, 0.16);" in paper_light
     assert "box-shadow: 0 8px 22px alpha(@shadow, 0.16);" in paper_light
     assert "background-color: alpha(@on_surface, 0.06);" in paper_light
+
+
+# --------------------------------------------------------------------------- #
+# Window role and the kitty conf projection
+# --------------------------------------------------------------------------- #
+
+
+WINDOW_TOKENS = {
+    "bg",
+    "border",
+    "border-width",
+    "radius",
+    "padding",
+    "shadow",
+    "blur",
+    "opacity",
+}
+
+
+def test_every_manifest_has_the_required_window_group() -> None:
+    for name in MANIFEST_NAMES:
+        surface = load_manifest(name)["groups"]["surface"]
+        assert set(surface["window"]) == WINDOW_TOKENS, name
+        assert 0 <= surface["window"]["opacity"] <= 1, name
+
+    paper_light = load_manifest("paper")["mode"]["light"]["surface"]
+    assert set(paper_light["window"]) == WINDOW_TOKENS
+    assert paper_light["window"]["opacity"] == 1.0
+
+
+def test_missing_window_group_or_token_fails(tmp_path: Path) -> None:
+    glass = (MANIFESTS / "glass.toml").read_text()
+    missing_group = re.sub(
+        r"\[groups\.surface\.window\][\s\S]*?(?=\[groups\.surface\.card\])",
+        "",
+        glass,
+        count=1,
+    )
+    assert "[groups.surface.window]" not in missing_group
+    fixture = tmp_path / "missing-window.toml"
+    fixture.write_text(missing_group)
+    root = make_root(tmp_path, manifest_override=("glass", fixture))
+    errors = errors_for(root)
+    assert any("missing required property 'window'" in error for error in errors), errors
+
+    window = re.search(
+        r"\[groups\.surface\.window\][\s\S]*?(?=\[groups\.surface\.card\])",
+        glass,
+    )
+    assert window is not None
+    missing_token = glass.replace(
+        window.group(0), window.group(0).replace("opacity = 0.94\n", "")
+    )
+    fixture.write_text(missing_token)
+    root = make_root(tmp_path / "second", manifest_override=("glass", fixture))
+    errors = errors_for(root)
+    assert any("missing required property 'opacity'" in error for error in errors), errors
+
+
+def test_window_opacity_is_a_unitless_bounded_number() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    manifest_schema = json.loads(
+        (CONTRACTS / "appearance-manifest.schema.json").read_text()
+    )
+    validator = jsonschema.Draft7Validator(manifest_schema)
+    for bad in ("0.94", -0.1, 1.1):
+        manifest = load_manifest("glass")
+        manifest["groups"]["surface"]["window"]["opacity"] = bad
+        errors = list(validator.iter_errors(manifest))
+        assert errors, f"window opacity {bad!r} must be rejected"
+
+
+def test_outer_consumers_use_the_window_role() -> None:
+    rofi = (TEMPLATES / "rofi.rasi.j2").read_text()
+    window = _wlogout_block(rofi, "window")
+    for token in (
+        "SKIN_SURFACE_WINDOW_BG",
+        "SKIN_SURFACE_WINDOW_BORDER",
+        "SKIN_SURFACE_WINDOW_BORDER_WIDTH",
+        "SKIN_SURFACE_WINDOW_RADIUS",
+        "SKIN_SURFACE_WINDOW_PADDING",
+    ):
+        assert "{{" + token + "}}" in window, token
+    assert "SKIN_SURFACE_PANEL" not in window
+
+    wlogout = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    assert "{{SKIN_SURFACE_WINDOW_BG}}" in _wlogout_block(wlogout, "window")
+    assert "{{SKIN_SURFACE_PANEL_BG}}" not in _wlogout_block(wlogout, "window")
+
+    for name in ("gtk3.gtk.css.j2", "gtk4.gtk.css.j2"):
+        text = (TEMPLATES / name).read_text()
+        assert "@define-color skin_window_bg {{SKIN_SURFACE_WINDOW_BG}}" in text, name
+        window = _wlogout_block(text, "window")
+        assert "@skin_window_bg" in window or "@window_bg_color" in window, name
+        headerbar = _wlogout_block(text, "headerbar")
+        assert "@skin_window_bg" in headerbar or "@headerbar_bg_color" in headerbar, name
+        assert "{{SKIN_SURFACE_WINDOW_BORDER_WIDTH}}" in headerbar, name
+        assert "@skin_window_border" in headerbar, name
+
+
+def test_kitty_conf_template_is_paint_free_and_projects_four_options() -> None:
+    text = (TEMPLATES / "kitty.conf.j2").read_text()
+    assert not HEX.search(text)
+    for token in ("SKIN_TYPE_FONT_FAMILY", "SKIN_TYPE_SIZE_BODY",
+                  "SKIN_SURFACE_WINDOW_PADDING", "SKIN_SURFACE_WINDOW_OPACITY"):
+        assert "{{" + token + "}}" in text, token
+    assert "SKIN_SURFACE_WINDOW_BG" not in text
+    assert "SKIN_SURFACE_PANEL" not in text
+
+
+@pytest.mark.parametrize(
+    ("name", "mode", "family", "size", "padding", "opacity"),
+    [
+        ("glass", "dark", "monospace", "9.75", "8.25", "0.94"),
+        ("flat", "dark", "Cantarell", "9.75", "8.25", "1"),
+        ("paper", "dark", "Cantarell", "9.75", "8.25", "1"),
+        ("paper", "light", "Cantarell", "9.75", "8.25", "1"),
+        ("terminal", "dark", "JetBrainsMono Nerd Font", "9", "6.75", "1"),
+        ("terminal-host", "dark", "JetBrainsMono Nerd Font", "9", "6.75", "1"),
+    ],
+)
+def test_kitty_projection_values(
+    name: str, mode: str, family: str, size: str, padding: str, opacity: str
+) -> None:
+    text = (TEMPLATES / "kitty.conf.j2").read_text()
+    rendered = render(text, name, mode, "conf")
+    assert rendered.splitlines()[-4:] == [
+        f"font_family {family}",
+        f"font_size {size}",
+        f"window_padding_width {padding}",
+        f"background_opacity {opacity}",
+    ], rendered
+
+
+def test_kitty_font_family_and_point_rules() -> None:
+    family = validate_skins._conf_font_family
+    assert family("inherit") == "monospace"
+    assert family('system-ui, "Cantarell", "Noto Sans", sans-serif') == "Cantarell"
+    assert family("JetBrainsMono Nerd Font, monospace") == "JetBrainsMono Nerd Font"
+    assert family('"Noto Sans", sans-serif') == "Noto Sans"
+    assert family("monospace, serif") == "monospace"
+
+    value = validate_skins._conf_token_value
+    assert value("type.size-body", 12) == "9"
+    assert value("type.size-body", 12.5) == "9.38"
+    assert value("type.size-body", 13) == "9.75"
+    assert value("surface.window.padding", 11) == "8.25"
+    assert value("type.size-body", 1) == "6"
+    assert value("type.size-body", 100) == "36"
+    assert value("surface.window.padding", 100) == "32"
+    assert value("surface.window.opacity", 0.94) == "0.94"
+    assert value("surface.window.opacity", 1.0) == "1"
+
+
+def test_kitty_artifact_parses_with_kitty_runpy(tmp_path: Path) -> None:
+    kitty = shutil.which("kitty")
+    if kitty is None:
+        pytest.skip("kitty is not installed")
+    text = (TEMPLATES / "kitty.conf.j2").read_text()
+    for name in MANIFEST_NAMES:
+        for mode in ("dark", "light"):
+            path = tmp_path / f"{name}-{mode}.conf"
+            path.write_text(render(text, name, mode, "conf"))
+            script = (
+                "from kitty.config import load_config\n"
+                f"b = []\nload_config({str(path)!r}, accumulate_bad_lines=b)\n"
+                "print(len(b))\n"
+            )
+            result = subprocess.run(
+                [kitty, "+runpy", script],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            assert result.returncode == 0, result.stderr
+            assert result.stdout.strip() == "0", result.stdout
+            assert "Ignoring unknown config key" not in result.stderr, result.stderr
+
+
+def test_kitty_runpy_reports_an_unknown_key(tmp_path: Path) -> None:
+    kitty = shutil.which("kitty")
+    if kitty is None:
+        pytest.skip("kitty is not installed")
+    path = tmp_path / "bad.conf"
+    path.write_text("font_family monospace\nnot_a_kitty_key 1\n")
+    script = (
+        "from kitty.config import load_config\n"
+        f"b = []\nload_config({str(path)!r}, accumulate_bad_lines=b)\n"
+        "print(len(b))\n"
+    )
+    result = subprocess.run(
+        [kitty, "+runpy", script], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Ignoring unknown config key: not_a_kitty_key" in result.stderr, result.stderr
+
+
+def test_missing_kitty_artifact_fails_the_required_artifact_gate(tmp_path: Path) -> None:
+    root = make_full_root(tmp_path, drop_artifact="kitty")
+    errors = errors_for(root)
+    assert any(
+        "missing required artifact(s) ['kitty:conf']" in error for error in errors
+    ), errors
 
 
 # --------------------------------------------------------------------------- #

@@ -1,11 +1,11 @@
 {
-  "$comment": "The skins contract's LOCAL validation target (Appearance token model v2). Token value types are NOT defined here: every manifest/resolved document is validated against the vendored canonical set under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type every length as a unitless JSON number rendered as CSS px, font-weight as unitless, and letter-spacing as a unitless ratio rendered as em; a numeric string such as \"12px\" is rejected. This file adds only the frozen local envelope (schema_major + the five v2 groups + optional mode overrides + the optional root host policy) and the palette/forbidden metadata. The vendored appearance-json schema validates the resolved runtime tokens.json (version 2 + the five fully resolved groups); the vendored appearance-artifact schema validates appearance.json. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css); non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rasi shipping first and conf/theme reserved. Both families expand flattened v2 placeholder paths. Layout tokens are TSX-owned and templates MUST NOT emit them as CSS. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
+  "$comment": "The skins contract's LOCAL validation target (Appearance token model v2). Token value types are NOT defined here: every manifest/resolved document is validated against the vendored canonical set under skins/contracts/ (see canonical.delegates and skins/contracts/PIN). The canonical schemas type every length as a unitless JSON number rendered as CSS px, font-weight as unitless, and letter-spacing as a unitless ratio rendered as em; a numeric string such as \"12px\" is rejected. This file adds only the frozen local envelope (schema_major + the five v2 groups + the six required surface roles + optional mode overrides + the optional root host policy) and the palette/forbidden metadata. The vendored appearance-json schema validates the resolved runtime tokens.json (version 2 + the five fully resolved groups); the vendored appearance-artifact schema validates appearance.json. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css); non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rofi/rasi and kitty/conf required; theme stays reserved. Both families expand flattened v2 placeholder paths. Layout tokens are TSX-owned and templates MUST NOT emit them as CSS. Re-vendoring must update the PIN hashes and canonical.tag together; schema_major moves independently of the repo tag.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "skins/schema.json",
   "title": "dotfiles-assets appearance manifest v2",
   "schema_major": 2,
   "contract": "skins",
-  "status": "populated (v0.18.1)",
+  "status": "populated (v0.19.0)",
   "canonical": {
     "repository": "contracts",
     "paths": [
@@ -17,7 +17,7 @@
       "schemas/skin-manifest.schema.json",
       "schemas/skin-json.schema.json"
     ],
-    "tag": "v0.11.0",
+    "tag": "v0.12.0",
     "vendored": true,
     "pin": "skins/contracts/PIN",
     "vendored_paths": [
@@ -40,13 +40,13 @@
         "skins/contracts/skin-manifest.schema.json",
         "skins/contracts/skin-json.schema.json"
       ],
-      "note": "The v1 skin schemas are vendored at v0.11.0 for provenance only. This class emits v2 manifests and resolved tokens.json; it never mixes a v1 token map with a v2 artifact."
+      "note": "The v1 skin schemas are vendored at v0.12.0 for provenance only. This class emits v2 manifests and resolved tokens.json; it never mixes a v1 token map with a v2 artifact."
     },
     "resolved_document": {
       "path": "skins/contracts/appearance-json.schema.json",
       "note": "The runtime emits one generation tokens.json: version 2 plus the five fully resolved groups, with mode overrides already applied. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
     },
-    "note": "Byte-for-byte copies of the canonical appearance, generation and frozen v1 skin schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.11.0, the rectangle-radii release: the optional [host] allowlist covers surface.panel.radius, surface.panel.border-width, surface.card.radius, surface.control.radius and surface.cell.radius, while surface.pill.radius is deliberately absent so the capsule identity stays explicit. The token vocabulary is surface.{panel,card,cell,control,pill}, state.{hover,selected,focus,disabled}, type, ink, layout.<app>, optional mode.dark/mode.light overrides and the optional root [host] policy. [host] is a policy object, not a token group, with mode override > host > skin fallback; no padding, gap, type, paint, colour, state, layout or non-panel border-width path is delegable. The generation manifest schema is vendored for contract-byte parity and records the same five delegated paths in host.defaults; this class emits skin/appearance documents, not generations and never writes an artifact path. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css), including gtk3/gtk4; non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rofi/rasi required and conf/theme reserved. Layout tokens stay in the manifest and tokens.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS."
+    "note": "Byte-for-byte copies of the canonical appearance, generation and frozen v1 skin schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.12.0, the required-window release: every manifest and resolved tokens.json carries six surface roles (window, panel, card, cell, control, pill), and surface.window is never aliased from surface.panel. surface.window owns bg, border, border-width, radius, padding, shadow, blur and the unitless [0,1] opacity; window padding and opacity are not delegable. The optional [host] allowlist covers exactly seven paths: surface.window.radius, surface.window.border-width, surface.panel.radius, surface.panel.border-width, surface.card.radius, surface.control.radius and surface.cell.radius; surface.pill.radius is deliberately absent so the capsule identity stays explicit. The token vocabulary is surface.{window,panel,card,cell,control,pill}, state.{hover,selected,focus,disabled}, type, ink, layout.<app>, optional mode.dark/mode.light overrides and the optional root [host] policy. [host] is a policy object, not a token group, with mode override > host > skin fallback; no padding, gap, type, paint, colour, state, layout or non-panel border-width path is delegable. The generation manifest schema is vendored for contract-byte parity and records the same seven delegated paths in host.defaults; this class emits skin/appearance documents, not generations and never writes an artifact path. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css), including gtk3/gtk4; non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rofi/rasi and kitty/conf required and theme reserved. Layout tokens stay in the manifest and tokens.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS."
   },
   "palette": {
     "vocabulary": "palette.v1",
@@ -132,10 +132,15 @@
       {
         "consumer": "rofi",
         "format": "rasi"
+      },
+      {
+        "consumer": "kitty",
+        "format": "conf"
       }
     ],
     "token_groups": {
       "surface": [
+        "window",
         "panel",
         "card",
         "cell",
@@ -170,6 +175,14 @@
       ]
     },
     "css_token_paths": [
+      "surface.window.bg",
+      "surface.window.border",
+      "surface.window.border-width",
+      "surface.window.radius",
+      "surface.window.padding",
+      "surface.window.shadow",
+      "surface.window.blur",
+      "surface.window.opacity",
       "surface.panel.bg",
       "surface.panel.border",
       "surface.panel.border-width",
@@ -243,14 +256,14 @@
       "\\banimation\\s*:"
     ],
     "notes": [
-      "A skin is appearance: surface paint/geometry, interaction state, type, ink and mode overrides. Structure (which widget sits where) and variant names belong to the app.",
+      "surface.window is a required outer/toplevel role with eight tokens; it is never populated from surface.panel. panel stays the AGS bar and layer-shell overlay role.",
       "surface/state/ink values are palette-role expressions or transparent; a literal hex colour is never a skin value.",
       "GTK 4.24 ignores transitions, so the format forbids them rather than shipping dead declarations.",
       "layout.<app> is a metric namespace consumed by skinValue(); templates MUST NOT expand it into CSS.",
-      "The wlogout target maps wide action-card buttons to surface.card fill/border/padding and surface.panel border-width/radius; glass/paper/terminal-host therefore follow delegated panel and rectangle-radius host geometry while terminal and flat stay explicit. Hover/focus keep the card fill and change only state ring/ink; active keeps state.selected fill/ink/ring.",
-      "terminal-host is the opt-in Hyprland-following variant of terminal: its base tokens are identical to terminal, and surface.panel.radius/border-width plus surface.card/control/cell.radius are delegated through [host]. The pill radius stays explicit. terminal stays [host]-free and explicit.",
+      "The wlogout outer window maps to surface.window.bg, and its wide action-card buttons keep surface.card fill/border/padding with surface.panel border-width/radius; glass/paper/terminal-host therefore follow delegated panel and rectangle-radius host geometry while terminal and flat stay explicit. Hover/focus keep the card fill and change only state ring/ink; active keeps state.selected fill/ink/ring.",
+      "terminal-host is the opt-in Hyprland-following variant of terminal: its base tokens are identical to terminal, and surface.window.radius/border-width, surface.panel.radius/border-width plus surface.card/control/cell.radius are delegated through [host]. Window padding/opacity and the pill radius stay explicit. terminal stays [host]-free and explicit.",
       "gtk3 and gtk4 are ordinary CSS targets with global, conservative selector allowlists. GTK3 must not use custom properties or colour-mixing; both sheets use only named colours/alpha compositing and may not emit layout, size, structure or transition declarations.",
-      "rofi is a rasi artifact, not a CSS target: solid hyphenated palette roles plus px geometry only. rasi has no alpha compositing and rejects underscore role names; typography is deferred until a Pango unit rule exists. btop and kitty remain palette-only, so no theme/conf template ships in this tag.",
+      "rofi is a rasi artifact and kitty is a paint-free conf artifact. rofi keeps solid hyphenated palette roles plus px geometry (no alpha, no underscore role names, typography deferred); kitty projects font_family, font_size, window_padding_width and background_opacity only. kitty colours remain colors.kitty; btop stays palette-only, so no theme template ships in this tag.",
       "An override group replaces the base group as a whole; there is no deep merge."
     ]
   },

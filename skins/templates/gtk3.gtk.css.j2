@@ -17,8 +17,8 @@
  * value is already defined when this sheet loads.
  */
 
-@define-color skin_panel_bg {{SKIN_SURFACE_PANEL_BG}};
-@define-color skin_panel_border {{SKIN_SURFACE_PANEL_BORDER}};
+@define-color skin_window_bg {{SKIN_SURFACE_WINDOW_BG}};
+@define-color skin_window_border {{SKIN_SURFACE_WINDOW_BORDER}};
 @define-color skin_card_bg {{SKIN_SURFACE_CARD_BG}};
 @define-color skin_card_border {{SKIN_SURFACE_CARD_BORDER}};
 @define-color skin_control_bg {{SKIN_SURFACE_CONTROL_BG}};
@@ -36,16 +36,16 @@
 @define-color skin_disabled_ink {{SKIN_STATE_DISABLED_INK}};
 
 window {
-  background-color: @skin_panel_bg;
+  background-color: @skin_window_bg;
   color: @skin_ink;
   font-family: {{SKIN_TYPE_FONT_FAMILY}};
   font-weight: {{SKIN_TYPE_FONT_WEIGHT}};
 }
 
 headerbar {
-  background-color: @skin_card_bg;
+  background-color: @skin_window_bg;
   color: @skin_ink;
-  border-bottom: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid @skin_card_border;
+  border-bottom: {{SKIN_SURFACE_WINDOW_BORDER_WIDTH}} solid @skin_window_border;
 }
 
 button {

@@ -1,0 +1,17 @@
+# skins/templates/kitty.conf.j2 — paint-free kitty appearance projection
+# (artifact: consumer kitty, format conf, runtime output appearance/kitty.conf).
+#
+# COLOURS STAY IN colors.kitty. This artifact projects type, window padding and
+# toplevel opacity only; it carries no paint placeholder and no literal colour.
+# The conf renderer applies the documented px→pt rule (CSS reference pixel:
+# value × 0.75, round half up to two decimals, clamped) and emits bare numbers,
+# because kitty rejects a `px`/`pt` suffix. font_family is the first usable
+# family from type.font-family (CSS-wide and non-portable system keywords are
+# dropped, quotes/escapes stripped, `monospace` when nothing remains).
+# background_opacity is surface.window.opacity, a unitless [0,1] number; it is
+# never derived from an alpha() paint.
+
+font_family {{SKIN_TYPE_FONT_FAMILY}}
+font_size {{SKIN_TYPE_SIZE_BODY}}
+window_padding_width {{SKIN_SURFACE_WINDOW_PADDING}}
+background_opacity {{SKIN_SURFACE_WINDOW_OPACITY}}

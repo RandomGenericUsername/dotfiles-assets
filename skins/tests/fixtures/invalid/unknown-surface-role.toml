@@ -22,6 +22,17 @@ border = "transparent"
 border-width = 0
 radius = 0
 padding = 0
+shadow = "none"
+blur = "none"
+opacity = 1.0
+[groups.surface.overlay]
+bg = "transparent"
+border = "transparent"
+border-width = 0
+radius = 0
+padding = 0
+shadow = "none"
+blur = "none"
 
 [groups.surface.card]
 bg = "alpha(@surface_container_high, 0.18)"
