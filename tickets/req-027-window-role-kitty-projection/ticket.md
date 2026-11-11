@@ -2,7 +2,7 @@
 id: req-027
 title: "surface.window role and the paint-free kitty conf projection"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -70,22 +70,22 @@ consumers and is never an alias for window.
 
 ## Acceptance
 
-- [ ] `skins/contracts/` is a byte copy of `contracts v0.12.0`; PIN hashes,
+- [x] `skins/contracts/` is a byte copy of `contracts v0.12.0`; PIN hashes,
       source commit and canonical tag agree.
-- [ ] Every manifest has the eight-token `surface.window`; paper's light
+- [x] Every manifest has the eight-token `surface.window`; paper's light
       branch has a complete window group; `surface.panel` is unchanged and no
       alias exists.
-- [ ] `glass`/`paper`/`terminal-host` inherit the two window geometry paths;
+- [x] `glass`/`paper`/`terminal-host` inherit the two window geometry paths;
       `terminal`/`flat` remain `[host]`-free.
-- [ ] rofi/wlogout/GTK outer slots use `surface.window`; cards/controls and
+- [x] rofi/wlogout/GTK outer slots use `surface.window`; cards/controls and
       wlogout action cards keep their agreed roles.
-- [ ] `kitty.conf.j2` is a paint-free `conf` artifact with the first-usable
+- [x] `kitty.conf.j2` is a paint-free `conf` artifact with the first-usable
       family, 0.75 px→pt conversion with clamps and direct opacity; no btop.
-- [ ] The kitty artifact parses cleanly with `kitty +runpy`; rofi and GTK
+- [x] The kitty artifact parses cleanly with `kitty +runpy`; rofi and GTK
       probes stay green; five manifests × all templates expand.
-- [ ] `make validate-skins`, `make test-skins`, `make lint` and
+- [x] `make validate-skins`, `make test-skins`, `make lint` and
       `make gates-ci` pass in the foreground.
-- [ ] Annotated `v0.19.0` is tagged on the fast-forwarded `master` commit and
+- [x] Annotated `v0.19.0` is tagged on the fast-forwarded `master` commit and
       pushed with `master`.
 
 ## Evidence / Verify
@@ -102,6 +102,14 @@ consumers and is never an alias for window.
 - Verify: `make validate-skins`, `make test-skins`, `make lint`,
   `make gates-ci`; `git diff v0.18.1 -- skins/contracts` shows the canonical
   `v0.12.0` bytes only.
+- Vendored bytes: `git -C ../../../contracts show v0.12.0:schemas/<file> | cmp - skins/contracts/<file>` → all seven identical.
+- Window/policy: `skins/manifests/*.toml` carry `[groups.surface.window]`;
+  `glass` `12/1.5/11/0.94`, `flat` `0/0/11/1.0`, `paper` `6/1/11/1.0` in both
+  modes, `terminal`/`terminal-host` `0/1/9/1.0`; `[host].inherit` of
+  `glass`/`paper`/`terminal-host` is the seven-path allowlist.
+- Artifact: `skins/templates/kitty.conf.j2` → consumer `kitty`, format `conf`,
+  runtime `appearance/kitty.conf`; `font_family`, `font_size`,
+  `window_padding_width`, `background_opacity` only.
 
 ## Non-goals
 
@@ -111,3 +119,64 @@ consumers and is never an alias for window.
   stays the palette's artifact.
 - No window padding/opacity host delegation, no panel deprecation and no
   `surface.panel` alias for window.
+
+## Outcome (2026-11-11)
+
+**Worktree:** `.worktrees/req-027/` (base `v0.18.1`)
+**Branch:** `ticket/req-027-window-role-kitty-projection`
+**Commits:** `6183012` (ticket + INDEX plan), `15288a6` (contracts v0.12.0
+re-vendor, required window groups, outer remaps, kitty conf artifact,
+validator/tests), `5a14cc2` (release docs/version), this closing commit
+(ticket outcome + INDEX done).
+**Tag:** `v0.19.0` (annotated) on this closing commit; fast-forward to
+`master`, push `master` + tag.
+
+### Delivered
+
+| Path | What changed |
+| --- | --- |
+| `skins/contracts/` + `PIN` | Byte re-vendor from `contracts v0.12.0`, source commit `a03b5632828df8012c02a6117c3be438eca4264b`; PIN hashes and comment updated. `appearance-manifest`, `appearance-json` and `generation-manifest` changed bytes; `appearance-artifact` and the frozen v1 schemas are byte-identical. |
+| `skins/manifests/*.toml` | Required eight-token `surface.window` in all five skins; paper has a complete `mode.light.surface.window`. Seven-path `[host].inherit` on glass/paper/terminal-host; terminal/flat stay `[host]`-free. |
+| `skins/templates/{rofi.rasi,wlogout.gtk.css,gtk3.gtk.css,gtk4.gtk.css}.j2` | rofi/wlogout outer `window` → `surface.window.*`; GTK `window`/`headerbar` → `surface.window.*`; wlogout action cards keep card fill/border/padding + panel radius/border-width; GTK cards/controls unchanged. |
+| `skins/templates/kitty.conf.j2` | Paint-free `conf` artifact: first usable `font_family`, `font_size`/`window_padding_width` in bare points via 0.75 px→pt with two-decimal round-half-up and clamps, direct `background_opacity`. |
+| `scripts/validate-skins.py` | v0.12.0 pin, required window role, seven-path host probe (`window 17/3`, `panel 13/2`, `card 14`, `control 15`, `cell 16`), conf bare-point/opacity/family rules, paint fail-closed, required kitty artifact. |
+| `skins/schema.json` | `canonical.tag = v0.12.0`, `required_artifacts` adds `{consumer: kitty, format: conf}`, six surface roles / 65 token paths, `status = populated (v0.19.0)`. |
+| `skins/tests/` | Required-window and opacity tests, outer-remap tests, kitty family/point/clamp tests, `kitty +runpy` parse and unknown-key warning, positive/invalid fixture migration, missing-kitty artifact gate. |
+| `skins/README.md`, `README.md`, `catalog.yaml`, `Makefile`, `CHANGELOG.md` | v0.12.0/v0.19.0 metadata, window semantics, seven-path allowlist, kitty projection and required artifact. |
+
+### Exact window values
+
+| Token | glass | flat | paper (dark) | paper light | terminal | terminal-host |
+| --- | --- | --- | --- | --- | --- | --- |
+| `bg` | `alpha(@surface, 0.94)` | `transparent` | `@surface_container_lowest` | `@surface_container_lowest` | `@surface` | `@surface` |
+| `border` | `@primary` | `transparent` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.16)` | `alpha(@on_surface, 0.22)` | `alpha(@on_surface, 0.22)` |
+| `border-width` | 1.5 | 0 | 1 | 1 | 1 | 1 |
+| `radius` | 12 | 0 | 6 | 6 | 0 | 0 |
+| `padding` | 11 | 11 | 11 | 11 | 9 | 9 |
+| `shadow` | `none` | `none` | `0 10px 28px rgba(0,0,0,0.22)` | `0 8px 22px alpha(@shadow, 0.16)` | `none` | `none` |
+| `blur` | `none` | `none` | `none` | `none` | `none` | `none` |
+| `opacity` | 0.94 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+
+### Gate evidence
+
+| Claim | Command | Result |
+| --- | --- | --- |
+| Skins gate | `make validate-skins` | **PASS** — 5 manifests, 12 templates, 10 targets, `artifacts=kitty:conf,rofi:rasi`, 65 tokens, 10 expansions, host probe on `glass,paper,terminal-host` |
+| Skins fixtures | `make test-skins PYTEST="../../.venv/bin/python -m pytest"` | **PASS** — `180 passed, 3 skipped` (the 3 skips are the pre-existing GTK probes that need `gi`; the kitty `+runpy` probe ran) |
+| Lint | `PATH="<uv-shellcheck-bin>:$PATH" make lint` | **PASS** — compileall + shellcheck clean |
+| CI gate set (foreground) | `PATH="<uv-shellcheck-bin>:$PATH" make gates-ci` | **PASS** — rc `0`; every validator, lint and `hermetic: PASS` |
+| Vendored bytes | `git -C ../../../contracts show v0.12.0:schemas/<file> \| cmp - skins/contracts/<file>` | all seven files identical |
+
+### Downstream pins
+
+- **contracts `v0.12.0`** — required canonical contract pin.
+- **assets `v0.19.0`** — this release.
+- **dotfiles-runtime `v1.5.0`** — accept/emit the required window group and
+  opacity, resolve the window host paths, render `conf` lengths as bare points.
+- **ags-platform `v1.1.0`** — parse the unchanged `schemaVersion: 2` document
+  with the required window role and opacity kind.
+- **dotfiles-provision `v0.1.63` / composition `v0.1.68`** — later slices after
+  assets and runtime.
+
+No runtime, provisioning, composition, app or live-state change is in this
+ticket.
