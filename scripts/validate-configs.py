@@ -34,6 +34,12 @@ WHAT THIS GATE PROVES (spine AD-11, R-05/R-06):
      systemd user units. A second launch path is a no-op today but a gate
      failure here keeps ownership single.
 
+  7. ROFI'S GENERATED SKIN LOADS LAST. `rofi/launcher/config.rasi` imports the
+     palette first and the generated `appearance.rasi` last: the static radii
+     are fallbacks, and the rendered skin's panel/card/control/cell geometry
+     must override them. An import above the static declarations silently
+     reverts every skin to the glass-era 16/8/5/5 radii (BUG-003).
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. This is the same rule as the other class validators.
 
@@ -77,6 +83,12 @@ WLOGOUT_LOGOUT_ACTION = "uwsm stop"
 #: user units. Everything else it launches is an overlay under the launch lock.
 AUTOSTART = Path(CONFIGS_DIR) / "hypr" / "autostart.lua"
 SYSTEMD_AGS_INSTANCES = ("ags", "notifications")
+#: The rofi theme's generated-skin import order. The palette is first so role
+#: references resolve, and the rendered appearance is last so its geometry wins
+#: over the static fallback radii (BUG-003).
+ROFI_CONFIG = Path(CONFIGS_DIR) / "rofi" / "launcher" / "config.rasi"
+ROFI_PALETTE_IMPORT = '@import "../colors.rasi"'
+ROFI_APPEARANCE_IMPORT = '@import "../appearance.rasi"'
 
 
 class ConfigError(Exception):
@@ -218,6 +230,32 @@ def _check_autostart_ags(root: Path) -> None:
             )
 
 
+def _check_rofi_import_order(root: Path) -> None:
+    path = root / ROFI_CONFIG
+    if not path.is_file():
+        raise ConfigError(f"{ROFI_CONFIG}: the rofi launcher theme is missing")
+    lines = [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    imports = [line for line in lines if line.startswith("@import")]
+    expected = [ROFI_PALETTE_IMPORT, ROFI_APPEARANCE_IMPORT]
+    if imports != expected:
+        raise ConfigError(
+            f"{ROFI_CONFIG}: imports are {imports!r}; expected exactly "
+            f"{expected!r}. The palette must load first and the generated "
+            "appearance must load LAST so its radii override the static fallbacks "
+            "(BUG-003)"
+        )
+    if lines[-1] != ROFI_APPEARANCE_IMPORT:
+        raise ConfigError(
+            f"{ROFI_CONFIG}: the generated appearance import is not the last "
+            "non-empty line; static declarations after it would override the "
+            "rendered panel/card/control/cell radii (BUG-003)"
+        )
+
+
 def validate(root: Path) -> tuple[str, int]:
     files = _files(root)
     _check_names(files, root)
@@ -225,6 +263,7 @@ def validate(root: Path) -> tuple[str, int]:
     _check_nonempty(files, root)
     _check_wlogout_logout(root)
     _check_autostart_ags(root)
+    _check_rofi_import_order(root)
     return token_at
 
 
@@ -241,7 +280,8 @@ def main(argv: list[str] | None = None) -> int:
         "validate-configs: PASS -- no template/mutable/rendered files; exactly one "
         f"render token at {token_file}:{token_line}; wlogout Logout action is "
         f"{WLOGOUT_LOGOUT_ACTION!r}; autostart leaves the systemd-owned AGS "
-        "instances to provisioning"
+        "instances to provisioning; rofi imports the palette first and the "
+        "generated appearance last"
     )
     return 0
 

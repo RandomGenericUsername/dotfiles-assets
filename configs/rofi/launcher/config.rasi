@@ -104,3 +104,9 @@ element alternate.normal {
     background-color: transparent;
     text-color: @on-surface;
 }
+
+/* Generated skin fragment, imported LAST: the static radii above are fallbacks
+ * for a host with no generated appearance, and the generated panel/card/
+ * control/cell geometry must win when it is present. The palette import stays
+ * first so every @role in this sheet resolves when the generated file loads. */
+@import "../appearance.rasi"

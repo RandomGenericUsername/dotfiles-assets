@@ -342,6 +342,10 @@ FORMAT_TEMPLATES = {
     "rofi": ("rofi.rasi.j2", "rasi"),
 }
 
+ROFI_CONFIG = ROOT / "configs" / "rofi" / "launcher" / "config.rasi"
+ROFI_PALETTE_IMPORT = '@import "../colors.rasi"'
+ROFI_APPEARANCE_IMPORT = '@import "../appearance.rasi"'
+
 _SPEC = importlib.util.spec_from_file_location(
     "validate_skins", ROOT / "scripts" / "validate-skins.py"
 )
@@ -748,6 +752,130 @@ def test_rofi_negative_fixture_warns_while_exiting_zero(
     )
     assert result.returncode == 0, result.stderr
     assert needle in result.stderr, result.stderr
+
+
+def _rofi_layout(
+    tmp_path: Path,
+    skin: str,
+    *,
+    host: dict[str, object] | None = None,
+    include_appearance: bool = True,
+) -> Path:
+    """Materialise the deployed rofi layout and return its launcher theme.
+
+    The static config imports ``../colors.rasi`` first and
+    ``../appearance.rasi`` last, exactly as the consumer deploys it. The
+    appearance sheet is rendered from the rofi artifact so this probe exercises
+    the real static/generated import order rather than the template in
+    isolation.
+    """
+    layout = tmp_path / "rofi"
+    launcher = layout / "launcher"
+    launcher.mkdir(parents=True)
+    roles = schema()["palette"]["roles"]
+    (layout / "colors.rasi").write_text(
+        "* {\n"
+        + "\n".join(f"    {role.replace('_', '-')}: #123456;" for role in roles)
+        + "\n}\n"
+    )
+    if include_appearance:
+        tokens = validate_skins._resolve_manifest(load_manifest(skin), "dark", host)
+        (layout / "appearance.rasi").write_text(
+            validate_skins.expand_template(
+                (TEMPLATES / "rofi.rasi.j2").read_text(), tokens, "rasi"
+            )
+        )
+    text = ROFI_CONFIG.read_text()
+    assert ROFI_PALETTE_IMPORT in text
+    assert ROFI_APPEARANCE_IMPORT in text
+    (launcher / "config.rasi").write_text(text)
+    return launcher / "config.rasi"
+
+
+def _rofi_dump_theme(theme: Path) -> str:
+    rofi = shutil.which("rofi")
+    if rofi is None:
+        pytest.skip("rofi is not installed")
+    result = subprocess.run(
+        [rofi, "-no-config", "-theme", str(theme), "-dump-theme"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Failed to parse theme" not in result.stderr, result.stderr
+    assert result.stdout.strip(), "rofi -dump-theme produced no theme"
+    return result.stdout
+
+
+def _rofi_radii(dump: str) -> tuple[int, int, int, int]:
+    radii = []
+    for selector in ("window", "mainbox", "inputbar", "element"):
+        match = re.search(
+            r"border-radius:\s*(\d+)px", _wlogout_block(dump, selector)
+        )
+        assert match is not None, f"{selector} has no border-radius in the dump"
+        radii.append(int(match.group(1)))
+    return tuple(radii)  # type: ignore[return-value]
+
+
+def test_rofi_static_config_imports_appearance_last() -> None:
+    """Regression guard: the static radii must not override the generated skin."""
+    lines = [line.strip() for line in ROFI_CONFIG.read_text().splitlines() if line.strip()]
+    imports = [line for line in lines if line.startswith("@import")]
+    assert imports == [ROFI_PALETTE_IMPORT, ROFI_APPEARANCE_IMPORT]
+    assert lines[-1] == ROFI_APPEARANCE_IMPORT
+
+
+@pytest.mark.parametrize(
+    ("skin", "host", "expected"),
+    [
+        ("terminal", None, (0, 0, 2, 0)),
+        (
+            "terminal-host",
+            {
+                "surface.panel.radius": 9,
+                "surface.panel.border-width": 2,
+                "surface.card.radius": 9,
+                "surface.control.radius": 9,
+                "surface.cell.radius": 9,
+            },
+            (9, 9, 9, 9),
+        ),
+        ("flat", None, (0, 0, 0, 0)),
+        ("paper", None, (6, 4, 3, 3)),
+    ],
+)
+def test_rofi_config_renders_generated_geometry_last(
+    tmp_path: Path,
+    skin: str,
+    host: dict[str, object] | None,
+    expected: tuple[int, int, int, int],
+) -> None:
+    """The deployed import order yields the generated panel/card/control/cell radii."""
+    theme = _rofi_layout(tmp_path, skin, host=host)
+    assert _rofi_radii(_rofi_dump_theme(theme)) == expected
+
+
+def test_rofi_host_probe_leaves_the_pill_radius_explicit() -> None:
+    """Delegating the four rectangles must not reach the pill token."""
+    pill = load_manifest("terminal-host")["groups"]["surface"]["pill"]["radius"]
+    host = {
+        "surface.panel.radius": 9,
+        "surface.panel.border-width": 2,
+        "surface.card.radius": 9,
+        "surface.control.radius": 9,
+        "surface.cell.radius": 9,
+    }
+    resolved = validate_skins._resolve_manifest(load_manifest("terminal-host"), "dark", host)
+    assert resolved["surface"]["pill"]["radius"] == pill
+
+
+def test_rofi_static_config_falls_back_when_appearance_is_missing(tmp_path: Path) -> None:
+    """A host without the generated sheet still parses the palette + static radii."""
+    theme = _rofi_layout(tmp_path, "terminal", include_appearance=False)
+    assert not (theme.parent.parent / "appearance.rasi").exists()
+    assert _rofi_radii(_rofi_dump_theme(theme)) == (16, 8, 5, 5)
 
 
 def _gtk_parse_probe(template_name: str, gtk_version: str) -> subprocess.CompletedProcess[str]:
