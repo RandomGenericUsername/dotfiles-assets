@@ -627,6 +627,36 @@ def test_rofi_template_is_solid_roles_and_geometry_only() -> None:
             assert set(validate_skins.RASI_ROLE.findall(rasi)) <= hyphenated
 
 
+@pytest.mark.parametrize(
+    ("name", "card_radius", "control_radius", "cell_radius"),
+    [
+        ("terminal-host", 0, 2, 0),
+        ("glass", 9, 7, 7),
+        ("paper", 4, 3, 3),
+    ],
+)
+def test_rofi_host_probe_moves_only_the_outer_window_radius(
+    name: str, card_radius: int, control_radius: int, cell_radius: int
+) -> None:
+    """Host rounding is outer-only: rofi window moves, inner roles stay skin-owned."""
+    text = (TEMPLATES / "rofi.rasi.j2").read_text()
+    host = dict(validate_skins.HOST_PROBE)
+    tokens = validate_skins._resolve_manifest(load_manifest(name), "dark", host)
+    rasi = validate_skins.expand_template(text, tokens, "rasi")
+    assert "{{" not in rasi
+
+    window = _wlogout_block(rasi, "window")
+    assert f"border-radius: {host['surface.panel.radius']}px;" in window
+    assert f"border: {host['surface.panel.border-width']}px;" in window
+
+    mainbox = _wlogout_block(rasi, "mainbox")
+    inputbar = _wlogout_block(rasi, "inputbar")
+    element = _wlogout_block(rasi, "element")
+    assert f"border-radius: {card_radius}px;" in mainbox
+    assert f"border-radius: {control_radius}px;" in inputbar
+    assert f"border-radius: {cell_radius}px;" in element
+
+
 def test_rofi_dump_theme_has_no_parse_warning(tmp_path: Path) -> None:
     rofi = shutil.which("rofi")
     if rofi is None:
@@ -1341,6 +1371,10 @@ def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
         "surface.panel.border-width",
     ]
     assert policy["properties"]["fallback"]["enum"] == ["skin", "error"]
+    assert validate_skins.HOST_INHERITABLE == (
+        "surface.panel.radius",
+        "surface.panel.border-width",
+    )
 
 
 def test_terminal_host_is_terminal_plus_only_the_host_policy() -> None:
@@ -1929,6 +1963,7 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
         ("host-empty-inherit.toml", "at least 1 item"),
         ("host-duplicate-inherit.toml", "duplicate items"),
         ("host-unknown-inherit.toml", "surface.card.radius"),
+        ("host-inner-radius.toml", "must be one of ['surface.panel.radius', 'surface.panel.border-width']"),
         ("host-bad-fallback.toml", "must be one of"),
         ("host-extra-key.toml", "unexpected property"),
     ],
