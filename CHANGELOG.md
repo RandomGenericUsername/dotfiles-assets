@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.17.1 — host rounding guards: outer-only semantics and inner-radii fixtures
+
+### Added
+
+- **Explicit inner-radius rejection fixture.**
+  `skins/tests/fixtures/invalid/host-inner-radius.toml` puts
+  `surface.card.radius` in `[host].inherit`; `make test-skins` asserts
+  `validate-skins` rejects it. The host allowlist is unchanged and remains
+  exactly `surface.panel.radius` and `surface.panel.border-width`.
+- **Rofi host-probe render assertion.** For `terminal-host`, `glass` and
+  `paper`, a probe host radius moves the rofi `window` radius while
+  `mainbox`/`inputbar`/`element` keep their authored skin radii. This locks the
+  outer-only contract from `dotfiles-v3/docs/111-host-radius-granularity.md`
+  (Option C) without changing a template.
+
+### Changed
+
+- `scripts/validate-skins.py` and `skins/README.md` state that `surface.panel`
+  is the canonical outer-surface role, host rounding is outer-only, and inner
+  radii are skin-owned. The wlogout button → panel geometry mapping is
+  documented as an action-card consumer mapping, not an inner-control
+  precedent.
+
+No production template, schema allowlist, runtime, provisioning or composition
+behavior changed; this release is validation and documentation only.
+
 ## v0.17.0 — format-aware skin templates: GTK3, GTK4 and the rofi rasi artifact
 
 ### Added

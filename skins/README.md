@@ -204,6 +204,32 @@ token group and does not change any token type.
 `appearance-manifest` schema (including `items`, `minItems` and
 `uniqueItems`); `make test-skins` adds positive/negative host fixtures.
 
+### Host rounding is outer-only (`v0.17.1`)
+
+`surface.panel` is the **canonical outer-surface role**. A consumer that owns an
+outer window or panel maps that outermost geometry to
+`surface.panel.radius`/`surface.panel.border-width`; this covers rofi `window`,
+wlogout `window` and the AGS bar panel, and the historical role name does not
+mean "the bar panel only". Hyprland `decoration:rounding` rounds a toplevel
+window's bounding box, so host inheritance is **outer-only**: inner `card`,
+`control`, `cell` and `pill` radii are skin-owned design and are never
+host-inheritable. `terminal-host` deliberately keeps its square `0/2/0` inner
+identity while following the host frame; `glass` and `paper` author rounded
+inner roles. A user who wants rounded inner components selects a skin whose
+inner roles are rounded rather than making the host setting rewrite the skin.
+
+The guard slice is tests/docs only: `host-inner-radius.toml` proves
+`[host].inherit` with an inner radius fails, and the rofi host-probe test for
+`terminal-host`/`glass`/`paper` asserts `window` follows the probe radius while
+`mainbox`/`inputbar`/`element` keep their authored skin values. No production
+template or allowlist entry changed.
+
+**wlogout action cards are an outer-surface exception by mapping.** The
+generated `wlogout.gtk.css.j2` takes each `button` radius/border from
+`surface.panel` because those buttons are wide action cards, not compact
+controls (docs/108 `W-2.12`). That is a consumer-template mapping decision, not
+a precedent for host-inheriting every inner control.
+
 ### wlogout action cards align to the panel (`v0.15.2`)
 
 wlogout's `button` widgets are wide action cards, not compact controls. The

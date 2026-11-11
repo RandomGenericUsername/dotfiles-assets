@@ -24,7 +24,11 @@ WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.10.0):
      layout keys must be namespaced app names with numeric values. `host` is a
      policy object, not a token group: its `inherit` allowlist is non-empty,
      unique and limited to `surface.panel.radius` and
-     `surface.panel.border-width`; `fallback` is `skin|error`.
+     `surface.panel.border-width`; `fallback` is `skin|error`. That allowlist
+     is OUTER-ONLY: `surface.panel` is the canonical outer-surface role (a
+     consumer's outermost window/panel), and Hyprland `decoration:rounding`
+     rounds a toplevel's bounding box, not a card, control, cell or pill inside
+     it. Inner radii are skin-owned design and are never host-inheritable.
 
   3. EVERY MODE RESOLVES TO A VALID tokens.json. For each manifest the gate
      resolves the base groups plus the selected `mode.dark`/`mode.light`
@@ -183,7 +187,10 @@ GTK_LAYOUT_PROPERTY = re.compile(
 GROUPS = ("surface", "state", "type", "ink", "layout")
 CSS_GROUPS = ("surface", "state", "type", "ink")
 MODES = ("dark", "light")
-#: The only token paths the canonical `[host]` policy may delegate.
+#: The only token paths the canonical `[host]` policy may delegate. The list is
+#: outer-surface only: `surface.panel` is the canonical outer window/panel role,
+#: and inner radii (card/control/cell/pill) are skin-owned design, never host
+#: values. Hyprland rounds a toplevel bounding box, not inner components.
 HOST_INHERITABLE = ("surface.panel.radius", "surface.panel.border-width")
 #: Deterministic probe values the gate feeds through every `[host]` policy. They
 #: are deliberately different from every skin fallback so a no-op resolution

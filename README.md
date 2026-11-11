@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.17.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.17.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -63,7 +63,11 @@ and the `rofi` `rasi` artifact: GTK3 forbids custom properties/colour-mixing, bo
 on a conservative selector allowlist with no layout/size properties, and rasi carries solid
 hyphenated palette roles plus px geometry only (no alpha, no underscore role names, typography
 deferred). btop and kitty remain palette-only, so no `theme`/`conf` template ships. `[host]` is a policy object, not a token group, and
-`mode override > host > skin fallback` is the precedence. Since `v0.15.2` the wlogout generated
+`mode override > host > skin fallback` is the precedence. Since `v0.17.1` host
+rounding is documented and guarded as outer-only: `surface.panel` is the
+canonical outer-surface role, inner `card`/`control`/`cell`/`pill` radii are
+skin-owned, and the host allowlist remains exactly `surface.panel.radius` and
+`surface.panel.border-width`. Since `v0.15.2` the wlogout generated
 sheet fills each action-card `button` from `surface.card` and takes its border width/radius from
 `surface.panel`, so `glass`/`paper`/`terminal-host` follow the delegated host geometry while `terminal` stays
 square and `flat` stays transparent. Since `v0.15.3` hover and focus keep that card fill and move
