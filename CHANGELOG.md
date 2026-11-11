@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.18.1 — rofi loads the generated appearance last
+
+### Fixed
+
+- **The generated rofi skin now overrides the static fallback radii.**
+  `configs/rofi/launcher/config.rasi` imports the palette first, declares its
+  static fallback geometry, and imports `../appearance.rasi` **last**. Before
+  this patch the generated sheet was not imported at the end, so the static
+  `window`/`mainbox`/`inputbar`/`element` radii (`16px`/`8px`/`5px`/`5px`)
+  overrode every skin. A `terminal` or `terminal-host` render therefore kept
+  the glass-era rounding instead of its generated panel/card/control/cell
+  radii. The static values remain as the fallback when the generated sheet is
+  absent, and the palette-first order keeps every generated `@role` resolvable.
+
+### Added
+
+- **Config-boundary guard.** `make validate-configs` now requires exactly two
+  rofi imports in the order palette → generated appearance, with the
+  appearance import as the last non-empty line. This catches the regression
+  without needing a rofi binary.
+- **Render-order regression tests.** `make test-skins` materialises the
+  deployed rofi layout, renders the `rofi.rasi.j2` artifact, and runs
+  `rofi -no-config -theme … -dump-theme`. It asserts the generated radii for
+  `terminal` (`0/0/2/0`), a host probe of `9` for `terminal-host`
+  (`9/9/9/9`), the authored `flat` (`0/0/0/0`) and `paper` (`6/4/3/3`) values,
+  and a clean-stderr static fallback (`16/8/5/5`) when the generated sheet is
+  missing. The pill radius is asserted to stay explicit.
+
+### Changed
+
+- `configs/README.md`, `README.md`, the `Makefile` help text and
+  `skins/README.md` document the palette-first/generated-last order.
+- Version metadata moves to `v0.18.1` (`README.md`, `catalog.yaml`,
+  `skins/schema.json`).
+
+No runtime, provisioning, composition, contract, template, manifest or live
+state changed.
+
 ## v0.18.0 — rectangle radii: panel/card/control/cell delegated, pill explicit
 
 ### Added

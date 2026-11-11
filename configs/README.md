@@ -34,6 +34,17 @@ owns where each path deploys, so no destination appears here (spine AD-2/AD-6).
 | `starship/starship.toml` | starship | prompt format; read as-is on every prompt |
 | `wlogout/layout` | wlogout | the button layout only — **one file**, not a directory: see below |
 
+`rofi/launcher/config.rasi` has one generated collaborator:
+`../appearance.rasi`, linked from the runtime's rendered
+`current/appearance/rofi.rasi`. The static file imports the palette
+(`../colors.rasi`) first, declares its own fallback geometry, and imports the
+generated appearance **last**. The rendered sheet owns the panel/card/control/
+cell radii, so last import is what makes a skin win; the static `16px`/`8px`/
+`5px`/`5px` values only apply when the generated sheet is missing. Do not move
+that import above the selector declarations: rofi would keep the glass-era
+radii for every skin (BUG-003). `make validate-configs` asserts the order and
+`make test-skins` dumps the real theme to assert the rendered radii.
+
 `wlogout` is the one **per-file** entry in this class, and it is deliberate. wlogout reads two
 files: `layout` (static, here) and `style.css` (**rendered**, not here). `style.css` is produced
 from a Jinja source whose variables are the palette file path, the runtime state root and the
@@ -85,11 +96,14 @@ subdirectory is declared, and no generated/mutable artifact name (`active-theme`
 four release-time commands below as executable checks. It fails naming the file and line, and
 the second-token negative names both locations. Since `v0.6.1` it also parses `wlogout/layout`
 and requires the single Logout tile's action to be exactly `uwsm stop`; a revert to the
-user-wide `loginctl terminate-user` fails the gate (`BUG-001`).
+user-wide `loginctl terminate-user` fails the gate (`BUG-001`). Since `v0.18.1` it also
+requires the rofi imports to be exactly palette → generated appearance and the generated
+appearance to be the final non-empty line, so a static radius can never override a skin
+(`BUG-003`).
 
 ```bash
 make validate-configs
-# PASS -- no template/mutable/rendered files; exactly one render token at configs/hypr/hyprland.lua:7; wlogout Logout action is 'uwsm stop'
+# PASS -- no template/mutable/rendered files; exactly one render token at configs/hypr/hyprland.lua:7; wlogout Logout action is 'uwsm stop'; autostart leaves the systemd-owned AGS instances to provisioning; rofi imports the palette first and the generated appearance last
 ```
 
 The same rules, written as the manual commands the gate replaced:

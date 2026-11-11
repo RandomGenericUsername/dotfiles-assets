@@ -52,7 +52,7 @@ help:
 	  'validate-icons    mapping templates resolve, tokens declared, mapping values are declared roles, surfaces valid, every SVG parses' \
 	  'validate-content  tarball has a top-level default.png, every *.theme is non-empty' \
 	  'validate-templates  every *.j2/*.tpl has a vars schema that equals its body; no default() on required' \
-	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; no mutable/rendered files' \
+	  'validate-configs  deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; rofi appearance imported last; no mutable/rendered files' \
 	  'validate-desktop  every .desktop parses, Exec/TryExec name declared binaries, scripts shellcheck-clean' \
 	  'validate-skins    vendored v0.11.0 schemas + v2 manifests + dark/light tokens.json + GTK3/GTK4 CSS targets + rofi rasi artifact + palette.v1 roles' \
 	  'test-skins        pytest fixtures for the skins class (dev dependency)' \
@@ -99,7 +99,9 @@ validate-templates:
 # The configs class (AD-11, R-05/R-06). The four release-time commands become one
 # executable gate: no *.j2/*.tpl source, no mutable/rendered file, exactly one
 # render token at configs/hypr/hyprland.lua:7, every file non-empty. A second token
-# fails naming both files and lines — that is the exception's ratchet.
+# fails naming both files and lines — that is the exception's ratchet. It also
+# holds the rofi theme's import order: palette first, generated appearance last,
+# so the rendered skin geometry overrides the static fallbacks (BUG-003).
 validate-configs:
 	@$(PYTHON) "$(CURDIR)/scripts/validate-configs.py"
 

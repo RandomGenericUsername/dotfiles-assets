@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.18.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v0.18.1`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -72,7 +72,9 @@ sheet fills each action-card `button` from `surface.card` and takes its border w
 `surface.panel`, so `glass`/`paper`/`terminal-host` follow the delegated host geometry while `terminal` stays
 square and `flat` stays transparent. Since `v0.15.3` hover and focus keep that card fill and move
 only the state ring/ink, so a focused card no longer turns transparent; `:active` keeps the
-selected fill/ink/ring as the deliberate press paint. The static wlogout sheet remains structure-only. Each class
+selected fill/ink/ring as the deliberate press paint. The static wlogout sheet remains structure-only. Since
+`v0.18.1` the static rofi theme imports the palette first and the generated `appearance.rasi` last, so the rendered
+panel/card/control/cell radii win over its `16/8/5/5` fallback values (see `configs/README.md`). Each class
 validator arrives **with** its corpus, so every check has run
 against real data before it can gate a tag. The `configs/` boundary is `make validate-configs` since `v0.5.1`: it
 rejects a Jinja source, a mutable/rendered file, or a second render token, and names
@@ -162,7 +164,7 @@ make validate         # catalog <-> class dirs, schema JSON, and the generated-a
 make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
-make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop
+make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; rofi appearance imported last
 make validate-desktop # Desktop Entry parse, Exec/TryExec ↔ requires, contract ↔ entries, shellcheck
 make validate-skins   # vendored v0.11.0 hashes, v2 manifests/host/modes/tokens.json, GTK3/GTK4/rasi format gates, palette.v1 roles, no layout output
 make test-skins       # pytest fixtures for the skins class (development dependency)

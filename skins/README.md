@@ -124,6 +124,13 @@ prefix, so `templates/ags.gtk.css.j2` renders `ags.css`.
 | --- | --- | --- |
 | `rofi.rasi.j2` | `rofi` / `rasi` | `rofi.rasi`: solid hyphenated palette roles + px geometry; no alpha, no underscore role names, no typography (Pango units deferred) |
 
+The static `configs/rofi/launcher/config.rasi` imports the palette first and
+this artifact **last**, after its own fallback geometry: the generated
+panel/card/control/cell radii must win, or every skin silently keeps the
+static `16/8/5/5` values (`BUG-003`). `make validate-configs` asserts that
+order; `make test-skins` renders the artifact, materialises the deployed
+layout, and runs `rofi -dump-theme` to assert the resulting radii.
+
 ## Placeholder flattening and the value convention
 
 A v2 placeholder is the full nested token path, uppercased with every run of

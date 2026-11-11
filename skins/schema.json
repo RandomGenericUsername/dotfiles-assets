@@ -5,7 +5,7 @@
   "title": "dotfiles-assets appearance manifest v2",
   "schema_major": 2,
   "contract": "skins",
-  "status": "populated (v0.18.0)",
+  "status": "populated (v0.18.1)",
   "canonical": {
     "repository": "contracts",
     "paths": [
