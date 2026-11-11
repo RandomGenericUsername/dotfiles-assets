@@ -1,4 +1,4 @@
-# host-inner-radius: an inner radius path is not host-inheritable. Derived from glass.
+# host-rectangles: all five delegated rectangle paths are valid. Derived from glass.
 # glass — the default/fallback skin and the v1→v2 parity target. This is a
 # faithful conversion of today's ags-bar look: a translucent panel, a low-alpha
 # card, a solid primary panel frame, no shadow and no backdrop blur. Values are
@@ -8,10 +8,16 @@
 schemaVersion = 2
 name = "glass"
 
-# Host defaults: only the outer panel geometry follows the compositor. Every
-# other token stays explicit; a complete mode override still wins.
+# Host defaults: the panel plus the card/control/cell rectangle radii follow
+# the compositor. The pill stays explicit, and a complete mode override wins.
 [host]
-inherit = ["surface.card.radius"]
+inherit = [
+  "surface.panel.radius",
+  "surface.panel.border-width",
+  "surface.card.radius",
+  "surface.control.radius",
+  "surface.cell.radius",
+]
 fallback = "skin"
 
 [groups.surface.panel]

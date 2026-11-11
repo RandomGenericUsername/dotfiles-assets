@@ -2,20 +2,28 @@
 # the dense-monospace, square/hairline token set exactly: an opaque @surface
 # panel, @surface_container cards, zero cell/panel/card radii, 1px hairlines,
 # tight paddings and a 9–14px JetBrainsMono scale. Unlike `terminal`, it
-# intentionally follows the live Hyprland panel geometry: only
-# surface.panel.radius and surface.panel.border-width are delegated through the
-# root [host] policy, with the skin's square/hairline values as the fallback.
-# Every other token stays explicit, so paint, type and rhythm cannot drift from
-# terminal. The original `terminal` remains the explicit, [host]-free skin.
+# intentionally follows the live Hyprland geometry: panel radius/border width
+# plus the card/control/cell rectangle radii are delegated through the root
+# [host] policy, with the skin's square/hairline values as the fallback. The
+# pill stays explicit. Every other token stays explicit, so paint, type and
+# rhythm cannot drift from terminal. The original `terminal` remains the
+# explicit, [host]-free skin.
 schemaVersion = 2
 name = "terminal-host"
 
 # Host defaults are intentionally inherited: this skin follows Hyprland's
-# decoration:rounding (surface.panel.radius) and general:border_size
-# (surface.panel.border-width). The square/hairline values above remain the
-# fallback when the host supplies no value.
+# decoration:rounding (surface.panel.radius plus card/control/cell radii) and
+# general:border_size (surface.panel.border-width). The pill stays explicit,
+# and the square/hairline values above remain the fallback when the host
+# supplies no value.
 [host]
-inherit = ["surface.panel.radius", "surface.panel.border-width"]
+inherit = [
+  "surface.panel.radius",
+  "surface.panel.border-width",
+  "surface.card.radius",
+  "surface.control.radius",
+  "surface.cell.radius",
+]
 fallback = "skin"
 
 [groups.surface.panel]

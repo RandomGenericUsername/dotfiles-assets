@@ -7,8 +7,9 @@ Run with the repository's development dependencies:
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
 that prove the gate actually bites. The model is the v2 Appearance token set
-from ``contracts`` v0.10.0, not the frozen v1 skin vocabulary. The optional
-root ``[host]`` policy is a delegation object, not a token group. The shared
+from ``contracts`` v0.11.0, not the frozen v1 skin vocabulary. The optional
+root ``[host]`` policy is a delegation object, not a token group and delegates
+the panel plus the card/control/cell rectangle radii; the pill stays explicit. The shared
 template set has CSS targets (``<configDir>.gtk.css.j2``) and non-CSS
 artifacts (``<consumer>.<format>.j2``); this tag ships the ``gtk3``/``gtk4``
 targets and the ``rofi``/``rasi`` artifact.
@@ -628,17 +629,31 @@ def test_rofi_template_is_solid_roles_and_geometry_only() -> None:
 
 
 @pytest.mark.parametrize(
-    ("name", "card_radius", "control_radius", "cell_radius"),
+    (
+        "name",
+        "panel_radius",
+        "panel_border",
+        "card_radius",
+        "control_radius",
+        "cell_radius",
+    ),
     [
-        ("terminal-host", 0, 2, 0),
-        ("glass", 9, 7, 7),
-        ("paper", 4, 3, 3),
+        ("terminal-host", 13, 2, 14, 15, 16),
+        ("glass", 13, 2, 14, 15, 16),
+        ("paper", 13, 2, 14, 15, 16),
+        ("terminal", 0, 1, 0, 2, 0),
+        ("flat", 0, 0, 0, 0, 0),
     ],
 )
-def test_rofi_host_probe_moves_only_the_outer_window_radius(
-    name: str, card_radius: int, control_radius: int, cell_radius: int
+def test_rofi_host_probe_delegates_rectangle_radii_for_opt_in_skins(
+    name: str,
+    panel_radius: int,
+    panel_border: int,
+    card_radius: int,
+    control_radius: int,
+    cell_radius: int,
 ) -> None:
-    """Host rounding is outer-only: rofi window moves, inner roles stay skin-owned."""
+    """Opt-in skins follow the probe on every rectangle; terminal/flat stay authored."""
     text = (TEMPLATES / "rofi.rasi.j2").read_text()
     host = dict(validate_skins.HOST_PROBE)
     tokens = validate_skins._resolve_manifest(load_manifest(name), "dark", host)
@@ -646,15 +661,43 @@ def test_rofi_host_probe_moves_only_the_outer_window_radius(
     assert "{{" not in rasi
 
     window = _wlogout_block(rasi, "window")
-    assert f"border-radius: {host['surface.panel.radius']}px;" in window
-    assert f"border: {host['surface.panel.border-width']}px;" in window
-
     mainbox = _wlogout_block(rasi, "mainbox")
     inputbar = _wlogout_block(rasi, "inputbar")
     element = _wlogout_block(rasi, "element")
+    assert f"border-radius: {panel_radius}px;" in window
+    assert f"border: {panel_border}px;" in window
     assert f"border-radius: {card_radius}px;" in mainbox
     assert f"border-radius: {control_radius}px;" in inputbar
     assert f"border-radius: {cell_radius}px;" in element
+
+
+@pytest.mark.parametrize(
+    "template_name",
+    ["gtk3.gtk.css.j2", "gtk4.gtk.css.j2"],
+)
+@pytest.mark.parametrize(
+    ("name", "card_radius", "control_radius"),
+    [
+        ("terminal-host", 14, 15),
+        ("glass", 14, 15),
+        ("paper", 14, 15),
+        ("terminal", 0, 2),
+        ("flat", 0, 0),
+    ],
+)
+def test_gtk_host_probe_delegates_card_and_control_radii(
+    template_name: str, name: str, card_radius: int, control_radius: int
+) -> None:
+    """GTK's control/card roles follow the host probe only for opt-in skins."""
+    text = (TEMPLATES / template_name).read_text()
+    tokens = validate_skins._resolve_manifest(
+        load_manifest(name), "dark", dict(validate_skins.HOST_PROBE)
+    )
+    css = validate_skins.expand_template(text, tokens, "css")
+    assert "{{" not in css
+    for selector in ("button", "entry"):
+        assert f"border-radius: {control_radius}px;" in _wlogout_block(css, selector)
+    assert f"border-radius: {card_radius}px;" in _wlogout_block(css, ".card")
 
 
 def test_rofi_dump_theme_has_no_parse_warning(tmp_path: Path) -> None:
@@ -1040,6 +1083,32 @@ def test_wlogout_button_uses_each_skins_card_fill_and_panel_geometry(
     assert "border-color: @primary;" in active, name
 
 
+@pytest.mark.parametrize(
+    ("name", "radius", "border"),
+    [
+        ("terminal-host", 13, 2),
+        ("glass", 13, 2),
+        ("paper", 13, 2),
+        ("terminal", 0, 1),
+        ("flat", 0, 0),
+    ],
+)
+def test_wlogout_host_probe_keeps_action_cards_on_panel_geometry(
+    name: str, radius: int, border: int
+) -> None:
+    """wlogout maps action cards to the panel, never to the inner card radius."""
+    text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
+    tokens = validate_skins._resolve_manifest(
+        load_manifest(name), "dark", dict(validate_skins.HOST_PROBE)
+    )
+    css = validate_skins.expand_template(text, tokens, "css")
+    assert "{{" not in css
+    button = _wlogout_block(css, "button")
+    assert f"border-radius: {radius}px;" in button
+    assert f"border: {border}px solid" in button
+    assert f"border-radius: {validate_skins.HOST_PROBE['surface.card.radius']}px;" not in button
+
+
 def test_wlogout_template_expands_card_panel_state_and_type() -> None:
     text = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
     glass = render(text, "glass", "dark")
@@ -1141,19 +1210,20 @@ def test_terminal_host_applies_host_radius_and_keeps_terminal_card_fill_with_gtk
 
     template = (TEMPLATES / "wlogout.gtk.css.j2").read_text()
     terminal_css = render(template, "terminal", "dark")
-    host = {
-        "surface.panel.radius": 13,
-        "surface.panel.border-width": 2,
-    }
+    host = dict(validate_skins.HOST_PROBE)
     host_tokens = validate_skins._resolve_manifest(
         load_manifest("terminal-host"), "dark", host
     )
     terminal_host_css = validate_skins.expand_template(template, host_tokens)
     assert "{{" not in terminal_host_css
 
-    # The host values reach the action cards only through panel geometry.
+    # The host values reach the action cards only through panel geometry; the
+    # delegated card/control/cell radii do not replace the panel mapping.
     button = _wlogout_block(terminal_host_css, "button")
     assert "border-radius: 13px;" in button
+    assert "border-radius: 14px;" not in button
+    assert "border-radius: 15px;" not in button
+    assert "border-radius: 16px;" not in button
     assert "border: 2px solid alpha(@on_surface, 0.18);" in button
     assert "background-color: @surface_container;" in button
     assert "padding: 8px;" in button
@@ -1291,7 +1361,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.10.0"
+    assert canonical["tag"] == "v0.11.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "manifest": "skins/contracts/appearance-manifest.schema.json",
@@ -1309,7 +1379,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
     assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "8af8aca54e7107617c4d31655a6eed2665f9b751"
+    assert metadata["source-commit"] == "6a3ed99dab6cf3e49a4643bc82e9d7428d0880ca"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -1336,14 +1406,20 @@ def test_manifest_documents_validate_against_the_vendored_manifest_schema() -> N
         assert errors == [], [error.message for error in errors]
 
 
+HOST_PATHS = [
+    "surface.panel.radius",
+    "surface.panel.border-width",
+    "surface.card.radius",
+    "surface.control.radius",
+    "surface.cell.radius",
+]
+
+
 def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
     glass = load_manifest("glass")
     paper = load_manifest("paper")
     terminal_host = load_manifest("terminal-host")
-    expected = {
-        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
-        "fallback": "skin",
-    }
+    expected = {"inherit": HOST_PATHS, "fallback": "skin"}
     assert glass["host"] == expected
     assert paper["host"] == expected
     assert terminal_host["host"] == expected
@@ -1366,15 +1442,10 @@ def test_host_policy_is_a_policy_object_not_a_token_group() -> None:
     assert policy["additionalProperties"] is False
     assert policy["properties"]["inherit"]["minItems"] == 1
     assert policy["properties"]["inherit"]["uniqueItems"] is True
-    assert policy["properties"]["inherit"]["items"]["enum"] == [
-        "surface.panel.radius",
-        "surface.panel.border-width",
-    ]
+    assert policy["properties"]["inherit"]["items"]["enum"] == HOST_PATHS
     assert policy["properties"]["fallback"]["enum"] == ["skin", "error"]
-    assert validate_skins.HOST_INHERITABLE == (
-        "surface.panel.radius",
-        "surface.panel.border-width",
-    )
+    assert validate_skins.HOST_INHERITABLE == tuple(HOST_PATHS)
+    assert "surface.pill.radius" not in validate_skins.HOST_INHERITABLE
 
 
 def test_terminal_host_is_terminal_plus_only_the_host_policy() -> None:
@@ -1384,17 +1455,14 @@ def test_terminal_host_is_terminal_plus_only_the_host_policy() -> None:
     assert terminal_host["groups"] == terminal["groups"]
     assert "host" not in terminal
     assert terminal_host["host"] == {
-        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
+        "inherit": HOST_PATHS,
         "fallback": "skin",
     }
     assert "mode" not in terminal_host
 
 
-def test_host_values_resolve_only_into_inherited_panel_geometry() -> None:
-    host = {
-        "surface.panel.radius": 13,
-        "surface.panel.border-width": 2,
-    }
+def test_host_values_resolve_only_into_inherited_rectangle_geometry() -> None:
+    host = dict(validate_skins.HOST_PROBE)
     for name in MANIFEST_NAMES:
         manifest = load_manifest(name)
         for mode in ("dark", "light"):
@@ -1422,19 +1490,30 @@ def test_host_values_resolve_only_into_inherited_panel_geometry() -> None:
     )
     assert terminal_host["surface"]["panel"]["radius"] == 13
     assert terminal_host["surface"]["panel"]["border-width"] == 2
+    assert terminal_host["surface"]["card"]["radius"] == 14
+    assert terminal_host["surface"]["control"]["radius"] == 15
+    assert terminal_host["surface"]["cell"]["radius"] == 16
+    assert terminal_host["surface"]["pill"]["radius"] == 2
 
     # The original terminal is explicit: even with host values supplied it
-    # keeps its square/hairline panel geometry.
+    # keeps its square/hairline geometry.
     terminal = validate_skins._resolve_manifest(load_manifest("terminal"), "dark", host)
     assert terminal["surface"]["panel"]["radius"] == 0
     assert terminal["surface"]["panel"]["border-width"] == 1
+    assert terminal["surface"]["card"]["radius"] == 0
+    assert terminal["surface"]["control"]["radius"] == 2
+    assert terminal["surface"]["cell"]["radius"] == 0
 
-    # paper's light surface override wins over the host policy.
+    # paper's light surface override wins over the host policy for every
+    # delegated rectangle path.
     paper_light = validate_skins._resolve_manifest(
         load_manifest("paper"), "light", host
     )
     assert paper_light["surface"]["panel"]["radius"] == 6
     assert paper_light["surface"]["panel"]["border-width"] == 1
+    assert paper_light["surface"]["card"]["radius"] == 4
+    assert paper_light["surface"]["control"]["radius"] == 3
+    assert paper_light["surface"]["cell"]["radius"] == 3
 
 
 def test_host_fallback_skin_keeps_skin_values_when_the_host_is_silent() -> None:
@@ -1442,15 +1521,20 @@ def test_host_fallback_skin_keeps_skin_values_when_the_host_is_silent() -> None:
     base = validate_skins._resolve_manifest(manifest, "dark")
     silent = validate_skins._resolve_manifest(manifest, "dark", {})
     partial = validate_skins._resolve_manifest(
-        manifest, "dark", {"surface.panel.radius": 9}
+        manifest,
+        "dark",
+        {"surface.panel.radius": 9, "surface.card.radius": 10},
     )
     assert silent == base
     assert partial["surface"]["panel"]["radius"] == 9
     assert partial["surface"]["panel"]["border-width"] == 1
+    assert partial["surface"]["card"]["radius"] == 10
+    assert partial["surface"]["control"]["radius"] == 2
+    assert partial["surface"]["cell"]["radius"] == 0
 
     error_policy = dict(manifest)
     error_policy["host"] = {
-        "inherit": ["surface.panel.radius", "surface.panel.border-width"],
+        "inherit": HOST_PATHS,
         "fallback": "error",
     }
     with pytest.raises(ValueError, match="fallback = \"error\""):
@@ -1462,6 +1546,19 @@ def test_positive_host_fixture_is_accepted(tmp_path: Path) -> None:
     with fixture.open("rb") as handle:
         fixture_data = tomllib.load(handle)
     assert fixture_data == load_manifest("glass")
+
+    root = make_full_root(tmp_path, manifest_override=("glass", fixture))
+    errors, _notes, stats = validate_skins.validate(root)
+    assert errors == []
+    assert stats["manifests"] == 5
+
+
+def test_positive_host_rectangles_fixture_is_accepted(tmp_path: Path) -> None:
+    fixture = POSITIVE / "host-rectangles.toml"
+    with fixture.open("rb") as handle:
+        fixture_data = tomllib.load(handle)
+    assert fixture_data == load_manifest("glass")
+    assert fixture_data["host"]["inherit"] == HOST_PATHS
 
     root = make_full_root(tmp_path, manifest_override=("glass", fixture))
     errors, _notes, stats = validate_skins.validate(root)
@@ -1806,10 +1903,7 @@ def test_terminal_host_expands_like_terminal_until_the_host_supplies_geometry() 
     terminal_host_fallback = render(template, "terminal-host")
     assert terminal_host_fallback == terminal
 
-    host = {
-        "surface.panel.radius": 13,
-        "surface.panel.border-width": 2,
-    }
+    host = dict(validate_skins.HOST_PROBE)
     tokens = validate_skins._resolve_manifest(
         load_manifest("terminal-host"), "dark", host
     )
@@ -1817,9 +1911,12 @@ def test_terminal_host_expands_like_terminal_until_the_host_supplies_geometry() 
     assert "{{" not in terminal_host
     assert "border-radius: 13px;" in terminal_host
     assert "border: 2px solid alpha(@on_surface, 0.22);" in terminal_host
-    # The host only moves panel geometry: card paint and type are identical.
+    # The host moves every rectangle radius; paint, type and the pill stay put.
     assert "background-color: @surface_container;" in terminal_host
-    assert "border-radius: 0px;" in terminal_host
+    assert "border-radius: 14px;" in terminal_host
+    assert "border-radius: 15px;" in terminal_host
+    assert "border-radius: 16px;" in terminal_host
+    assert "border-radius: 2px;" in terminal_host
     assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal_host
     assert terminal_host.count("border-radius: 13px;") == 1
 
@@ -1962,8 +2059,8 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
         ("incomplete-mode.toml", "missing required property"),
         ("host-empty-inherit.toml", "at least 1 item"),
         ("host-duplicate-inherit.toml", "duplicate items"),
-        ("host-unknown-inherit.toml", "surface.card.radius"),
-        ("host-inner-radius.toml", "must be one of ['surface.panel.radius', 'surface.panel.border-width']"),
+        ("host-unknown-inherit.toml", "surface.card.border-width"),
+        ("host-pill-radius.toml", "surface.pill.radius"),
         ("host-bad-fallback.toml", "must be one of"),
         ("host-extra-key.toml", "unexpected property"),
     ],
