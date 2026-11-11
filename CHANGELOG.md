@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — req-028 sound panel paint
+
+### Added
+
+- **Sound surface classes in the `ags` target.** `skins/templates/ags.gtk.css.j2`
+  now paints the bar's anchored sound popover, tray dropdown, settings
+  popover, menus and now-playing strip from the v3 roles: `surface.panel` for
+  every AGS layer-shell surface (doc 113 W-10 — never `surface.window`),
+  `surface.card` for the Playing page, `surface.cell` for rows,
+  `surface.control` for buttons/fields, `surface.pill` for badges, and
+  `state.hover/selected/focus/disabled` plus `ink`/`type` for text. The app's
+  `audio-panel.css` is structural only (dimensions, spacing, layout, content
+  art, the semantic live green), so all five skins paint the same panel.
+- **Sound fixture coverage.** The `ags` selector/token coverage names the
+  sound classes; a positive test asserts the panel role's paint/radius reaches
+  `.audio-surface`/`.tray-surface`/`.audio-settings` in glass, paper, flat,
+  terminal and terminal-host, and that no sound selector touches
+  `surface.window`.
+
 ## v0.19.0 — required surface.window and the paint-free kitty projection
 
 ### Added

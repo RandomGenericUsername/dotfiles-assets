@@ -73,7 +73,7 @@ skins/
   manifests/paper.toml                    palette-axis skin with explicit mode.light
   manifests/terminal.toml                 dense-monospace, square/hairline skin
   manifests/terminal-host.toml            terminal paint/type + opt-in host geometry
-  templates/ags.gtk.css.j2                bar settings + Bluetooth paint (target: ags)
+  templates/ags.gtk.css.j2                bar settings/Bluetooth/sound paint (target: ags)
   templates/ags-clipboard.gtk.css.j2      clipboard overlay (target: ags-clipboard)
   templates/ags-notifications.gtk.css.j2  notification cards (target: ags-notifications)
   templates/ags-wallpaper-selector.gtk.css.j2 selector dialog (target: ags-wallpaper-selector)
@@ -117,7 +117,7 @@ prefix, so `templates/ags.gtk.css.j2` renders `ags.css`.
 
 | Template | Target `configDir` | Canonical source |
 | --- | --- | --- |
-| `ags.gtk.css.j2` | `ags` | bar settings/Bluetooth |
+| `ags.gtk.css.j2` | `ags` | bar settings/Bluetooth/sound |
 | `ags-clipboard.gtk.css.j2` | `ags-clipboard` | clipboard overlay |
 | `ags-notifications.gtk.css.j2` | `ags-notifications` | notification cards |
 | `ags-wallpaper-selector.gtk.css.j2` | `ags-wallpaper-selector` | selector dialog |

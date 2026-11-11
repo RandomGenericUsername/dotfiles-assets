@@ -65,6 +65,16 @@ APP_TEMPLATES = {
             ".settings-net",
             ".settings-badge",
             ".settings-rowact",
+            ".audio-surface",
+            ".tray-surface",
+            ".audio-settings",
+            ".audio-menu > contents",
+            ".audio-playing-page",
+            ".audio-mixer-row",
+            ".audio-device",
+            ".audio-muted-pill",
+            ".audio-switch",
+            ".audio-strip-main",
         ],
         "tokens": {
             "SKIN_SURFACE_PANEL_BG",
@@ -100,6 +110,8 @@ APP_TEMPLATES = {
             "SKIN_STATE_HOVER_RING",
             "SKIN_STATE_SELECTED_FILL",
             "SKIN_STATE_SELECTED_INK",
+            "SKIN_STATE_FOCUS_RING",
+            "SKIN_STATE_DISABLED_INK",
             "SKIN_INK_INK",
             "SKIN_INK_INK_DIM",
             "SKIN_INK_ACCENT",
@@ -527,6 +539,49 @@ def test_app_template_expands_for_every_manifest_and_mode(target: str) -> None:
         assert re.search(
             rf"(?m)^\s*{re.escape(selector)}\s*(?:,|\{{)", text
         ), f"{path.name}: missing selector {selector}"
+
+
+def _rule(css: str, selector: str) -> str:
+    """Declarations for a selector, including grouped selectors."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        selectors = [item.strip() for item in match.group(1).split(",")]
+        if selector in selectors:
+            return match.group(2)
+    raise AssertionError(f"missing {selector} rule")
+
+
+def test_ags_template_paints_the_sound_panel_from_the_panel_role() -> None:
+    """REQ-005: the AGS sound overlay is `surface.panel`, never `window`."""
+    text = TEMPLATE.read_text()
+    assert ".audio-surface" in text
+    assert ".tray-surface" in text
+    assert ".audio-settings" in text
+    # No sound selector may consume the toplevel window role (doc 113 W-10).
+    code = validate_skins._strip_comments(text)
+    for match in re.finditer(r"(?m)^\s*([^{}]+)\s*\{", code):
+        selector = match.group(1)
+        if ".audio-" in selector or ".tray-" in selector:
+            assert "surface.window" not in selector
+    sound = text[text.index("/* ── Sound — REQ-005"):]
+    assert "SKIN_SURFACE_WINDOW" not in sound
+    # The panel radius/paint are the manifest's panel values in every skin.
+    expected = {
+        "glass": ("alpha(@surface, 0.94)", "12px"),
+        "paper": ("@surface_container_lowest", "6px"),
+        "flat": ("transparent", "0px"),
+        "terminal": ("@surface", "0px"),
+        "terminal-host": ("@surface", "0px"),
+    }
+    for name, (paint, radius) in expected.items():
+        css = render(text, name, "dark")
+        surface = _rule(css, ".audio-surface")
+        settings = _rule(css, ".audio-settings")
+        assert f"background-color: {paint}" in surface, (name, surface)
+        assert f"border-radius: {radius}" in surface, (name, surface)
+        assert f"border-radius: {radius}" in settings, (name, settings)
+        assert "padding:" in surface and "box-shadow:" in surface
+        assert "backdrop-filter:" in surface
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
@@ -2086,7 +2141,11 @@ def test_terminal_host_expands_like_terminal_until_the_host_supplies_geometry() 
     assert "border-radius: 16px;" in terminal_host
     assert "border-radius: 2px;" in terminal_host
     assert "font-family: JetBrainsMono Nerd Font, monospace;" in terminal_host
-    assert terminal_host.count("border-radius: 13px;") == 1
+    # The host radius reaches every panel-role surface: the settings panel plus
+    # the REQ-005 sound popover/tray/settings and their menu (doc 113 W-10).
+    for selector in (".settings-surface", ".audio-surface", ".tray-surface",
+                     ".audio-settings", ".audio-menu > contents"):
+        assert "border-radius: 13px;" in _rule(terminal_host, selector), selector
 
 
 def test_positive_terminal_fixture_is_accepted(tmp_path: Path) -> None:

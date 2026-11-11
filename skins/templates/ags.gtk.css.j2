@@ -403,3 +403,549 @@ window.settings-catcher {
   font-size: {{SKIN_TYPE_SIZE_BODY}};
   color: alpha({{SKIN_INK_INK}}, 0.7);
 }
+
+/* ── Sound — REQ-005, the bar's one overlay surface family ──────────────────
+   The AGS bar's sound popover, tray dropdown, settings popover, menus and the
+   now-playing strip are app-owned LAYER-SHELL surfaces: doc 113 W-10 maps them
+   to `surface.panel`, never `surface.window`. This template is the ONLY paint
+   authority: the app's `audio-panel.css` carries dimensions, spacing, layout,
+   content art and the semantic live green only.
+
+   Roles:
+     panel   the popover, tray dropdown, menus and settings popover
+     card    the per-player Playing page
+     cell    Mixer/tray/menu/settings rows
+     control device/route/icon/transport/level controls
+     pill    muted/live badges, the mode tab, the switch
+     state   hover / selected / focus / disabled
+     ink/type  text
+
+   Widths (352 popover, 300 dropdown, 280 settings) are app layout, so the
+   skin padding is inside those boxes (border-box) and never changes them. */
+
+window.audio-popup,
+window.tray-popup {
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
+}
+
+.audio-surface,
+.tray-surface,
+.audio-settings {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_PANEL_PADDING}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+}
+
+.audio-menu > contents {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_PANEL_PADDING}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+}
+
+.audio-caption {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-muted-pill {
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+  letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 8px;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-big-number {
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-big-unit {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-hero-note,
+.audio-device-note,
+.audio-page-index,
+.audio-mixer-sub,
+.audio-mixer-mixed,
+.audio-section-summary,
+.audio-foot-note,
+.audio-foot-hint,
+.audio-settings-help {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-settings-foot {
+  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-device {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 10px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-device:hover,
+.audio-device:focus {
+  border-color: {{SKIN_STATE_HOVER_RING}};
+}
+
+.audio-device:disabled {
+  color: {{SKIN_STATE_DISABLED_INK}};
+}
+
+.audio-device-name {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-device-chevron {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-icon-button {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-icon-button:hover,
+.audio-icon-button:active {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-icon-button.active,
+.audio-icon-button:checked {
+  color: {{SKIN_INK_ACCENT}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+}
+
+.audio-icon-button:disabled {
+  color: {{SKIN_STATE_DISABLED_INK}};
+}
+
+.audio-big-number {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.audio-mode-tab {
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-mode-tab:hover {
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-mode-tab.selected {
+  color: {{SKIN_INK_INK}};
+  border-bottom-color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-mode-label {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  font-weight: 650;
+}
+
+.audio-mode-dot {
+  background-color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-carousel-button {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-carousel-button:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-carousel-glyph {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+}
+
+.audio-playing-page {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  padding: {{SKIN_SURFACE_CARD_PADDING}};
+}
+
+.audio-app-tile {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.08);
+}
+
+.audio-artwork.audio-app-tile,
+.audio-strip-art.audio-app-tile {
+  border: 1px solid alpha({{SKIN_INK_INK}}, 0.13);
+}
+
+.audio-app-tile-image {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.audio-app-tile-fallback {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-app-name {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-live-badge {
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+  letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
+  padding: {{SKIN_SURFACE_PILL_PADDING}} 7px;
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-track-title {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-track-artist {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-transport-button {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-transport-button.play {
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-glyph-button.active .audio-glyph {
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-playing-level {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 6px;
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-playing-level:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-time,
+.audio-percent,
+.audio-input-value,
+.audio-mixer-pct {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-empty-title {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-empty-sub,
+.audio-empty-line,
+.audio-consumer-use {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-empty-art {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.08);
+}
+
+.audio-mixer-row {
+  background-color: {{SKIN_SURFACE_CELL_BG}};
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 8px;
+}
+
+.audio-mixer-row:hover {
+  background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
+}
+
+.audio-mixer-row + .audio-mixer-row {
+  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+}
+
+.audio-mixer-mute {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-mixer-mute:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-mixer-mute.active {
+  color: {{SKIN_INK_ACCENT}};
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+}
+
+.audio-route {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 6px;
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-route:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-route-label {
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+}
+
+.audio-section {
+  border-bottom: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+}
+
+.audio-section-head {
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-section-head:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+}
+
+.audio-section-title {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-section-chevron {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-consumer {
+  background-color: {{SKIN_SURFACE_CELL_BG}};
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
+}
+
+.audio-consumer-name {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-foot {
+  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+}
+
+.audio-menu-heading {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-menu-option {
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 8px;
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-menu-option:hover,
+.audio-menu-option:focus {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-menu-option.selected {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+.audio-menu-option:disabled {
+  color: {{SKIN_STATE_DISABLED_INK}};
+}
+
+.audio-menu-note {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-option-mark {
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-settings-head {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-settings-row {
+  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 0;
+}
+
+.audio-settings-name {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-switch {
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+}
+
+.audio-switch:checked {
+  background-color: {{SKIN_INK_ACCENT}};
+  border-color: transparent;
+}
+
+.audio-switch > slider {
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: {{SKIN_INK_INK}};
+}
+
+.audio-tray-caption {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-tray-source-name,
+.audio-tray-artist {
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-tray-source-name {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.audio-tray-title {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-tray-artist {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.audio-tray-divider,
+.audio-tray-foot {
+  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
+}
+
+.audio-tray-players-head {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-tray-player {
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  padding: {{SKIN_SURFACE_CELL_PADDING}} 4px;
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-tray-player:hover {
+  background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
+}
+
+.audio-tray-player.active {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+.audio-tray-player-name {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-tray-player-track {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+}
+
+.audio-tray-check {
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-tray-open {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-tray-open:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.audio-tray-open-label {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+}
+
+/* Bar strip (inside window#bar). The bar owns the transparent window; the
+   strip is a cell/control family like the rest of the row. */
+.audio-strip-main {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.audio-strip-main:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+}
+
+.audio-strip-title {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-strip-artist {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.audio-strip-art.audio-app-tile {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.audio-strip-controls .audio-glyph-button.active .audio-glyph {
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.audio-icon-button:focus-visible,
+.audio-device:focus-visible,
+.audio-route:focus-visible,
+.audio-carousel-button:focus-visible,
+.audio-mode-tab:focus-visible,
+.audio-section-head:focus-visible,
+.audio-playing-level:focus-visible,
+.audio-menu-option:focus-visible,
+.audio-tray-player:focus-visible,
+.audio-tray-open:focus-visible,
+.audio-hero-slider:focus-visible,
+.audio-level-slider:focus-visible,
+.audio-seek-slider:focus-visible {
+  outline: 2px solid {{SKIN_STATE_FOCUS_RING}};
+  outline-offset: 2px;
+}
