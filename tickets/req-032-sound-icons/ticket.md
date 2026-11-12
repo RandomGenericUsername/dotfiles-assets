@@ -23,3 +23,12 @@ Owner round-two art is integrated through the real icons corpus:
   (`on_surface`).
 - `ROLE-MIGRATION.md`, icons README and tests updated.
 - `make validate-icons` and the icon tests pass; no skin retune.
+
+## Live
+
+Installed as assets `v0.21.0`. The runtime rendered
+`media-controls-shuffle(-active)`, `repeat`, `repeat-once`, `repeat-off`,
+`settings-panel-settings` and the new `status-bar-settings` into
+`current/icons`. Terminal-host uses on_surface/primary fills; glass
+generation `06799bd0442b...` renders active `#b9c3ff` and inactive `#e3e1e9`.
+Bootstrap verify `ok=337 failed=0`.
