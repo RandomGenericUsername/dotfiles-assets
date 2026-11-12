@@ -13,18 +13,33 @@ hl.config({
     },
 })
 
-hl.gesture({
-    fingers = 3,
-    direction = "left",
-    action = function()
-        hl.exec_cmd("hyprctl gloviewnext")
-    end,
-})
+local gloview_loaded = pcall(function()
+    return hl.plugin.gloview.toggle
+end)
 
-hl.gesture({
-    fingers = 3,
-    direction = "right",
-    action = function()
-        hl.exec_cmd("hyprctl gloviewprev")
-    end,
-})
+if gloview_loaded then
+    hl.gesture({
+        fingers = 3,
+        direction = "left",
+        action = function()
+            hl.exec_cmd("hyprctl gloviewnext")
+        end,
+    })
+
+    hl.gesture({
+        fingers = 3,
+        direction = "right",
+        action = function()
+            hl.exec_cmd("hyprctl gloviewprev")
+        end,
+    })
+else
+    -- Missing/stale GloView must leave the compositor usable. Hyprland's
+    -- native horizontal workspace gesture keeps three-finger left/right
+    -- switching instead of dispatching unknown `gloview*` commands.
+    hl.gesture({
+        fingers = 3,
+        direction = "horizontal",
+        action = "workspace",
+    })
+end

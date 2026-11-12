@@ -31,7 +31,7 @@ hl.on("hyprland.start", function()
 
     -- AGS capture tool (standalone instance `capture`, staggered: two
     -- concurrent `ags run` invocations collide on /run/user/$UID/ags.js).
-    -- Wrapped in bash -lc like gloview-activate below: hl.exec_cmd has no
+    -- Wrapped in bash -lc: hl.exec_cmd has no
     -- shell semantics (no &&, no $HOME expansion) on its own. The log dir
     -- (~/.local/state/ags) is ensured by the gui_tools role — directory
     -- setup is provisioning's responsibility, this line only starts processes.
@@ -44,8 +44,11 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start xdg-desktop-portal-hyprland")
     hl.exec_cmd("systemctl --user start xdg-desktop-portal-gtk")
 
-    -- Hyprland plugins require a live IPC session.
-    hl.exec_cmd("bash -lc '$HOME/.local/bin/gloview-activate'")
+    -- GloView activation is owned by the systemd user oneshot
+    -- dotfiles-gloview.service (ordered after graphical-session.target and
+    -- dotfiles-ags-notifications.service). It verifies the loaded plugin via
+    -- `hyprctl plugin list -j`, records ABI status and notifies on failure;
+    -- autostart must not launch a second, fire-and-forget activation path.
 
     -- Clipboard history is owned by the resident `dotfiles-runtime clipboard`
     -- job (systemd --user unit dotfiles-runtime-clipboard.service), which

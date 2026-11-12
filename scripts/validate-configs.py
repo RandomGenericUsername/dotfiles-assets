@@ -40,6 +40,12 @@ WHAT THIS GATE PROVES (spine AD-11, R-05/R-06):
      must override them. An import above the static declarations silently
      reverts every skin to the glass-era 16/8/5/5 radii (BUG-003).
 
+  8. GLOVIEW IS OPTIONAL AND SYSTEMD-OWNED. `autostart.lua` must not launch
+     `gloview-activate`; the systemd user oneshot owns activation. SUPER+TAB and
+     the three-finger left/right gestures must sit behind the
+     `gloview_loaded` pcall guard, with a native fallback when the plugin is
+     missing or ABI-stale — no dead `hyprctl gloview…` dispatchers (G-8).
+
 WHY STDLIB ONLY. A fresh clone must pass `make gates` with no virtualenv and no
 network. This is the same rule as the other class validators.
 
@@ -83,6 +89,8 @@ WLOGOUT_LOGOUT_ACTION = "uwsm stop"
 #: user units. Everything else it launches is an overlay under the launch lock.
 AUTOSTART = Path(CONFIGS_DIR) / "hypr" / "autostart.lua"
 SYSTEMD_AGS_INSTANCES = ("ags", "notifications")
+KEYBINDINGS = Path(CONFIGS_DIR) / "hypr" / "keybindings.lua"
+INPUT = Path(CONFIGS_DIR) / "hypr" / "input.lua"
 #: The rofi theme's generated-skin import order. The palette is first so role
 #: references resolve, and the rendered appearance is last so its geometry wins
 #: over the static fallback radii (BUG-003).
@@ -230,6 +238,66 @@ def _check_autostart_ags(root: Path) -> None:
             )
 
 
+def _check_gloview_guards(root: Path) -> None:
+    """GloView is optional; no fire-and-forget launch and no dead dispatchers."""
+    autostart = root / AUTOSTART
+    if not autostart.is_file():
+        raise ConfigError(f"{AUTOSTART}: the autostart module is missing")
+    for lineno, line in enumerate(autostart.read_text(encoding="utf-8").splitlines(), start=1):
+        code = line.strip()
+        if code.startswith("--"):
+            continue
+        if "gloview-activate" in code:
+            raise ConfigError(
+                f"{AUTOSTART}:{lineno}: autostart launches gloview-activate; the "
+                "systemd user oneshot dotfiles-gloview.service is the single owner "
+                "of activation (A-6/G-5)"
+            )
+
+    keybindings = root / KEYBINDINGS
+    if not keybindings.is_file():
+        raise ConfigError(f"{KEYBINDINGS}: the keybindings module is missing")
+    bindings = keybindings.read_text(encoding="utf-8")
+    guard = "if gloview_loaded then"
+    if "local gloview_loaded = pcall(" not in bindings or guard not in bindings:
+        raise ConfigError(
+            f"{KEYBINDINGS}: SUPER+TAB is not behind the gloview_loaded pcall guard; "
+            "a missing plugin would leave a dead `hyprctl gloview` dispatcher (G-8)"
+        )
+    overview = 'hl.dsp.exec_cmd("hyprctl gloview")'
+    if bindings.find(overview) < bindings.find(guard):
+        raise ConfigError(
+            f"{KEYBINDINGS}: the `hyprctl gloview` bind is registered outside the "
+            "gloview_loaded guard (G-8)"
+        )
+    if 'workspace = "e+1"' not in bindings[bindings.find(guard):]:
+        raise ConfigError(
+            f"{KEYBINDINGS}: the gloview_loaded else branch has no native "
+            "workspace fallback for SUPER+TAB when GloView is absent (G-8)"
+        )
+
+    gestures = root / INPUT
+    if not gestures.is_file():
+        raise ConfigError(f"{INPUT}: the input module is missing")
+    input_text = gestures.read_text(encoding="utf-8")
+    if "local gloview_loaded = pcall(" not in input_text or guard not in input_text:
+        raise ConfigError(
+            f"{INPUT}: three-finger GloView gestures are not behind the "
+            "gloview_loaded pcall guard (G-8)"
+        )
+    if '"hyprctl gloviewnext"' in input_text:
+        guarded_at = input_text.find(guard)
+        if input_text.find('"hyprctl gloviewnext"') < guarded_at:
+            raise ConfigError(
+                f"{INPUT}: the GloView gesture is registered outside the guard (G-8)"
+            )
+    if 'action = "workspace"' not in input_text:
+        raise ConfigError(
+            f"{INPUT}: no native workspace gesture fallback when GloView is "
+            "missing; three-finger left/right would stop switching workspaces (G-8)"
+        )
+
+
 def _check_rofi_import_order(root: Path) -> None:
     path = root / ROFI_CONFIG
     if not path.is_file():
@@ -263,6 +331,7 @@ def validate(root: Path) -> tuple[str, int]:
     _check_nonempty(files, root)
     _check_wlogout_logout(root)
     _check_autostart_ags(root)
+    _check_gloview_guards(root)
     _check_rofi_import_order(root)
     return token_at
 
@@ -280,8 +349,9 @@ def main(argv: list[str] | None = None) -> int:
         "validate-configs: PASS -- no template/mutable/rendered files; exactly one "
         f"render token at {token_file}:{token_line}; wlogout Logout action is "
         f"{WLOGOUT_LOGOUT_ACTION!r}; autostart leaves the systemd-owned AGS "
-        "instances to provisioning; rofi imports the palette first and the "
-        "generated appearance last"
+        "instances to provisioning; GloView activation is systemd-owned and its "
+        "binds/gestures fall back natively when the plugin is absent; rofi "
+        "imports the palette first and the generated appearance last"
     )
     return 0
 

@@ -4,12 +4,27 @@
 
 local mod = "SUPER"
 
--- Toggle the GloView workspace overview.
-hl.bind(
-    mod .. " + TAB",
-    hl.dsp.exec_cmd("hyprctl gloview"),
-    { description = "Toggle workspace overview" }
-)
+-- GloView is optional: a missing or ABI-stale plugin must not leave a dead
+-- `hyprctl gloview` dispatcher. When the plugin is loaded, SUPER+TAB toggles
+-- the overview; otherwise it falls back to the native next-workspace action.
+local gloview_loaded = pcall(function()
+    return hl.plugin.gloview.toggle
+end)
+
+if gloview_loaded then
+    -- Toggle the GloView workspace overview.
+    hl.bind(
+        mod .. " + TAB",
+        hl.dsp.exec_cmd("hyprctl gloview"),
+        { description = "Toggle workspace overview" }
+    )
+else
+    hl.bind(
+        mod .. " + TAB",
+        hl.dsp.focus({ workspace = "e+1" }),
+        { description = "Switch to next workspace (GloView unavailable)" }
+    )
+end
 
 
 -- ============================================================
