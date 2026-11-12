@@ -522,6 +522,22 @@ window.tray-popup {
   color: {{SKIN_INK_INK_DIM}};
 }
 
+/* Icon-only actions are BARE: no surface.control fill/border around the gear,
+   mute, transport, carousel arrows, the read-only level or the Mixer mute.
+   Only their hover/active state paints. Real controls (device/route fields,
+   sliders, the switch) keep their role paint. */
+.audio-icon-button,
+.audio-transport-button,
+.audio-carousel-button,
+.audio-playing-level,
+.audio-mixer-mute,
+.audio-settings-gear {
+  background-color: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
 .audio-icon-button:hover,
 .audio-icon-button:active {
   background-color: {{SKIN_STATE_HOVER_FILL}};
@@ -595,6 +611,28 @@ window.tray-popup {
 .audio-artwork.audio-app-tile,
 .audio-strip-art.audio-app-tile {
   border: 1px solid alpha({{SKIN_INK_INK}}, 0.13);
+}
+
+/* The Playing page/tray/strip artwork is the track thumbnail. The app icon is
+   only the fallback (or the small corner badge when the thumbnail exists). */
+.audio-track-art {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  border: 1px solid alpha({{SKIN_INK_INK}}, 0.13);
+  background-color: alpha({{SKIN_INK_INK}}, 0.08);
+}
+
+.audio-track-art-image {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.audio-track-art-fallback {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK}};
+}
+
+.audio-track-badge {
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  background-color: alpha({{SKIN_INK_INK}}, 0.10);
 }
 
 .audio-app-tile-image {

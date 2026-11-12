@@ -1,3 +1,15 @@
+## 0.20.1
+
+Sound panel QA in the `ags` target (bar REQ-011):
+
+- Icon-only sound controls (gear, mute, transport, carousel, read-only level,
+  Mixer mute) are bare: transparent fill/border; only hover/active paint.
+  Device/route fields, sliders and the switch keep the role paint.
+- Track artwork classes: `.audio-track-art`, its image/fallback and the small
+  app badge; the app owns the geometry.
+- Fixture coverage: `.audio-track-art` selector and a positive test that the
+  icon-only group is bare while device/route remain control-painted.
+
 # Changelog
 
 ## Unreleased — req-028 sound panel paint

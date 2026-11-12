@@ -75,6 +75,7 @@ APP_TEMPLATES = {
             ".audio-muted-pill",
             ".audio-switch",
             ".audio-strip-main",
+            ".audio-track-art",
         ],
         "tokens": {
             "SKIN_SURFACE_PANEL_BG",
@@ -582,6 +583,34 @@ def test_ags_template_paints_the_sound_panel_from_the_panel_role() -> None:
         assert f"border-radius: {radius}" in settings, (name, settings)
         assert "padding:" in surface and "box-shadow:" in surface
         assert "backdrop-filter:" in surface
+
+
+def test_ags_icon_only_sound_controls_are_bare() -> None:
+    """QA: gear/mute/transport/carousel/level buttons never paint as controls."""
+    text = TEMPLATE.read_text()
+    start = text.index("Icon-only actions are BARE")
+    block = text[start:text.index("}", start)]
+    for selector in (
+        ".audio-icon-button",
+        ".audio-transport-button",
+        ".audio-carousel-button",
+        ".audio-playing-level",
+        ".audio-mixer-mute",
+        ".audio-settings-gear",
+    ):
+        assert selector in block, selector
+    assert "background-color: transparent;" in block
+    assert "border: 1px solid transparent;" in block
+    assert "SKIN_SURFACE_CONTROL_BG" not in block
+    # Real fields remain control-painted (glass: 1px border, 7px control radius).
+    glass = render(text, "glass")
+    for selector in (".audio-device", ".audio-route"):
+        field = _rule(glass, selector)
+        assert "border: 1px solid" in field, selector
+        assert "border-radius: 7px;" in field, selector
+    # The thumbnail is content; its app icon is a corner badge/fallback.
+    assert ".audio-track-badge" in text
+    assert ".audio-track-art" in text
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
