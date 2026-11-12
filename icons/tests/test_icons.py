@@ -33,6 +33,8 @@ def test_media_controls_carry_active_and_shape_states() -> None:
         template = TEMPLATES / variant["template"]
         assert template.is_file(), template
         assert "{{COLOR_FOREGROUND}}" in template.read_text(), template
+    assert 'fill-opacity="0.5"' in (TEMPLATES / variants["shuffle"]["template"]).read_text()
+    assert 'fill-opacity' not in (TEMPLATES / variants["shuffle-active"]["template"]).read_text()
 
 
 def test_settings_gear_is_one_template_for_bar_and_panel() -> None:

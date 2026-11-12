@@ -1,3 +1,9 @@
+## 0.21.1
+
+- `media-controls/shuffle` is the owner's shuffle-disabled art at
+  `fill-opacity="0.5"`; `shuffle-active` stays full. Icon tests assert the
+  opacity split.
+
 ## 0.21.0
 
 Sound-panel icon integration:
