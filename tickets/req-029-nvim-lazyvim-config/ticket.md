@@ -139,3 +139,10 @@ bash scripts/worktree-guard.sh create req-029 nvim-lazyvim-config
 
 Implement on `ticket/req-029-nvim-lazyvim-config`. Do not tag, release, merge,
 or bump pins.
+
+## Release-time note (not now)
+
+At implementation time the assets repo already has tags `v0.20.0` and
+`v0.20.1`. This ticket was developed from `8802b26` (`v0.19.0`); the release
+slice must rebase the branch on the current `master`, rerun the gates, and then
+pick the next available tag (do not reuse `v0.20.x`).
