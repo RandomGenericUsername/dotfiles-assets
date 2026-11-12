@@ -26,7 +26,7 @@ The desired ownership split is:
 - LazyVim/lazy.nvim own **plugin resolution and installation** on first launch.
 
 No provisioning task may run `:Lazy sync`. The generated-palette integration is
-a separate follow-up (`REQ-116` / `REQ-117` in `dotfiles-v3`); this ticket keeps
+a separate follow-up (`REQ-119` / `REQ-120` in `dotfiles-v3`); this ticket keeps
 Catppuccin as the active colorscheme for now.
 
 ## Requirement

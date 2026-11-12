@@ -1,4 +1,4 @@
 return {
-  -- Temporary until the generated-palette projection lands (dotfiles-v3 REQ-116).
+  -- Temporary until the generated-palette projection lands (dotfiles-v3 REQ-119).
   { "LazyVim/LazyVim", opts = { colorscheme = "catppuccin" } },
 }
