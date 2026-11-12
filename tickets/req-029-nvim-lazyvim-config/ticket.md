@@ -2,13 +2,13 @@
 id: req-029
 title: "Neovim config: adopt LazyVim with Catppuccin (lockfile committed)"
 kind: requirement
-status: proposed
+status: in-progress
 lane: 2 — bounded implementation
 links:
   openspec: none
   bmad: none
-worktree: none
-branch: none
+worktree: .worktrees/req-029/
+branch: ticket/req-029-nvim-lazyvim-config
 ---
 
 # Neovim config: adopt LazyVim with Catppuccin
@@ -99,18 +99,18 @@ from provisioning and never install Neovim via provision under this ticket.
 
 ## Acceptance
 
-- [ ] The LazyVim starter layout is present and the old six plugin files and
+- [x] The LazyVim starter layout is present and the old six plugin files and
       old `lua/options.lua` are gone.
-- [ ] LazyVim defaults are kept (empty options/keymaps/autocmds), Catppuccin is
+- [x] LazyVim defaults are kept (empty options/keymaps/autocmds), Catppuccin is
       selected, and Snacks is the picker (no Telescope extra).
-- [ ] `bashls` is configured through the LazyVim LSP opts.
-- [ ] `lazy-lock.json` is committed, or explicitly recorded as blocked with the
+- [x] `bashls` is configured through the LazyVim LSP opts.
+- [x] `lazy-lock.json` is committed, or explicitly recorded as blocked with the
       reason and the exact dev-time command needed later.
-- [ ] `configs/README.md`, `catalog.yaml` contents and `CHANGELOG.md` describe
+- [x] `configs/README.md`, `catalog.yaml` contents and `CHANGELOG.md` describe
       the new tree and the lockfile exception; no release metadata changed.
-- [ ] `make validate-configs` and `make validate` pass; `make gates` (or the
+- [x] `make validate-configs` and `make validate` pass; `make gates` (or the
       available subset) passes without installing anything.
-- [ ] No tag, release, pin bump, package install/apply, or UI worktree was
+- [x] No tag, release, pin bump, package install/apply, or UI worktree was
       touched.
 
 ## Evidence
