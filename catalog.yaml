@@ -27,9 +27,10 @@ classes:
     subdirs:
       - templates
       - mappings
+      - tests
     schema: icons/schema.json
     schema_major: 1
-    contents: 117 SVGs in 12 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml); a declared role vocabulary (vocabulary.json, 50 Material roles + on_backdrop) and the reviewed role proposal (ROLE-MIGRATION.md)
+    contents: 123 SVGs in 13 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml); a declared role vocabulary (vocabulary.json, 50 Material roles + on_backdrop), the reviewed role proposal (ROLE-MIGRATION.md) and the icon corpus tests
   templates:
     dir: templates
     subdirs:

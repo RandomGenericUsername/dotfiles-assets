@@ -1,3 +1,17 @@
+## 0.21.0
+
+Sound-panel icon integration:
+
+- Add the `media-controls` group (shuffle, shuffle-active, repeat,
+  repeat-once, repeat-off) from the owner's 1024-viewBox art, with panel ink
+  for inactive states, primary for active states, and shape-based repeat
+  states.
+- Upgrade the `settings` bar gear to the new gear art and add
+  `settings-panel.settings` for the audio Output gear on `on_surface`.
+- Add icon corpus tests (`icons/tests`) and include them in `test-skins`.
+- `make validate-icons` PASS (23 groups, 142 variants, 123 SVGs); no skin
+  retune.
+
 ## 0.20.2
 
 Sound panel feedback round 1:

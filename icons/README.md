@@ -4,7 +4,7 @@ This class holds the icon corpus. It is addressed by consumers as data; nothing 
 is generated and nothing here names a deployment destination (spine AD-2/AD-6).
 
 ```text
-templates/   117 SVGs in 12 template directories (the rendered artwork)
+templates/   123 SVGs in 13 template directories (the rendered artwork)
 mappings/    icons.yaml (the ONE group map) + defaults.yaml (the COLOR_* vocabulary)
              + vocabulary.json (the declared roles) + ROLE-MIGRATION.md (the role proposal)
 schema.json  the contract: group -> color_mappings -> variants, template resolution

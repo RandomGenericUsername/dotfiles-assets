@@ -511,6 +511,11 @@ settings-panel:
   color_mappings:
     COLOR_FOREGROUND: on_surface
   variants:
+    - name: settings
+      template: settings-panel/settings/default/icon.svg
+      output: settings-panel-settings.svg
+      color_mappings:
+        COLOR_FOREGROUND: on_surface
     # The capability glyphs bake their own on/off tint through ITR (primary
     # when on, panel ink when off) so the panel renders bare glyphs — no CSS
     # filter, no background box. Variant-level mappings win over the group ink.
@@ -758,6 +763,33 @@ microphone:
 # bar-icon contrast guard never retargets them. Variant names are the PipeWire
 # `application.icon-name` values (`google-chrome`, `tidal-hifi`, …); the audio
 # state module falls back to `generic` then to the device glyph.
+media-controls:
+  surface: dark-glass
+  color_mappings:
+    COLOR_FOREGROUND: on_surface
+  variants:
+    - name: shuffle
+      template: media-controls/shuffle/default/icon.svg
+      output: media-controls-shuffle.svg
+    - name: shuffle-active
+      template: media-controls/shuffle-active/default/icon.svg
+      output: media-controls-shuffle-active.svg
+      color_mappings:
+        COLOR_FOREGROUND: primary
+    - name: repeat
+      template: media-controls/repeat/default/icon.svg
+      output: media-controls-repeat.svg
+      color_mappings:
+        COLOR_FOREGROUND: primary
+    - name: repeat-once
+      template: media-controls/repeat-once/default/icon.svg
+      output: media-controls-repeat-once.svg
+      color_mappings:
+        COLOR_FOREGROUND: primary
+    - name: repeat-off
+      template: media-controls/repeat-off/default/icon.svg
+      output: media-controls-repeat-off.svg
+
 app-icons:
   surface: dark-glass
   color_mappings: {}

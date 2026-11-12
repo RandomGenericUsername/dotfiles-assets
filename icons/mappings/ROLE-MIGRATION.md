@@ -114,6 +114,7 @@ setting one is a render input and Phase A must not change renders.
 | `app-icons` | `dark-glass` | Brand marks with literal fills; no placeholder, no role, no mapping. |
 | `media-transport` | `dark-glass` | Transport glyphs in the audio popup's dark-glass rows. |
 | `media-transport-panel` | `dark-glass` | Round filled transport button in an audio row: container + on-container ink. |
+| `media-controls` | `dark-glass` | Shuffle/repeat controls in the audio panel, tray and strip; active states use the accent, inactive uses panel ink, and repeat-once/off are shape states. |
 
 ## Group-level token proposals
 
@@ -151,6 +152,7 @@ the proposed role is the intent.
 | `media-transport` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | row glyph on the audio popup's dark glass (was the `foreground` alias; the group is not a bar group, so it never floated over the wallpaper) | panel ink on dark glass |
 | `media-transport-panel` | `COLOR_BACKGROUND` | `color6` | `primary` | `dark-glass` | the round container is a primary action (the comment names the GUI-unification primary role; the pin was color6 = outline_variant, a neutral grey) | filled action container; its ink is on_primary, the Material pair |
 | `media-transport-panel` | `COLOR_FOREGROUND` | `background` | `on_primary` | `dark-glass` | glyph ink on the filled primary container | on_primary on primary is the Material pair; `background` (surface) was only correct while the container was a surface tone |
+| `media-controls` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | default shuffle/repeat ink on the audio panel/tray/strip | panel ink on dark glass; active variants override with primary |
 
 ## Variant-level overrides
 
@@ -174,6 +176,10 @@ per-variant `surface` override exists for.
 | `settings-panel` / `wifi` | `COLOR_FOREGROUND` | `color13` | `primary` | `dark-glass` | capability glyph, on = accent tint. — on-state capability tint (was color13 = surface_container: near-black on a dark panel, i.e. invisible) | on-state is a hue signal; the off state keeps brightness-only differentiation via opacity |
 | `settings-panel` / `wifi-off` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | capability glyph, off = neutral ink + opacity dimming. — off state must not rely on hue; brightness (opacity) carries it, so the base ink is the panel ink | same ink as an on row; the panel applies the dimming |
 | `settings-panel` / `bluetooth` | `COLOR_FOREGROUND` | `color13` | `primary` | `dark-glass` | capability glyph, on = accent tint. — on-state capability tint (was color13 = surface_container) | hue signal on dark glass |
+| `settings-panel` / `settings` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | Output settings gear on the audio panel; panel ink, not wallpaper ink | on_surface is the Material ink for the panel surface |
+| `media-controls` / `shuffle-active` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` | shuffle is on; accent marks the active state | active hue plus the button's selected state |
+| `media-controls` / `repeat` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` | repeat-all is active; accent marks the active state | active hue plus the button's selected state |
+| `media-controls` / `repeat-once` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` | repeat-one is active; the baked "1" carries the shape | active hue plus the shape |
 | `settings-panel` / `bluetooth-off` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | capability glyph, off = neutral ink + opacity dimming. — off state uses the panel ink; opacity carries 'off' | same ink as an on row; the panel applies the dimming |
 | `settings-panel` / `wifi-signal-full` | `COLOR_BACKGROUND` | `color12` | `primary_container` | `dark-glass` | circle-badged signal-strength glyph; badge fill + ink. — full-strength badge takes the accent container; the fill was color12 (= primary_container, so this one was already the right role by accident) | container fill on dark glass; the container/on-container pair keeps the bars readable in both modes |
 | `settings-panel` / `wifi-signal-full` | `COLOR_FOREGROUND` | `color0` | `on_primary_container` | `dark-glass` | circle-badged signal-strength glyph; badge fill + ink. — bars on the accent container (was color0 = surface: light ink on a light badge in light mode) | the Material on-container role is the guaranteed ink for that container in both modes |
@@ -199,6 +205,13 @@ per-variant `surface` override exists for.
 | `volume` / `system-max` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | panel-surface copy: sits on dark glass, not over the wallpaper. — panel ink on dark glass (was the `foreground` alias) | panel ink; on_backdrop would chase a wallpaper band that is not behind this glyph |
 | `microphone` / `system-mic-on` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | panel-surface copy: sits on dark glass, not over the wallpaper. — panel ink on dark glass (was the `foreground` alias) | panel ink; on_backdrop would chase a wallpaper band that is not behind this glyph |
 | `microphone` / `system-mic-off` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` | panel-surface copy: sits on dark glass, not over the wallpaper. — panel ink on dark glass (was the `foreground` alias) | panel ink; on_backdrop would chase a wallpaper band that is not behind this glyph |
+
+| `media-controls` | `shuffle` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` |
+| `media-controls` | `shuffle-active` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` |
+| `media-controls` | `repeat` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` |
+| `media-controls` | `repeat-once` | `COLOR_FOREGROUND` | `foreground` | `primary` | `dark-glass` |
+| `media-controls` | `repeat-off` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` |
+| `settings-panel` | `settings` | `COLOR_FOREGROUND` | `foreground` | `on_surface` | `dark-glass` |
 
 ## `defaults.yaml` proposals
 
