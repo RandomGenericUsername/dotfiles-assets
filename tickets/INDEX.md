@@ -40,6 +40,7 @@
 - [req-027-window-role-kitty-projection](./req-027-window-role-kitty-projection/ticket.md) — Window role and kitty projection: `contracts v0.12.0` re-vendor, `surface.window` in every skin, outer template remaps, paint-free kitty `conf`, `v0.19.0` | `done` | lane 2 — bounded implementation | worktree `.worktrees/req-027/`, branch `ticket/req-027-window-role-kitty-projection` | commits `6183012` + `15288a6` + `5a14cc2` + close, gates green (`180 passed, 3 skipped`, `gates-ci` PASS), tag `v0.19.0` (base `v0.18.1`)
 
 - [req-028-sound-panel-skin](./req-028-sound-panel-skin/ticket.md) — Skin the AGS sound panel from the v3 roles: all five skins paint the popover/tray/strip/settings, app CSS structural only | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-028/`, branch `ticket/req-028-sound-panel-skin`
+- [req-029-nvim-lazyvim-config](./req-029-nvim-lazyvim-config/ticket.md) — Neovim config: adopt LazyVim with Catppuccin, commit the lockfile, keep plugin installation in LazyVim | `proposed` | lane 2 — bounded implementation | implementation-only; no tag/release/merge/pin bump/apply/UI worktree
 
 ## Bugs
 
