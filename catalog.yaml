@@ -53,7 +53,7 @@ classes:
       - wlogout
     schema: null
     schema_major: null
-    contents: 25 static files; Hyprland (13 Lua), hyprpaper.conf, rofi config.rasi, Neovim (8), starship.toml and the wlogout layout; no Jinja source, no rendered output, no mutable state
+    contents: 25 static files; Hyprland (13 Lua), hyprpaper.conf, rofi config.rasi, Neovim (8; LazyVim starter modules plus the committed lazy-lock.json plugin pin), starship.toml and the wlogout layout; no Jinja source, no rendered output, no mutable state
   content:
     dir: content
     subdirs:
