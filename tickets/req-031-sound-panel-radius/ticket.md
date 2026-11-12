@@ -25,3 +25,10 @@ dim caption text. Delete the dead selector; no visual change.
 - [x] No skin retune; the target still paints `.audio-settings`/`.tray-surface`
       with `surface.panel` radius.
 - [x] Tag `v0.20.2`.
+
+## Live
+
+Installed in composition `v0.1.78` with bar `v0.6.9`; the live terminal-host
+generation `028c27636174...` has **0** occurrences of `.audio-hero-note`.
+Settings/tray/card radii are 0 at host 0, 14 at host 14, and 14 on glass at
+host 14; the outer settings/tray containers add no radius.
