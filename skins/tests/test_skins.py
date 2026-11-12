@@ -613,6 +613,11 @@ def test_ags_icon_only_sound_controls_are_bare() -> None:
     assert ".audio-track-art" in text
 
 
+def test_ags_removed_muted_note_selector() -> None:
+    """Owner QA: the removed note has no dead selector left in the target."""
+    assert ".audio-hero-note" not in TEMPLATE.read_text()
+
+
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))
 def test_app_template_placeholder_coverage(target: str) -> None:
     text = (TEMPLATES / f"{target}.gtk.css.j2").read_text()

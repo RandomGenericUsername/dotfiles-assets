@@ -1,3 +1,12 @@
+## 0.20.2
+
+Sound panel feedback round 1:
+
+- Remove the dead `.audio-hero-note` selector from the `ags` target. The note
+  text/element was removed in v0.20.1; this is a no-visual-change cleanup.
+- The outer settings/tray window chrome stays app-owned; `.audio-settings` and
+  `.tray-surface` continue to own `surface.panel` radius/border/shadow.
+
 ## 0.20.1
 
 Sound panel QA in the `ags` target (bar REQ-011):
