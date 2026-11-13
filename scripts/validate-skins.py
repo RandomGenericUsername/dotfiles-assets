@@ -197,6 +197,104 @@ GTK_LAYOUT_PROPERTY = re.compile(
 GROUPS = ("surface", "state", "type", "ink", "layout")
 CSS_GROUPS = ("surface", "state", "type", "ink")
 MODES = ("dark", "light")
+
+# ---------------------------------------------------------------------------
+# Skin boundary — skin = role tokens/paint for app-declared surfaces.
+#
+# The v2 vocabulary is paint and rhythm: surface.{panel,card,cell,control,pill}
+# fill/border/radius/padding, state.{hover,selected,focus,disabled}, type and
+# ink. Everything a widget tree decides — which box exists, how big it is, where
+# it sits, what its children are, whether a separator is drawn between two rows
+# — belongs to the app's own CSS. A skin template may therefore declare only:
+#
+#   * a paint/state/type/ink declaration whose value is a palette role or a
+#     {{SKIN_*}} token;
+#   * a role `padding` whose value is exactly one {{SKIN_*}} padding token;
+#   * a simple selector for the surface itself, plus `:hover`/`:focus`/
+#     `:focus-visible`/`:disabled`/`.selected`/`.active`/`.checked` state
+#     variants (compound, no combinator).
+#
+# It may not declare geometry, component type sizes/weights, structural
+# borders/separators, toolkit sub-nodes (child/sibling/descendant selectors) or
+# a component/content subject (art tile, status dot, spinner, divider, slider
+# trough, scrollbar). Those are the app's; a second owner breaks parity and is
+# what pushed layout into the skin plane in the first place.
+#
+# Enforcement is staged: `ags` is the surface the owner reviewed (REQ-005 /
+# REQ-018 sound panel) and is enforced now. The remaining app targets are
+# measured and reported but not failed yet, because the same defect is present
+# in their long-standing extraction. Extending BOUNDARY_TARGETS is the gate's
+# migration switch, not a weakening: every target is checked by the same law.
+# ---------------------------------------------------------------------------
+BOUNDARY_TARGETS = ("ags",)
+BOUNDARY_LAYOUT_PROPERTIES = frozenset(
+    {
+        "min-width",
+        "min-height",
+        "max-width",
+        "max-height",
+        "width",
+        "height",
+        "margin",
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left",
+        "padding-top",
+        "padding-right",
+        "padding-bottom",
+        "padding-left",
+        "inset",
+        "inset-top",
+        "inset-right",
+        "inset-bottom",
+        "inset-left",
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "position",
+        "flex",
+        "flex-grow",
+        "flex-shrink",
+        "flex-basis",
+        "flex-direction",
+        "flex-wrap",
+        "grid",
+        "grid-template",
+        "grid-template-columns",
+        "grid-template-rows",
+        "grid-area",
+        "grid-column",
+        "grid-row",
+        "order",
+        "align-self",
+        "align-items",
+        "justify-content",
+        "gap",
+        "row-gap",
+        "column-gap",
+    }
+)
+BOUNDARY_STRUCTURAL_BORDERS = frozenset(
+    {"border-top", "border-right", "border-bottom", "border-left"}
+)
+BOUNDARY_COMPONENT_TYPE = frozenset({"font-size", "font-weight", "letter-spacing"})
+BOUNDARY_COMPONENT_CONTENT = frozenset({"text-transform"})
+#: A selector that reaches into the widget tree is structure, not paint.
+BOUNDARY_STRUCTURE_SELECTOR = re.compile(r"\s|[>+~]")
+#: A component/content subject the skin must not own. The subject is the last
+#: compound selector, so a declared surface's *state* stays allowed while a
+#: separate art/dot/divider/slider node does not.
+BOUNDARY_COMPONENT_SELECTOR = re.compile(
+    r"\.(?:[a-z0-9-]*-)?"
+    r"(?:scroll|scrollbar|slider|trough|viewport|contents|spinner|divider|"
+    r"dot|empty-art|track-art|app-tile|strip-art|art-image|track-badge)$"
+)
+#: A value that is exactly one {{SKIN_*}} token is a role value. The scan
+#: replaces a placeholder with its bare name, so anything else (a literal, or a
+#: token plus an extra length) is a component value.
+BOUNDARY_TOKEN_VALUE = re.compile(r"^SKIN_[A-Z0-9_]+$")
 #: The only token paths the canonical `[host]` policy may delegate. It covers
 #: the outer panel plus the inner card/control/cell rectangle radii. The pill
 #: radius is deliberately absent (a capsule stays a skin identity), and no
@@ -1146,6 +1244,123 @@ def _check_expansion(
     )
 
 
+def _neutralize_css(text: str) -> str:
+    """Blank comments and unwrap placeholders without moving a single newline.
+
+    The boundary report is `file:line`, so the scan text must keep the source's
+    line structure. Comments become spaces (newlines survive) and
+    `{{SKIN_*}}` becomes its bare name, which is what BOUNDARY_TOKEN_VALUE
+    recognises and what the error message can show without the CSS braces
+    breaking the rule parser.
+    """
+
+    def blank(match: re.Match[str]) -> str:
+        return re.sub(r"[^\n]", " ", match.group(0))
+
+    neutral = re.sub(r"/\*.*?\*/", blank, text, flags=re.DOTALL)
+    neutral = re.sub(r"(?m)^\s*//[^\n]*$", blank, neutral)
+    return PLACEHOLDER.sub(lambda m: m.group(1).strip(), neutral)
+
+
+def skin_boundary_violations(text: str) -> list[tuple[str, int, str]]:
+    """Return `(category, line, detail)` for every skin-boundary violation."""
+    neutral = _neutralize_css(text)
+    violations: list[tuple[str, int, str]] = []
+    for rule in re.finditer(r"([^{}]+)\{([^{}]*)\}", neutral):
+        start = rule.start(1)
+        line = neutral.count("\n", 0, start) + 1
+        selectors = [item.strip() for item in rule.group(1).split(",") if item.strip()]
+        for selector in selectors:
+            if BOUNDARY_STRUCTURE_SELECTOR.search(selector):
+                violations.append(
+                    (
+                        "structural selector",
+                        line,
+                        f"{selector!r} reaches into the widget tree; the app "
+                        f"owns structure, the skin names the surface itself",
+                    )
+                )
+                continue
+            subject = re.sub(r"::?[a-zA-Z-]+(?:\([^)]*\))?", "", selector)
+            # A focus/focus-visible ring is declared state, not a component: the
+            # skin owns `state.focus.ring`, and an app control cannot read the
+            # token itself. The selector must still be a simple compound (the
+            # structural check above already rejected every combinator).
+            if re.search(r":focus(?:-visible)?$", selector):
+                continue
+            if BOUNDARY_COMPONENT_SELECTOR.search(subject):
+                violations.append(
+                    (
+                        "component/content selector",
+                        line,
+                        f"{selector!r} is an app component/content node, not a "
+                        f"declared surface role",
+                    )
+                )
+        for declaration in rule.group(2).split(";"):
+            declaration = declaration.strip()
+            if not declaration:
+                continue
+            prop, _colon, value = declaration.partition(":")
+            prop = prop.strip().lower()
+            value = value.strip()
+            detail = f"{', '.join(selectors)}: {declaration!r}"
+            if prop in BOUNDARY_LAYOUT_PROPERTIES:
+                violations.append(
+                    (
+                        "layout property",
+                        line,
+                        f"{detail} -- geometry is app-owned",
+                    )
+                )
+            elif prop in BOUNDARY_STRUCTURAL_BORDERS:
+                violations.append(
+                    (
+                        "structural border",
+                        line,
+                        f"{detail} -- a separator/divider is app structure, not "
+                        f"a surface role border",
+                    )
+                )
+            elif prop in BOUNDARY_COMPONENT_TYPE:
+                if BOUNDARY_TOKEN_VALUE.fullmatch(value) is None:
+                    violations.append(
+                        (
+                            "component type",
+                            line,
+                            f"{detail} -- component sizes/weights are app-owned; "
+                            f"use a SKIN_TYPE_* token or leave it to the app",
+                        )
+                    )
+            elif prop in BOUNDARY_COMPONENT_CONTENT:
+                violations.append(
+                    (
+                        "component content",
+                        line,
+                        f"{detail} -- casing/text treatment is component content",
+                    )
+                )
+            elif prop == "padding":
+                if BOUNDARY_TOKEN_VALUE.fullmatch(value) is None:
+                    violations.append(
+                        (
+                            "component padding",
+                            line,
+                            f"{detail} -- role padding must be exactly one "
+                            f"SKIN_SURFACE_*_PADDING token; literal/asymmetric "
+                            f"padding is app layout",
+                        )
+                    )
+    return violations
+
+
+def _check_skin_boundary(text: str, rel: str, errors: list[str]) -> int:
+    violations = skin_boundary_violations(text)
+    for category, line, detail in violations:
+        errors.append(f"{rel}:{line}: skin boundary ({category}): {detail}")
+    return len(violations)
+
+
 def _check_template(
     path: Path,
     root: Path,
@@ -1196,6 +1411,16 @@ def _check_template(
                     f"{rel}:{lineno}: layout/size property is not skin paint -- "
                     f"{line.strip()!r}"
                 )
+
+    if template_format == CSS_FORMAT and consumer not in GTK_TARGETS:
+        if consumer in BOUNDARY_TARGETS:
+            _check_skin_boundary(text, rel, errors)
+        else:
+            notes.append(
+                f"{rel}: skin boundary measured (enforced targets: "
+                f"{','.join(BOUNDARY_TARGETS)}): "
+                f"{len(skin_boundary_violations(text))} violation(s)"
+            )
 
     used: set[str] = set()
     for lineno, line in enumerate(text.splitlines(), start=1):
