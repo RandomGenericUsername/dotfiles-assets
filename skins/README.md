@@ -487,3 +487,37 @@ fixtures proving exit 0 alone is not validation), the `kitty +runpy`
 `load_config(... accumulate_bad_lines=[])` probe (with an explicit skip when
 kitty is absent and a negative proving unknown keys warn), the
 rofi/GTK/wlogout/window host-geometry probes and the other negative fixtures.
+
+## Skin boundary — role paint for app-declared surfaces
+
+A skin is **appearance**, not structure. The enforceable split is:
+
+```text
+skin template        app CSS (and TSX)
+-------------------- ------------------------------------------------
+role fill/border/    which widget exists, its hierarchy, order and
+radius/padding       visibility
+state.hover/         geometry: width, height, min/max, margin, gaps,
+selected/focus/      directional padding, flex/grid/position
+disabled             component type: literal sizes, weights, spacing,
+type scale + ink     casing, glyph metrics
+paint roles          structural borders/dividers/separators
+declared surfaces    toolkit sub-nodes (slider trough, menu `contents`,
+                     switch `slider`, scrollbar) and content nodes
+                     (art tile/image, badge, status dot, spinner)
+```
+
+A rule may only target the app-declared surface itself (a simple compound
+selector) plus its `:hover` / `:focus` / `:focus-visible` / `:disabled` /
+`.selected` / `.active` / `.checked` state. The surface's role `padding` is
+exactly one `SKIN_SURFACE_*_PADDING` token; adding a literal second length is
+component layout and belongs to the app. Type sizes/weights/letter-spacing use
+`SKIN_TYPE_*` tokens; a literal is a component face, not a role.
+
+`scripts/validate-skins.py` enforces this as `skin_boundary_violations()`
+(`make validate-skins`); `make test-skins` names every offending rule through
+`skins/tests/test_skin_boundary.py`. Enforcement is staged by
+`BOUNDARY_TARGETS`: the bar target (`ags`) is the surface the owner reviewed
+and fails now; the other app targets are measured in the gate notes with the
+same law but are not failed in this slice. Extending the tuple is the
+migration switch. Layout tokens (`layout.<app>`) stay TSX-owned either way.
