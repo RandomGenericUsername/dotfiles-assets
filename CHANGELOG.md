@@ -1,3 +1,14 @@
+## 0.21.3
+
+Sound panel round four:
+
+- Remove all skin paint from the artwork tile (`.audio-track-art`,
+  `.audio-artwork.audio-app-tile`, `.audio-strip-art.audio-app-tile`, app tile
+  container/image/badge backgrounds, borders, shadows and radii). The app owns
+  the transparent container; the thumbnail/app fallback is the only visual.
+- Add text-only player identity styles; no artwork paint returns.
+- Add a skin-template gate for the app-owned artwork boundary.
+
 ## 0.21.2
 
 Sound panel round three:

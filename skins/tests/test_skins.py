@@ -76,7 +76,10 @@ APP_TEMPLATES = {
             ".audio-muted-pill",
             ".audio-switch",
             ".audio-strip-main",
-            ".audio-track-art",
+            ".audio-track-art-fallback",
+            ".audio-app-tile-fallback",
+            ".audio-player-identity",
+            ".audio-tray-player-identity",
         ],
         "tokens": {
             "SKIN_SURFACE_PANEL_BG",
@@ -586,6 +589,24 @@ def test_ags_template_paints_the_sound_panel_from_the_panel_role() -> None:
         assert "backdrop-filter:" in surface
 
 
+def test_ags_artwork_tiles_are_app_owned_not_skin_painted() -> None:
+    """The thumbnail/app tile is content: no skin container, frame or border."""
+    text = TEMPLATE.read_text()
+    for dead in (
+        ".audio-track-art {",
+        ".audio-artwork.audio-app-tile",
+        ".audio-strip-art.audio-app-tile",
+        ".audio-app-tile {",
+        ".audio-track-art-image",
+        ".audio-app-tile-image",
+        ".audio-track-badge",
+    ):
+        assert dead not in text, dead
+    # Fallback ink/type stays skin-owned; the tile itself does not.
+    assert ".audio-track-art-fallback" in text
+    assert ".audio-app-tile-fallback" in text
+
+
 def test_ags_footer_copy_and_split_label_selectors_are_gone() -> None:
     """Round three: footer copy removed; Output/Input share one label class."""
     text = TEMPLATE.read_text()
@@ -617,9 +638,9 @@ def test_ags_icon_only_sound_controls_are_bare() -> None:
         field = _rule(glass, selector)
         assert "border: 1px solid" in field, selector
         assert "border-radius: 7px;" in field, selector
-    # The thumbnail is content; its app icon is a corner badge/fallback.
-    assert ".audio-track-badge" in text
-    assert ".audio-track-art" in text
+    # The thumbnail is content; its fallback ink/type remains skin-owned.
+    assert ".audio-track-art-fallback" in text
+    assert ".audio-app-tile-fallback" in text
 
 
 def test_ags_removed_muted_note_selector() -> None:

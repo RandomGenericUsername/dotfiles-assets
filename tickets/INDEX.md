@@ -50,3 +50,4 @@
 - [req-031-sound-panel-radius](./req-031-sound-panel-radius/ticket.md) — Sound panel feedback: remove dead `.audio-hero-note` selector | `done` | tag: v0.20.2 | worktree: .worktrees/req-031/ | branch: ticket/req-031-sound-panel-radius
 - [req-032-sound-icons](./req-032-sound-icons/ticket.md) — Sound-panel media-controls and settings gear icons | `done` | tag: v0.21.0 | worktree: .worktrees/req-032/ | branch: ticket/req-032-sound-icons
 - [req-033-sound-round3](./req-033-sound-round3/ticket.md) — Sound round three: shared section label, no footer selectors | `done` | tag: v0.21.2 | worktree: .worktrees/req-033/ | branch: ticket/req-033-sound-round3
+- [req-034-sound-round4](./req-034-sound-round4/ticket.md) — Sound round four: bare app-owned artwork, per-player identity text | `done` | tag: v0.21.3 | worktree: .worktrees/req-034/ | branch: ticket/req-034-sound-round4

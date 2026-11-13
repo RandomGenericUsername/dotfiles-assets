@@ -597,40 +597,13 @@ window.tray-popup {
   padding: {{SKIN_SURFACE_CARD_PADDING}};
 }
 
-.audio-app-tile {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  background-color: alpha({{SKIN_INK_INK}}, 0.08);
-}
-
-.audio-artwork.audio-app-tile,
-.audio-strip-art.audio-app-tile {
-  border: 1px solid alpha({{SKIN_INK_INK}}, 0.13);
-}
-
-/* The Playing page/tray/strip artwork is the track thumbnail. The app icon is
-   only the fallback (or the small corner badge when the thumbnail exists). */
-.audio-track-art {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  border: 1px solid alpha({{SKIN_INK_INK}}, 0.13);
-  background-color: alpha({{SKIN_INK_INK}}, 0.08);
-}
-
-.audio-track-art-image {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-}
+/* Artwork tiles are app-owned layout/content. The skin supplies only the
+   fallback ink/type below; it must not paint a container, image frame or
+   border behind the thumbnail/app icon. */
 
 .audio-track-art-fallback {
   font-size: {{SKIN_TYPE_SIZE_CAPTION}};
   color: {{SKIN_INK_INK}};
-}
-
-.audio-track-badge {
-  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
-  background-color: alpha({{SKIN_INK_INK}}, 0.10);
-}
-
-.audio-app-tile-image {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
 }
 
 .audio-app-tile-fallback {
@@ -641,6 +614,13 @@ window.tray-popup {
 .audio-app-name {
   font-size: {{SKIN_TYPE_SIZE_TITLE}};
   color: {{SKIN_INK_INK}};
+}
+
+/* Text-only player identity (raw MPRIS Identity/DesktopEntry); no artwork paint. */
+.audio-player-identity,
+.audio-tray-player-identity {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
 }
 
 .audio-live-badge {
@@ -946,10 +926,6 @@ window.tray-popup {
 .audio-strip-artist {
   font-size: {{SKIN_TYPE_SIZE_CAPTION}};
   color: {{SKIN_INK_INK_DIM}};
-}
-
-.audio-strip-art.audio-app-tile {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
 }
 
 .audio-strip-controls .audio-glyph-button.active .audio-glyph {
