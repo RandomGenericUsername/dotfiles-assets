@@ -511,13 +511,24 @@ A rule may only target the app-declared surface itself (a simple compound
 selector) plus its `:hover` / `:focus` / `:focus-visible` / `:disabled` /
 `.selected` / `.active` / `.checked` state. The surface's role `padding` is
 exactly one `SKIN_SURFACE_*_PADDING` token; adding a literal second length is
-component layout and belongs to the app. Type sizes/weights/letter-spacing use
-`SKIN_TYPE_*` tokens; a literal is a component face, not a role.
+component layout and belongs to the app. **Inner component spacing is
+app-owned**: the skin declares the surface's single padding token and nothing
+else (owner decision 2026-11-13; the gate stays strict).
+
+Type sizes/weights/letter-spacing use `SKIN_TYPE_*` tokens; a literal is a
+component face, not a role.
+
+**Semantic signal dots are app-owned.** The app owns the live/playing dot node
+and its behaviour and uses one semantic green; the skin may supply only the
+colour role (or nothing), never a dot selector. The gate reports a
+`semantic signal dot` violation for any `-dot` subject, including the current
+`.audio-mode-dot` rule.
 
 `scripts/validate-skins.py` enforces this as `skin_boundary_violations()`
 (`make validate-skins`); `make test-skins` names every offending rule through
 `skins/tests/test_skin_boundary.py`. Enforcement is staged by
 `BOUNDARY_TARGETS`: the bar target (`ags`) is the surface the owner reviewed
-and fails now; the other app targets are measured in the gate notes with the
-same law but are not failed in this slice. Extending the tuple is the
+and fails now; the other seven app targets are measured in the gate notes with
+the same law but are not failed in this slice (owner decision 2026-11-13:
+migration-documented, not corpus-wide red). Extending the tuple is the
 migration switch. Layout tokens (`layout.<app>`) stay TSX-owned either way.
