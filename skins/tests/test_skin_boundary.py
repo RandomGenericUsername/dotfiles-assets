@@ -28,8 +28,20 @@ It may not declare:
 * component type sizes/weights/letter-spacing or text casing;
 * structural borders or dividers (`border-top/bottom/...`);
 * descendant/child/sibling selectors (they encode the widget tree);
-* a component/content subject (art tile, status dot, spinner, divider,
-  scrollbar, slider trough, `contents`).
+* a component/content subject (art tile, spinner, divider, scrollbar, slider
+  trough, `contents`);
+* a semantic signal dot (`live`/`playing`/`mode`/`status`). The app owns the
+  dot and its behaviour and uses one semantic green; the skin may supply only
+  the colour role, never the node.
+
+Owner decisions recorded (2026-11-13):
+
+1. **Spacing** — the app owns inner component spacing; the skin may declare
+   only the surface's single padding token. The strict padding gate stays.
+2. **Scope** — enforce `ags` now; the other seven app targets are staged and
+   migration-documented, not corpus-wide red today.
+6. **Live dot** — app-owned node/behaviour, one semantic green, skin supplies
+   only the colour role; the skin's `.audio-mode-dot` ownership is removed.
 
 The bar target (`ags`) is enforced now; the other app targets carry the same
 long-standing defect and are measured, not failed, in this slice
@@ -98,6 +110,26 @@ def test_ags_template_has_no_boundary_violation() -> None:
 def test_the_enforced_target_is_the_bar_and_is_registered() -> None:
     assert validate_skins.BOUNDARY_TARGETS == ("ags",)
     for target in validate_skins.BOUNDARY_TARGETS:
+        assert (TEMPLATES / f"{target}.gtk.css.j2").is_file(), target
+
+
+#: Owner decision 2026-11-13: the seven other app targets are migration-staged,
+#: not failed. The list is frozen here so a future change that silently widens
+#: enforcement (or drops a target) fails this test.
+STAGED_TARGETS = (
+    "ags-btop-studio",
+    "ags-capture",
+    "ags-clipboard",
+    "ags-icme",
+    "ags-notifications",
+    "ags-wallpaper-selector",
+    "wlogout",
+)
+
+
+def test_staged_targets_are_named_and_not_enforced() -> None:
+    assert set(STAGED_TARGETS).isdisjoint(validate_skins.BOUNDARY_TARGETS)
+    for target in STAGED_TARGETS:
         assert (TEMPLATES / f"{target}.gtk.css.j2").is_file(), target
 
 
@@ -183,7 +215,6 @@ def test_widget_tree_combinators_are_app_owned() -> None:
 def test_component_content_subjects_are_app_owned() -> None:
     for selector in (
         ".app-empty-art",
-        ".app-mode-dot",
         ".app-spinner",
         ".app-divider",
         ".app-level-slider",
@@ -194,6 +225,25 @@ def test_component_content_subjects_are_app_owned() -> None:
         assert "component/content selector" in _categories(
             f"{selector} {{ color: @on_surface; }}"
         ), selector
+
+
+def test_semantic_signal_dots_are_app_owned() -> None:
+    """Decision 6: the app owns the dot/behaviour and one green; the skin does not."""
+    for selector in (".app-live-dot", ".app-playing-dot", ".app-mode-dot", ".app-status-dot"):
+        categories = _categories(
+            f"{selector} {{ background-color: @primary; }}"
+        )
+        assert "semantic signal dot" in categories, (selector, categories)
+
+
+def test_ags_template_owns_no_semantic_signal_dot() -> None:
+    """The bar target must not paint a dot; this is RED until the fix lands."""
+    text = (TEMPLATES / "ags.gtk.css.j2").read_text()
+    dots = [item for item in _violations(text) if item[0] == "semantic signal dot"]
+    assert dots == [], "\n".join(
+        f"ags.gtk.css.j2:{line}: {category}: {detail}"
+        for category, line, detail in dots
+    )
 
 
 def test_focus_ring_state_on_a_control_stays_skin_owned() -> None:

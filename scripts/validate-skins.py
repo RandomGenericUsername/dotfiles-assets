@@ -210,20 +210,24 @@ MODES = ("dark", "light")
 #   * a paint/state/type/ink declaration whose value is a palette role or a
 #     {{SKIN_*}} token;
 #   * a role `padding` whose value is exactly one {{SKIN_*}} padding token;
+#     inner component spacing is app-owned, so a token plus any literal length
+#     (or a directional padding) fails (owner decision 2026-11-13);
 #   * a simple selector for the surface itself, plus `:hover`/`:focus`/
 #     `:focus-visible`/`:disabled`/`.selected`/`.active`/`.checked` state
 #     variants (compound, no combinator).
 #
 # It may not declare geometry, component type sizes/weights, structural
-# borders/separators, toolkit sub-nodes (child/sibling/descendant selectors) or
-# a component/content subject (art tile, status dot, spinner, divider, slider
-# trough, scrollbar). Those are the app's; a second owner breaks parity and is
-# what pushed layout into the skin plane in the first place.
+# borders/separators, toolkit sub-nodes (child/sibling/descendant selectors), a
+# component/content subject (art tile, spinner, divider, slider trough,
+# scrollbar) or a semantic signal dot. The app owns the live/playing dot and
+# its behaviour with one semantic green; the skin may supply only the colour
+# role, never the dot node.
 #
 # Enforcement is staged: `ags` is the surface the owner reviewed (REQ-005 /
-# REQ-018 sound panel) and is enforced now. The remaining app targets are
+# REQ-018 sound panel) and is enforced now. The remaining seven app targets are
 # measured and reported but not failed yet, because the same defect is present
-# in their long-standing extraction. Extending BOUNDARY_TARGETS is the gate's
+# in their long-standing extraction (owner decision 2026-11-13: migration-
+# documented, not corpus-wide red). Extending BOUNDARY_TARGETS is the gate's
 # migration switch, not a weakening: every target is checked by the same law.
 # ---------------------------------------------------------------------------
 BOUNDARY_TARGETS = ("ags",)
@@ -283,13 +287,19 @@ BOUNDARY_COMPONENT_TYPE = frozenset({"font-size", "font-weight", "letter-spacing
 BOUNDARY_COMPONENT_CONTENT = frozenset({"text-transform"})
 #: A selector that reaches into the widget tree is structure, not paint.
 BOUNDARY_STRUCTURE_SELECTOR = re.compile(r"\s|[>+~]")
+#: Semantic signal dots (`live`, `playing`, `mode`, `status`) are app-owned
+#: content AND behaviour: the app decides when the dot exists and uses one
+#: semantic green. The skin may supply that colour through a declared role, but
+#: it must not paint the dot node or own a dot selector. Kept separate from the
+#: generic component pattern so the gate names the decision.
+BOUNDARY_SEMANTIC_SIGNAL = re.compile(r"\.(?:[a-z0-9-]*-)?dot$")
 #: A component/content subject the skin must not own. The subject is the last
 #: compound selector, so a declared surface's *state* stays allowed while a
 #: separate art/dot/divider/slider node does not.
 BOUNDARY_COMPONENT_SELECTOR = re.compile(
     r"\.(?:[a-z0-9-]*-)?"
     r"(?:scroll|scrollbar|slider|trough|viewport|contents|spinner|divider|"
-    r"dot|empty-art|track-art|app-tile|strip-art|art-image|track-badge)$"
+    r"empty-art|track-art|app-tile|strip-art|art-image|track-badge)$"
 )
 #: A value that is exactly one {{SKIN_*}} token is a role value. The scan
 #: replaces a placeholder with its bare name, so anything else (a literal, or a
@@ -1287,6 +1297,17 @@ def skin_boundary_violations(text: str) -> list[tuple[str, int, str]]:
             # token itself. The selector must still be a simple compound (the
             # structural check above already rejected every combinator).
             if re.search(r":focus(?:-visible)?$", selector):
+                continue
+            if BOUNDARY_SEMANTIC_SIGNAL.search(subject):
+                violations.append(
+                    (
+                        "semantic signal dot",
+                        line,
+                        f"{selector!r} is app-owned: the app owns the dot and its "
+                        f"behaviour, and uses one semantic green; the skin may "
+                        f"supply only the colour role, never the node",
+                    )
+                )
                 continue
             if BOUNDARY_COMPONENT_SELECTOR.search(subject):
                 violations.append(
