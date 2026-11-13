@@ -32,3 +32,10 @@ Installed as assets `v0.21.0`. The runtime rendered
 `current/icons`. Terminal-host uses on_surface/primary fills; glass
 generation `06799bd0442b...` renders active `#b9c3ff` and inactive `#e3e1e9`.
 Bootstrap verify `ok=337 failed=0`.
+
+## Final residual
+
+Assets `v0.21.1`: `media-controls/shuffle` now uses the owner's
+`shuffle-disabled.svg` shape at `fill-opacity="0.5"`; `shuffle-active` stays
+full. Icon tests assert the split. Final live generation `249c3428...`; the
+rendered off icon is 50%. Tag canonicalized to `master`.
