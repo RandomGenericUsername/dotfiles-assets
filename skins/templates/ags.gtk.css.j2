@@ -449,9 +449,11 @@ window.tray-popup {
   backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
-.audio-caption {
-  font-size: {{SKIN_TYPE_SIZE_META}};
-  color: {{SKIN_INK_INK_DIM}};
+/* Output and Input are the same section label: one type face, size, weight,
+   ink, casing and start alignment. */
+.audio-section-label {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+  color: {{SKIN_INK_INK}};
 }
 
 .audio-muted-pill {
@@ -477,14 +479,7 @@ window.tray-popup {
 .audio-mixer-sub,
 .audio-mixer-mixed,
 .audio-section-summary,
-.audio-foot-note,
-.audio-foot-hint,
 .audio-settings-help {
-  color: alpha({{SKIN_INK_INK}}, 0.4);
-}
-
-.audio-settings-foot {
-  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
   color: alpha({{SKIN_INK_INK}}, 0.4);
 }
 
@@ -778,11 +773,6 @@ window.tray-popup {
   background-color: {{SKIN_STATE_HOVER_FILL}};
 }
 
-.audio-section-title {
-  font-size: {{SKIN_TYPE_SIZE_TITLE}};
-  color: {{SKIN_INK_INK}};
-}
-
 .audio-section-chevron {
   color: alpha({{SKIN_INK_INK}}, 0.4);
 }
@@ -796,10 +786,6 @@ window.tray-popup {
 .audio-consumer-name {
   font-size: {{SKIN_TYPE_SIZE_BODY}};
   color: {{SKIN_INK_INK}};
-}
-
-.audio-foot {
-  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
 }
 
 .audio-menu-heading {

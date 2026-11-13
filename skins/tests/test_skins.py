@@ -68,6 +68,7 @@ APP_TEMPLATES = {
             ".audio-surface",
             ".tray-surface",
             ".audio-settings",
+            ".audio-section-label",
             ".audio-menu > contents",
             ".audio-playing-page",
             ".audio-mixer-row",
@@ -583,6 +584,14 @@ def test_ags_template_paints_the_sound_panel_from_the_panel_role() -> None:
         assert f"border-radius: {radius}" in settings, (name, settings)
         assert "padding:" in surface and "box-shadow:" in surface
         assert "backdrop-filter:" in surface
+
+
+def test_ags_footer_copy_and_split_label_selectors_are_gone() -> None:
+    """Round three: footer copy removed; Output/Input share one label class."""
+    text = TEMPLATE.read_text()
+    for dead in (".audio-foot", ".audio-settings-foot", ".audio-caption", ".audio-section-title"):
+        assert dead not in text, dead
+    assert ".audio-section-label" in text
 
 
 def test_ags_icon_only_sound_controls_are_bare() -> None:

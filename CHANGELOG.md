@@ -1,3 +1,12 @@
+## 0.21.2
+
+Sound panel round three:
+
+- Add `.audio-section-label` as the single Output/Input type style (title
+  size, ink, start-aligned).
+- Remove the dead `.audio-foot`, `.audio-settings-foot`, `.audio-foot-note`
+  and `.audio-foot-hint` selectors. No skin retune.
+
 ## 0.21.1
 
 - `media-controls/shuffle` is the owner's shuffle-disabled art at
