@@ -1,44 +1,46 @@
 /*
  * skins/templates/ags.gtk.css.j2 — settings + Bluetooth paint rules.
  *
- * FIDELITY POLICY (Appearance token model v2)
+ * FIDELITY POLICY (Appearance token model v2) + SKIN BOUNDARY (AUDIT-001)
  * -----------------------------
- * `glass` is a faithful extraction of today's ../ags-bar/style.css, not a
- * design-system re-expression of it. A SKIN_* placeholder is used ONLY
- * where a v2 token is a genuine global knob: surface.panel paint/frame/radius/
- * padding/shadow/blur, surface.card paint/radius/padding, surface.cell
- * paint/radius/padding, surface.control paint/border/radius/padding/type,
- * surface.pill paint/border/radius/padding/type, state.hover/selected/focus/
- * disabled, the type scale and ink. Everything else is a
- * component literal copied from style.css, expressed with palette roles only
- * (never a hex colour).
+ * A skin is paint/state/type/ink for app-declared SURFACES. It may declare a
+ * palette role or a SKIN_* token, one `padding` role that is exactly one
+ * SKIN_SURFACE_*_PADDING token, and `:hover`/`:focus`/`:focus-visible`/
+ * `:disabled`/`.selected`/`.active`/`.checked` state variants.
+ *
+ * It may NOT declare geometry (min-width/height, margin, directional padding,
+ * flex/grid/position), component type literals, structural borders, descendant
+ * or sibling selectors, component/content subjects (art, dividers, sliders,
+ * switch knobs, scroll nodes, toolkit `contents`) or a semantic signal dot.
+ * The app owns all of that in `../ags-bar/style.css` and
+ * `../ags-bar/audio/audio-panel.css`; inner component spacing is app-owned
+ * (owner decision 1), so only a declared surface keeps its single padding role.
+ *
+ * The app also owns the live/playing dot and its one semantic green; this
+ * template supplies no dot selector (owner decision 6).
+ *
+ * `glass` remains the faithful value source: every paint/radius/type token here
+ * expands to the declaration measured in `../ags-bar/style.css`. Declarations
+ * that were component layout or content moved to the app rather than being
+ * re-expressed here, so the rendered result is unchanged while ownership is
+ * single-valued.
  *
  * BORDER OWNERSHIP (v2)
  * ---------------------
- * `surface.panel.border-width` is the outer panel/frame border: 1.5px on
- * .settings-surface (:163). `surface.card.border-width` is the card/tile
- * hairline (1px, :183/:559), `surface.control.border-width` is the row-action
- * hairline (1px, :442), and `surface.pill.border-width` is the badge hairline
- * (1px, :428/:433); the Wi-Fi settings top rule uses the control width (:761). The row/cell itself has NO border (border: none,
- * :378-387); a transparent border would change its allocated height
- * (measured 54px instead of 50px).
+ * The panel role owns the 1.5px outer frame; card/control/pill own their 1px
+ * hairlines. Structural separators (a top/bottom rule between two rows) are
+ * app structure and are NOT declared here.
  *
- * LAYOUT IS TSX-OWNED. `panel-width` and `bt-list-spacing` remain in the
- * manifest and resolved tokens.json for `skinValue()`, but this template MUST
- * NOT expand them into CSS. (`bar-row-height`/`chip-min` were retired in
- * v0.12.2; no app reads them.) The widgets set the panel width
- * (SettingsPanel.tsx), list spacing (BluetoothContent.tsx) and row/chip
- * geometry; emitting min-width, margin or min-height here would be a second
- * owner and break parity when either side changes. The template uses the
- * source's literal component measurements instead (for example the 30px
- * signal glyph).
+ * LAYOUT IS TSX-OWNED. `panel-width` and `bt-list-spacing` stay in the
+ * manifest/tokens.json for `skinValue()` and are never expanded into CSS. The
+ * widgets set the panel width, list spacing and row/chip geometry; emitting
+ * min-width, margin or min-height here would be a second owner.
  *
- * `gap` is not consumed here: every gap-looking source declaration is a
- * component padding. The fixed `gap` rhythm is no longer a token in v2.
+ * `gap` is not consumed here: inner spacing belongs to the app (`gap` is not consumed).
  *
- * The app owns this selector vocabulary and the widget structure. There are no
- * structure or variant tokens, no literal hex colours and no CSS transition
- * declarations (GTK 4.24 ignores transitions, so shipping one would be dead CSS).
+ * There are no structure or variant tokens, no literal hex colours and no CSS
+ * transition declarations (GTK 4.24 ignores transitions, so shipping one would
+ * be dead CSS).
  *
  * ink-over is {{SKIN_INK_INK_OVER}}: on a painted container the app resolves the
  * paired on-colour automatically instead of hard-coding a second ink token.
@@ -74,19 +76,6 @@ window.settings-catcher {
   backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
-.settings-scroll,
-.settings-scroll viewport {
-  background-color: {{SKIN_SURFACE_CONTROL_BG}};
-  border: none;
-}
-
-/* style.css:174-178 — the scrollbar is a fixed 5px detail, not a skin radius. */
-.settings-scroll scrollbar slider {
-  min-width: 5px;
-  border-radius: 5px;
-  background-color: alpha({{SKIN_INK_INK}}, 0.25);
-}
-
 /* Cards. .settings-password shares the card paint (style.css:556-561);
    .settings-tile and .settings-mini have their own padding (:194-199, :260-268).
    The card hairline is 1px in the source (`:183`, `:559`). */
@@ -95,12 +84,10 @@ window.settings-catcher {
   background-color: {{SKIN_SURFACE_CARD_BG}};
   border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
   border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: {{SKIN_SURFACE_CARD_PADDING}} 11px;
 }
 
 .settings-card-title {
   font-size: {{SKIN_TYPE_SIZE_TITLE}};
-  font-weight: 650;
 }
 
 /* style.css:194-199 — capability tile has asymmetric padding. */
@@ -108,12 +95,10 @@ window.settings-catcher {
   background-color: {{SKIN_SURFACE_CARD_BG}};
   border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
   border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: 8px 11px 8px 10px;
 }
 
 .settings-tile-title {
   font-size: {{SKIN_TYPE_SIZE_BODY}};
-  font-weight: 600;
 }
 
 .settings-tile-sub {
@@ -130,7 +115,6 @@ window.settings-catcher {
 /* style.css:260-268 — mini action tile keeps its 10px padding and its
    none-shadow. */
 .settings-mini {
-  min-height: 0;
   padding: {{SKIN_SURFACE_CARD_PADDING}};
   background-color: {{SKIN_SURFACE_CARD_BG}};
   background-image: none;
@@ -144,16 +128,10 @@ window.settings-catcher {
   border-color: {{SKIN_STATE_HOVER_RING}};
 }
 
-.settings-mini-title {
-  font-size: 12px;
-  font-weight: 600;
-}
-
 /* Wi-Fi / Bluetooth rows (style.css:378-387). The row is transparent and has no
    border; surface.cell.padding and surface.control.radius are genuine density knobs. Row height and
    list spacing are TSX-owned, so this rule emits neither. */
 .settings-net {
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
   background-color: {{SKIN_SURFACE_CELL_BG}};
   background-image: none;
   border: none;
@@ -179,8 +157,6 @@ window.settings-catcher {
    collapsing while the badge reserves its width. */
 .settings-net-name {
   font-size: {{SKIN_TYPE_SIZE_TITLE}};
-  font-weight: 600;
-  min-width: 48px;
 }
 
 /* style.css:413-416 — line two is a small 10.5px literal, not text-size. */
@@ -189,16 +165,11 @@ window.settings-catcher {
   color: {{SKIN_INK_INK_DIM}};
 }
 
-.settings-net.sel .settings-net-sub {
-  color: alpha(@on_primary_container, 0.85);
-}
-
 /* style.css:422-429 — badge type/padding are component details; only the pill
    radius is a skin knob. The badge hairline is 1px in the source. */
 .settings-badge {
   font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
   letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
-  padding: {{SKIN_SURFACE_PILL_PADDING}} 6px;
   border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: {{SKIN_SURFACE_PILL_BG}};
   border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
@@ -214,7 +185,6 @@ window.settings-catcher {
    the source; padding/font/geometry are component details, and width/height are
    TSX-owned. */
 .settings-rowact {
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 8px;
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
   border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
@@ -257,28 +227,6 @@ window.settings-catcher {
   background: alpha({{SKIN_INK_INK}}, 0.06);
 }
 
-/* style.css:493-497 — the spinner is a fixed 14px glyph. */
-.settings-spinner {
-  min-width: 14px;
-  min-height: 14px;
-  color: {{SKIN_INK_ACCENT}};
-}
-
-.settings-divider {
-  min-height: 1px;
-  background-color: alpha({{SKIN_INK_INK}}, 0.06);
-  margin: 4px 0;
-}
-
-/* Connected-device detail table (style.css:699-709). */
-.settings-conn-details {
-  padding: 6px 16px;
-}
-
-.settings-detail-row {
-  min-height: 18px;
-}
-
 .settings-detail {
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   color: alpha({{SKIN_INK_INK}}, 0.5);
@@ -286,46 +234,11 @@ window.settings-catcher {
 
 /* Empty and inline message states (style.css:637-641). */
 .settings-empty {
-  padding: 18px 10px;
-  font-size: 12px;
   color: alpha({{SKIN_INK_INK}}, 0.6);
-}
-
-.settings-other-networks {
-  padding: 4px 0;
-}
-
-/* Level slider (style.css:350-371): a fixed 99px pill, not a skin radius. */
-.settings-level-slider trough {
-  min-height: 10px;
-  min-width: 10px;
-  border-radius: 99px;
-  background-color: alpha({{SKIN_INK_INK}}, 0.16);
-  border: none;
-}
-
-.settings-level-slider trough highlight {
-  border-radius: 99px;
-  background-color: {{SKIN_INK_ACCENT}};
-}
-
-.settings-level-slider trough slider {
-  min-width: 15px;
-  min-height: 15px;
-  margin: -3px 0;
-  border: none;
-  border-radius: 50%;
-  background-color: {{SKIN_INK_INK}};
-  box-shadow: none;
 }
 
 /* Wi-Fi settings footer row (style.css:759-794). The top rule is the 1px
    hairline. The note/arrow are fixed small literals. */
-.settings-wifi-settings-row {
-  padding: 10px 16px;
-  border-top: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.06);
-}
-
 .settings-wifi-settings-row:hover {
   background-color: alpha({{SKIN_INK_INK}}, 0.05);
 }
@@ -336,26 +249,14 @@ window.settings-catcher {
 }
 
 .settings-wifi-settings-note {
-  font-size: 10px;
   color: alpha({{SKIN_INK_INK}}, 0.3);
 }
 
 .settings-wifi-settings-arrow {
-  font-size: 14px;
   color: alpha({{SKIN_INK_INK}}, 0.3);
 }
 
-/* Subview header: back button, title and the header row itself
-   (style.css:287-325). The 26px/18px/13.5px measurements are component details. */
-.settings-nav-header {
-  min-height: 26px;
-  padding-bottom: 7px;
-}
-
 .settings-back {
-  min-width: 26px;
-  min-height: 26px;
-  padding: 0;
   border-radius: 8px;
   background-color: alpha({{SKIN_INK_INK}}, 0.12);
   background-image: none;
@@ -368,31 +269,10 @@ window.settings-catcher {
   background-color: alpha({{SKIN_INK_INK}}, 0.2);
 }
 
-.settings-back-glyph {
-  font-size: 18px;
-}
-
-.settings-nav-title {
-  font-size: 13.5px;
-  font-weight: 650;
-}
-
-.settings-net-signal {
-  min-width: 30px;
-  min-height: 30px;
-}
-
 .settings-section-label {
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: alpha({{SKIN_INK_INK}}, 0.4);
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 16px;
-}
-
-.settings-chevron-row {
-  padding: 8px 16px;
 }
 
 .settings-chevron-row:hover {
@@ -440,7 +320,9 @@ window.tray-popup {
   backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
-.audio-menu > contents {
+/* The app declares this surface on the menu's content box: a simple selector
+   the skin may paint (the toolkit `contents` sub-node is app structure). */
+.audio-menu-panel {
   background-color: {{SKIN_SURFACE_PANEL_BG}};
   border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
   border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
@@ -459,7 +341,6 @@ window.tray-popup {
 .audio-muted-pill {
   font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
   letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
-  padding: {{SKIN_SURFACE_PILL_PADDING}} 8px;
   border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: {{SKIN_INK_ACCENT_MUTED}};
   color: {{SKIN_INK_INK}};
@@ -487,7 +368,6 @@ window.tray-popup {
   background-color: {{SKIN_SURFACE_CONTROL_BG}};
   border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
   border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 10px;
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
   color: {{SKIN_INK_INK}};
@@ -548,12 +428,6 @@ window.tray-popup {
   color: {{SKIN_STATE_DISABLED_INK}};
 }
 
-.audio-big-number {
-  font-size: 28px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-}
-
 .audio-mode-tab {
   color: {{SKIN_INK_INK_DIM}};
 }
@@ -569,11 +443,6 @@ window.tray-popup {
 
 .audio-mode-label {
   font-size: {{SKIN_TYPE_SIZE_BODY}};
-  font-weight: 650;
-}
-
-.audio-mode-dot {
-  background-color: {{SKIN_INK_ACCENT}};
 }
 
 .audio-carousel-button {
@@ -626,7 +495,6 @@ window.tray-popup {
 .audio-live-badge {
   font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
   letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
-  padding: {{SKIN_SURFACE_PILL_PADDING}} 7px;
   border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   background-color: {{SKIN_SURFACE_PILL_BG}};
   border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
@@ -652,13 +520,8 @@ window.tray-popup {
   color: {{SKIN_INK_INK}};
 }
 
-.audio-glyph-button.active .audio-glyph {
-  color: {{SKIN_INK_ACCENT}};
-}
-
 .audio-playing-level {
   border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 6px;
   font-size: {{SKIN_TYPE_SIZE_CAPTION}};
   color: alpha({{SKIN_INK_INK}}, 0.4);
 }
@@ -688,23 +551,14 @@ window.tray-popup {
   color: alpha({{SKIN_INK_INK}}, 0.4);
 }
 
-.audio-empty-art {
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  background-color: alpha({{SKIN_INK_INK}}, 0.08);
-}
-
 .audio-mixer-row {
   background-color: {{SKIN_SURFACE_CELL_BG}};
   border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 8px;
+  padding: {{SKIN_SURFACE_CELL_PADDING}};
 }
 
 .audio-mixer-row:hover {
   background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
-}
-
-.audio-mixer-row + .audio-mixer-row {
-  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
 }
 
 .audio-mixer-mute {
@@ -726,7 +580,6 @@ window.tray-popup {
   background-color: {{SKIN_SURFACE_CONTROL_BG}};
   border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
   border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 6px;
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
   font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
   color: {{SKIN_INK_INK_DIM}};
@@ -739,10 +592,6 @@ window.tray-popup {
 
 .audio-route-label {
   font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
-}
-
-.audio-section {
-  border-bottom: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
 }
 
 .audio-section-head {
@@ -760,7 +609,6 @@ window.tray-popup {
 .audio-consumer {
   background-color: {{SKIN_SURFACE_CELL_BG}};
   border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 9px;
 }
 
 .audio-consumer-name {
@@ -774,7 +622,7 @@ window.tray-popup {
 
 .audio-menu-option {
   border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 8px;
+  padding: {{SKIN_SURFACE_CELL_PADDING}};
   color: {{SKIN_INK_INK}};
 }
 
@@ -807,9 +655,7 @@ window.tray-popup {
 }
 
 .audio-settings-row {
-  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
   border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 0;
 }
 
 .audio-settings-name {
@@ -826,11 +672,6 @@ window.tray-popup {
 .audio-switch:checked {
   background-color: {{SKIN_INK_ACCENT}};
   border-color: transparent;
-}
-
-.audio-switch > slider {
-  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
-  background-color: {{SKIN_INK_INK}};
 }
 
 .audio-tray-caption {
@@ -856,18 +697,12 @@ window.tray-popup {
   font-size: {{SKIN_TYPE_SIZE_CAPTION}};
 }
 
-.audio-tray-divider,
-.audio-tray-foot {
-  border-top: 1px solid alpha({{SKIN_INK_INK}}, 0.07);
-}
-
 .audio-tray-players-head {
   color: alpha({{SKIN_INK_INK}}, 0.4);
 }
 
 .audio-tray-player {
   border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
-  padding: {{SKIN_SURFACE_CELL_PADDING}} 4px;
   color: {{SKIN_INK_INK}};
 }
 
@@ -926,10 +761,6 @@ window.tray-popup {
 .audio-strip-artist {
   font-size: {{SKIN_TYPE_SIZE_CAPTION}};
   color: {{SKIN_INK_INK_DIM}};
-}
-
-.audio-strip-controls .audio-glyph-button.active .audio-glyph {
-  color: {{SKIN_INK_ACCENT}};
 }
 
 .audio-icon-button:focus-visible,

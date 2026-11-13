@@ -69,7 +69,7 @@ APP_TEMPLATES = {
             ".tray-surface",
             ".audio-settings",
             ".audio-section-label",
-            ".audio-menu > contents",
+            ".audio-menu-panel",
             ".audio-playing-page",
             ".audio-mixer-row",
             ".audio-device",
@@ -102,14 +102,12 @@ APP_TEMPLATES = {
             "SKIN_SURFACE_CONTROL_BORDER",
             "SKIN_SURFACE_CONTROL_BORDER_WIDTH",
             "SKIN_SURFACE_CONTROL_RADIUS",
-            "SKIN_SURFACE_CONTROL_PADDING",
             "SKIN_SURFACE_CONTROL_FONT_SIZE",
             "SKIN_SURFACE_CONTROL_FONT_WEIGHT",
             "SKIN_SURFACE_PILL_BG",
             "SKIN_SURFACE_PILL_BORDER",
             "SKIN_SURFACE_PILL_BORDER_WIDTH",
             "SKIN_SURFACE_PILL_RADIUS",
-            "SKIN_SURFACE_PILL_PADDING",
             "SKIN_SURFACE_PILL_FONT_SIZE",
             "SKIN_SURFACE_PILL_LETTER_SPACING",
             "SKIN_STATE_HOVER_RING",
@@ -207,7 +205,6 @@ APP_TEMPLATES = {
             "SKIN_SURFACE_CARD_PADDING",
             "SKIN_SURFACE_CONTROL_RADIUS",
             "SKIN_SURFACE_PILL_RADIUS",
-            "SKIN_SURFACE_PILL_PADDING",
             "SKIN_INK_INK",
             "SKIN_INK_INK_DIM",
             "SKIN_INK_ACCENT",
@@ -241,7 +238,6 @@ APP_TEMPLATES = {
             "SKIN_SURFACE_CELL_RADIUS",
             "SKIN_SURFACE_CELL_PADDING",
             "SKIN_SURFACE_CONTROL_RADIUS",
-            "SKIN_SURFACE_CONTROL_PADDING",
             "SKIN_SURFACE_PILL_RADIUS",
             "SKIN_STATE_HOVER_FILL",
             "SKIN_STATE_SELECTED_FILL",
@@ -2208,7 +2204,7 @@ def test_terminal_host_expands_like_terminal_until_the_host_supplies_geometry() 
     # The host radius reaches every panel-role surface: the settings panel plus
     # the REQ-005 sound popover/tray/settings and their menu (doc 113 W-10).
     for selector in (".settings-surface", ".audio-surface", ".tray-surface",
-                     ".audio-settings", ".audio-menu > contents"):
+                     ".audio-settings", ".audio-menu-panel"):
         assert "border-radius: 13px;" in _rule(terminal_host, selector), selector
 
 
@@ -2301,11 +2297,12 @@ def test_glass_expands_to_the_tokenized_values() -> None:
     assert "border-radius: 9px;" in css
     assert "border-radius: 7px;" in css
     assert "border-radius: 20px;" in css
+    # Inner component spacing is app-owned (AUDIT-001 decision 1): the skin
+    # emits only its one padding role per declared surface.
     assert "padding: 11px;" in css
-    assert "padding: 10px 11px;" in css
-    assert "padding: 8px 9px;" in css
-    assert "padding: 4px 8px;" in css
-    assert "padding: 2px 6px;" in css
+    assert "padding: 10px;" in css
+    assert "padding: 8px;" in css
+    assert not re.search(r"padding: \d+px \d+px;", css), "asymmetric component padding"
     assert "font-size: 10.5px;" in css
     assert "font-size: 11px;" in css
     assert "font-size: 12.5px;" in css
@@ -2320,7 +2317,7 @@ def test_flat_and_paper_expand_with_their_own_surfaces() -> None:
     assert "background-color: transparent;" in flat
     assert "border: 0px solid transparent;" in flat
     assert "box-shadow: none;" in flat
-    assert "padding: 7px 9px;" in flat
+    assert "padding: 7px;" in flat
     assert "border-radius: 0px;" in flat
 
     paper_dark = render(TEMPLATE.read_text(), "paper", "dark")

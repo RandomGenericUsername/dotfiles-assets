@@ -68,328 +68,122 @@ def parse_rules(css: str) -> dict[str, list[str]]:
     return rules
 
 
-PARITY: dict[str, tuple[str, list[str]]] = {
-    "window.settings-panel": (
-        "style.css:147-151 + policy: font-family only, no font-size",
-        [
-            "background-color: transparent",
-            "color: @on_surface",
-            "font-family: inherit",
-        ],
-    ),
-    "window.settings-catcher": (
-        "style.css:147-151 + policy: font-family only, no font-size",
-        [
-            "background-color: transparent",
-            "color: @on_surface",
-            "font-family: inherit",
-        ],
-    ),
-    ".settings-catcher-fill": (
-        "style.css:157-159",
-        ["background-color: alpha(@surface, 0.01)"],
-    ),
-    ".settings-surface": (
-        "style.css:161-166 + token extras (shadow/blur none)",
-        [
-            "background-color: alpha(@surface, 0.94)",
-            "border: 1.5px solid @primary",
-            "border-radius: 12px",
-            "padding: 11px",
-            "box-shadow: none",
-            "backdrop-filter: none",
-        ],
-    ),
-    ".settings-scroll": (
-        "style.css:168-172",
-        ["background-color: transparent", "border: none"],
-    ),
-    ".settings-scroll viewport": (
-        "style.css:168-172",
-        ["background-color: transparent", "border: none"],
-    ),
-    ".settings-scroll scrollbar slider": (
-        "style.css:174-178",
-        [
-            "min-width: 5px",
-            "border-radius: 5px",
-            "background-color: alpha(@on_surface, 0.25)",
-        ],
-    ),
-    ".settings-card": (
-        "style.css:181-186 (hairline-w = 1px)",
-        [
-            "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1px solid alpha(@on_surface, 0.10)",
-            "border-radius: 9px",
-            "padding: 10px 11px",
-        ],
-    ),
-    ".settings-password": (
-        "style.css:556-561 (same paint as the card, hairline-w = 1px)",
-        [
-            "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1px solid alpha(@on_surface, 0.10)",
-            "border-radius: 9px",
-            "padding: 10px 11px",
-        ],
-    ),
-    ".settings-card-title": (
-        "style.css:188-191 (title-size = 12.5px)",
-        ["font-size: 12.5px", "font-weight: 650"],
-    ),
-    ".settings-tile": (
-        "style.css:194-199 (asymmetric tile padding preserved)",
-        [
-            "background-color: alpha(@surface_container_high, 0.18)",
-            "border: 1px solid alpha(@on_surface, 0.10)",
-            "border-radius: 9px",
-            "padding: 8px 11px 8px 10px",
-        ],
-    ),
-    ".settings-tile-title": (
-        "style.css:201-204 (text-size = 13px)",
-        ["font-size: 13px", "font-weight: 600"],
-    ),
-    ".settings-tile-sub": (
-        "style.css:206-209 (11px literal)",
-        ["font-size: 11px", "color: alpha(@on_surface, 0.62)"],
-    ),
-    ".settings-chevron": (
-        "style.css:211-214 (16px literal)",
-        ["font-size: 16px", "color: alpha(@on_surface, 0.5)"],
-    ),
-    ".settings-mini": (
-        "style.css:260-268",
-        [
-            "min-height: 0",
-            "padding: 10px",
-            "background-color: alpha(@surface_container_high, 0.18)",
-            "background-image: none",
-            "border: 1px solid alpha(@on_surface, 0.10)",
-            "border-radius: 9px",
-            "color: @on_surface",
-            "box-shadow: none",
-        ],
-    ),
-    ".settings-mini:hover": ("style.css:270-272", ["border-color: @primary"]),
-    ".settings-mini-title": (
-        "style.css:281-284 (12px literal)",
-        ["font-size: 12px", "font-weight: 600"],
-    ),
-    ".settings-net": (
-        "style.css:378-387 + cell-pad/radius-cell (row height/spacing are TSX-owned)",
-        [
-            "padding: 8px 9px",
-            "background-color: transparent",
-            "background-image: none",
-            "border: none",
-            "border-radius: 7px",
-            "box-shadow: none",
-            "color: @on_surface",
-        ],
-    ),
-    ".settings-net:hover": (
-        "style.css:389-391",
-        ["background-color: alpha(@on_surface, 0.08)"],
-    ),
-    ".settings-net.sel": (
-        "style.css:393-396",
-        ["background-color: @primary_container", "color: @on_primary_container"],
-    ),
-    ".settings-net.out-of-range": ("style.css:400-402", ["opacity: 0.45"]),
-    ".settings-net-name": (
-        "style.css:407-411 (title-size = 12.5px)",
-        ["font-size: 12.5px", "font-weight: 600", "min-width: 48px"],
-    ),
-    ".settings-net-sub": (
-        "style.css:413-416 (10.5px literal)",
-        ["font-size: 10.5px", "color: alpha(@on_surface, 0.62)"],
-    ),
-    ".settings-net.sel .settings-net-sub": (
-        "style.css:418-420",
-        ["color: alpha(@on_primary_container, 0.85)"],
-    ),
-    ".settings-badge": (
-        "style.css:422-429 (hairline-w = 1px)",
-        [
-            "font-size: 9.5px",
-            "letter-spacing: 0.05em",
-            "padding: 2px 6px",
-            "border-radius: 20px",
-            "background-color: alpha(@on_surface, 0.12)",
-            "border: 1px solid alpha(@on_surface, 0.14)",
-        ],
-    ),
-    ".settings-badge.conn": (
-        "style.css:431-435 (hairline-w = 1px)",
-        [
-            "background-color: alpha(@primary, 0.18)",
-            "border: 1px solid alpha(@primary, 0.45)",
-            "color: @on_surface",
-        ],
-    ),
-    ".settings-rowact": (
-        "style.css:437-448 (hairline-w = 1px; width/height are TSX-owned)",
-        [
-            "padding: 4px 8px",
-            "font-size: 11px",
-            "font-weight: 600",
-            "border: 1px solid alpha(@on_surface, 0.26)",
-            "border-radius: 7px",
-            "background-color: transparent",
-            "background-image: none",
-            "box-shadow: none",
-            "color: @on_surface",
-        ],
-    ),
-    ".settings-rowact:hover": ("style.css:450-452", ["border-color: @primary"]),
-    ".settings-rowact.disabled": ("style.css:456-458", ["opacity: 0.5"]),
-    ".settings-rowact.subtle": ("style.css:461-463", ["opacity: 0.68"]),
-    ".settings-rowact.subtle:hover": (
-        "style.css:465-468",
-        ["opacity: 1", "border-color: alpha(@on_surface, 0.4)"],
-    ),
-    ".settings-rowact.danger": (
-        "style.css:473-476",
-        ["border-color: @tertiary", "color: @tertiary"],
-    ),
-    ".settings-rowact.danger:hover": (
-        "style.css:478-481",
-        ["border-color: @secondary", "color: @secondary"],
-    ),
-    ".settings-net.confirming": (
-        "style.css:488-490",
-        ["background: alpha(@on_surface, 0.06)"],
-    ),
-    ".settings-spinner": (
-        "style.css:493-497 (14px literal)",
-        ["min-width: 14px", "min-height: 14px", "color: @primary"],
-    ),
-    ".settings-divider": (
-        "style.css:694-698",
-        [
-            "min-height: 1px",
-            "background-color: alpha(@on_surface, 0.06)",
-            "margin: 4px 0",
-        ],
-    ),
-    ".settings-conn-details": ("style.css:699-700", ["padding: 6px 16px"]),
-    ".settings-detail-row": ("style.css:702-703", ["min-height: 18px"]),
-    ".settings-detail": (
-        "style.css:705-709 (11px literal)",
-        ["font-size: 11px", "color: alpha(@on_surface, 0.5)"],
-    ),
-    ".settings-empty": (
-        "style.css:637-641 (12px + 18px 10px literals)",
-        [
-            "padding: 18px 10px",
-            "font-size: 12px",
-            "color: alpha(@on_surface, 0.6)",
-        ],
-    ),
-    ".settings-other-networks": ("style.css:754-756", ["padding: 4px 0"]),
-    ".settings-level-slider trough": (
-        "style.css:350-357 (99px literal)",
-        [
-            "min-height: 10px",
-            "min-width: 10px",
-            "border-radius: 99px",
-            "background-color: alpha(@on_surface, 0.16)",
-            "border: none",
-        ],
-    ),
-    ".settings-level-slider trough highlight": (
-        "style.css:358-361 (99px literal)",
-        ["border-radius: 99px", "background-color: @primary"],
-    ),
-    ".settings-level-slider trough slider": (
-        "style.css:363-371",
-        [
-            "min-width: 15px",
-            "min-height: 15px",
-            "margin: -3px 0",
-            "border: none",
-            "border-radius: 50%",
-            "background-color: @on_surface",
-            "box-shadow: none",
-        ],
-    ),
-    ".settings-wifi-settings-row": (
-        "style.css:759-762 (hairline-w = 1px)",
-        [
-            "padding: 10px 16px",
-            "border-top: 1px solid alpha(@on_surface, 0.06)",
-        ],
-    ),
-    ".settings-wifi-settings-row:hover": (
-        "style.css:763-765",
-        ["background-color: alpha(@on_surface, 0.05)"],
-    ),
-    ".settings-wifi-settings-label": (
-        "style.css:783-786 (text-size = 13px)",
-        ["font-size: 13px", "color: alpha(@on_surface, 0.7)"],
-    ),
-    ".settings-wifi-settings-note": (
-        "style.css:787-790 (10px literal)",
-        ["font-size: 10px", "color: alpha(@on_surface, 0.3)"],
-    ),
-    ".settings-wifi-settings-arrow": (
-        "style.css:791-795 (14px literal)",
-        ["font-size: 14px", "color: alpha(@on_surface, 0.3)"],
-    ),
-    ".settings-nav-header": (
-        "style.css:287-300",
-        ["min-height: 26px", "padding-bottom: 7px"],
-    ),
-    ".settings-back": (
-        "style.css:301-312",
-        [
-            "min-width: 26px",
-            "min-height: 26px",
-            "padding: 0",
-            "border-radius: 8px",
-            "background-color: alpha(@on_surface, 0.12)",
-            "background-image: none",
-            "border: none",
-            "box-shadow: none",
-            "color: @on_surface",
-        ],
-    ),
-    ".settings-back:hover": (
-        "style.css:313-315",
-        ["background-color: alpha(@on_surface, 0.2)"],
-    ),
-    ".settings-back-glyph": ("style.css:317-319", ["font-size: 18px"]),
-    ".settings-nav-title": (
-        "style.css:321-325 (13.5px literal)",
-        ["font-size: 13.5px", "font-weight: 650"],
-    ),
-    ".settings-net-signal": (
-        "style.css:711-715 (30px literal)",
-        ["min-width: 30px", "min-height: 30px"],
-    ),
-    ".settings-section-label": (
-        "style.css:732-739 (11px literal)",
-        [
-            "font-size: 11px",
-            "font-weight: 600",
-            "text-transform: uppercase",
-            "letter-spacing: 0.05em",
-            "color: alpha(@on_surface, 0.4)",
-            "padding: 4px 16px",
-        ],
-    ),
-    ".settings-chevron-row": ("style.css:742-744", ["padding: 8px 16px"]),
-    ".settings-chevron-row:hover": (
-        "style.css:745-747",
-        ["background-color: alpha(@on_surface, 0.05)"],
-    ),
-    ".settings-chevron-label": (
-        "style.css:748-751 (text-size = 13px)",
-        ["font-size: 13px", "color: alpha(@on_surface, 0.7)"],
-    ),
-}
+PARITY: dict[str, tuple[str, list[str]]] = {'window.settings-panel': ('style.css:147-151 + policy: font-family only, no font-size',
+                           ['background-color: transparent',
+                            'color: @on_surface',
+                            'font-family: inherit']),
+ 'window.settings-catcher': ('style.css:147-151 + policy: font-family only, no font-size',
+                             ['background-color: transparent',
+                              'color: @on_surface',
+                              'font-family: inherit']),
+ '.settings-catcher-fill': ('style.css:157-159', ['background-color: alpha(@surface, 0.01)']),
+ '.settings-surface': ('style.css:161-166 + token extras (shadow/blur none)',
+                       ['background-color: alpha(@surface, 0.94)',
+                        'border: 1.5px solid @primary',
+                        'border-radius: 12px',
+                        'padding: 11px',
+                        'box-shadow: none',
+                        'backdrop-filter: none']),
+ '.settings-card': ('style.css:181-186 (hairline-w = 1px)',
+                    ['background-color: alpha(@surface_container_high, 0.18)',
+                     'border: 1px solid alpha(@on_surface, 0.10)',
+                     'border-radius: 9px']),
+ '.settings-password': ('style.css:556-561 (same paint as the card, hairline-w = 1px)',
+                        ['background-color: alpha(@surface_container_high, 0.18)',
+                         'border: 1px solid alpha(@on_surface, 0.10)',
+                         'border-radius: 9px']),
+ '.settings-card-title': ('style.css:188-191 (title-size = 12.5px)', ['font-size: 12.5px']),
+ '.settings-tile': ('style.css:194-199 (asymmetric tile padding preserved)',
+                    ['background-color: alpha(@surface_container_high, 0.18)',
+                     'border: 1px solid alpha(@on_surface, 0.10)',
+                     'border-radius: 9px']),
+ '.settings-tile-title': ('style.css:201-204 (text-size = 13px)', ['font-size: 13px']),
+ '.settings-tile-sub': ('style.css:206-209 (11px literal)',
+                        ['font-size: 11px', 'color: alpha(@on_surface, 0.62)']),
+ '.settings-chevron': ('style.css:211-214 (16px literal)',
+                       ['font-size: 16px', 'color: alpha(@on_surface, 0.5)']),
+ '.settings-mini': ('style.css:260-268',
+                    ['padding: 10px',
+                     'background-color: alpha(@surface_container_high, 0.18)',
+                     'background-image: none',
+                     'border: 1px solid alpha(@on_surface, 0.10)',
+                     'border-radius: 9px',
+                     'color: @on_surface',
+                     'box-shadow: none']),
+ '.settings-mini:hover': ('style.css:270-272', ['border-color: @primary']),
+ '.settings-net': ('style.css:378-387 + cell-pad/radius-cell (row height/spacing are '
+                   'TSX-owned)',
+                   ['background-color: transparent',
+                    'background-image: none',
+                    'border: none',
+                    'border-radius: 7px',
+                    'box-shadow: none',
+                    'color: @on_surface']),
+ '.settings-net:hover': ('style.css:389-391', ['background-color: alpha(@on_surface, 0.08)']),
+ '.settings-net.sel': ('style.css:393-396',
+                       ['background-color: @primary_container',
+                        'color: @on_primary_container']),
+ '.settings-net.out-of-range': ('style.css:400-402', ['opacity: 0.45']),
+ '.settings-net-name': ('style.css:407-411 (title-size = 12.5px)', ['font-size: 12.5px']),
+ '.settings-net-sub': ('style.css:413-416 (10.5px literal)',
+                       ['font-size: 10.5px', 'color: alpha(@on_surface, 0.62)']),
+ '.settings-badge': ('style.css:422-429 (hairline-w = 1px)',
+                     ['font-size: 9.5px',
+                      'letter-spacing: 0.05em',
+                      'border-radius: 20px',
+                      'background-color: alpha(@on_surface, 0.12)',
+                      'border: 1px solid alpha(@on_surface, 0.14)']),
+ '.settings-badge.conn': ('style.css:431-435 (hairline-w = 1px)',
+                          ['background-color: alpha(@primary, 0.18)',
+                           'border: 1px solid alpha(@primary, 0.45)',
+                           'color: @on_surface']),
+ '.settings-rowact': ('style.css:437-448 (hairline-w = 1px; width/height are TSX-owned)',
+                      ['font-size: 11px',
+                       'font-weight: 600',
+                       'border: 1px solid alpha(@on_surface, 0.26)',
+                       'border-radius: 7px',
+                       'background-color: transparent',
+                       'background-image: none',
+                       'box-shadow: none',
+                       'color: @on_surface']),
+ '.settings-rowact:hover': ('style.css:450-452', ['border-color: @primary']),
+ '.settings-rowact.disabled': ('style.css:456-458', ['opacity: 0.5']),
+ '.settings-rowact.subtle': ('style.css:461-463', ['opacity: 0.68']),
+ '.settings-rowact.subtle:hover': ('style.css:465-468',
+                                   ['opacity: 1', 'border-color: alpha(@on_surface, 0.4)']),
+ '.settings-rowact.danger': ('style.css:473-476',
+                             ['border-color: @tertiary', 'color: @tertiary']),
+ '.settings-rowact.danger:hover': ('style.css:478-481',
+                                   ['border-color: @secondary', 'color: @secondary']),
+ '.settings-net.confirming': ('style.css:488-490', ['background: alpha(@on_surface, 0.06)']),
+ '.settings-detail': ('style.css:705-709 (11px literal)',
+                      ['font-size: 11px', 'color: alpha(@on_surface, 0.5)']),
+ '.settings-empty': ('style.css:637-641 (12px + 18px 10px literals)',
+                     ['color: alpha(@on_surface, 0.6)']),
+ '.settings-wifi-settings-row:hover': ('style.css:763-765',
+                                       ['background-color: alpha(@on_surface, 0.05)']),
+ '.settings-wifi-settings-label': ('style.css:783-786 (text-size = 13px)',
+                                   ['font-size: 13px', 'color: alpha(@on_surface, 0.7)']),
+ '.settings-wifi-settings-note': ('style.css:787-790 (10px literal)',
+                                  ['color: alpha(@on_surface, 0.3)']),
+ '.settings-wifi-settings-arrow': ('style.css:791-795 (14px literal)',
+                                   ['color: alpha(@on_surface, 0.3)']),
+ '.settings-back': ('style.css:301-312',
+                    ['border-radius: 8px',
+                     'background-color: alpha(@on_surface, 0.12)',
+                     'background-image: none',
+                     'border: none',
+                     'box-shadow: none',
+                     'color: @on_surface']),
+ '.settings-back:hover': ('style.css:313-315', ['background-color: alpha(@on_surface, 0.2)']),
+ '.settings-section-label': ('style.css:732-739 (11px literal)',
+                             ['font-size: 11px',
+                              'font-weight: 600',
+                              'color: alpha(@on_surface, 0.4)']),
+ '.settings-chevron-row:hover': ('style.css:745-747',
+                                 ['background-color: alpha(@on_surface, 0.05)']),
+ '.settings-chevron-label': ('style.css:748-751 (text-size = 13px)',
+                             ['font-size: 13px', 'color: alpha(@on_surface, 0.7)'])}
 
 
 def source_style() -> Path | None:
@@ -412,7 +206,10 @@ def test_glass_expansion_keeps_unit_suffixed_lengths() -> None:
     assert "border-radius: 12px;" in css
     assert "border: 1.5px solid @primary;" in css
     assert "border: 1px solid alpha(@on_surface, 0.10);" in css
-    assert "padding: 8px 9px;" in css
+    # Inner component padding is app-owned (AUDIT-001 decision 1); the skin
+    # only expands its one role padding per declared surface.
+    assert "padding: 11px;" in css
+    assert not __import__("re").search(r"padding: \d+px \d+px;", css)
     assert "border-radius: 20px;" in css
     assert "font-size: 12.5px;" in css
     assert "letter-spacing: 0.05em;" in css
@@ -480,9 +277,8 @@ def test_per_role_border_widths_match_source() -> None:
             for declaration in rules[selector]
         ), selector
     assert "border: 1px solid alpha(@primary, 0.45)" in rules[".settings-badge.conn"]
-    assert "border-top: 1px solid alpha(@on_surface, 0.06)" in rules[
-        ".settings-wifi-settings-row"
-    ]
+    # Structural separators are app-owned; the skin must not emit them.
+    assert ".settings-wifi-settings-row" not in rules
     assert not any(
         declaration.startswith("border: 1.5px solid alpha(")
         for selector, declarations in rules.items()
@@ -544,8 +340,8 @@ def test_settings_net_height_matches_source_no_border() -> None:
 def test_gap_is_metadata_not_a_rewritten_padding() -> None:
     css = render("glass")
     assert "padding: 11px;" in css
-    assert "padding: 10px 11px;" in css
-    assert "padding: 8px;" not in css
+    # App-owned component spacing never appears as a literal asymmetric value.
+    assert "padding: 10px 11px;" not in css
     assert "margin-bottom: 4px;" not in css
 
 
