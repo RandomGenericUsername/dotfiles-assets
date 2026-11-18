@@ -1,4 +1,4 @@
-## Unreleased — req-029 LazyVim nvim config
+## 0.21.6 — LazyVim nvim config
 
 ### Changed
 
