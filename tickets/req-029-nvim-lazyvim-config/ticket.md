@@ -142,7 +142,6 @@ or bump pins.
 
 ## Release-time note (not now)
 
-At implementation time the assets repo already has tags `v0.20.0` and
-`v0.20.1`. This ticket was developed from `8802b26` (`v0.19.0`); the release
-slice must rebase the branch on the current `master`, rerun the gates, and then
-pick the next available tag (do not reuse `v0.20.x`).
+At release time the assets repo had tags through `v0.21.5`. This branch was
+rebased onto `master` at `2b758f7` and the gates were rerun; pick the next
+available tag at release (do not reuse an existing tag).
