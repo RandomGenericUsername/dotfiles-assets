@@ -184,7 +184,7 @@ APP_TEMPLATES = {
         "selectors": [
             "window#wallpaper-selector-window",
             ".ws-control-bar",
-            ".ws-search",
+            ".ws-grid-search",
             ".ws-look",
             ".ws-set",
             ".ws-grid",
