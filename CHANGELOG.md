@@ -1,3 +1,13 @@
+## 0.21.7 — resolved LazyVim lock
+
+- Refresh `configs/nvim/lazy-lock.json` to the stable plugin set LazyVim
+  resolves on first launch. Six plugin commits (gitsigns, mini.ai,
+  mini.icons, mini.pairs, nvim-lspconfig, nvim-treesitter) moved from the
+  pre-resolution lock; the resolved lock was stable across a second
+  `Lazy! sync`.
+- No config behavior change: same LazyVim starter, Catppuccin, Snacks picker
+  and bashls.
+
 ## 0.21.6 — LazyVim nvim config
 
 ### Changed
