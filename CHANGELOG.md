@@ -1,4 +1,4 @@
-## Unreleased
+## 0.22.1 — absolute line numbers
 
 - Neovim uses absolute line numbers (`number=true`, `relativenumber=false`)
   instead of LazyVim's relative-number default.

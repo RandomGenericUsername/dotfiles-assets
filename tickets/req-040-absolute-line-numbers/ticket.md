@@ -2,7 +2,7 @@
 id: req-040
 title: "Use absolute line numbers in Neovim"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -30,4 +30,7 @@ below the cursor. The owner wants absolute line numbers.
 
 - [x] Absolute line numbers configured.
 - [x] `make gates` PASS.
-- [ ] Release/tag (pending green).
+- [x] Release/tag v0.22.1.
+
+
+- Release: v0.22.1
