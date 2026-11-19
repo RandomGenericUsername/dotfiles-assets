@@ -527,8 +527,15 @@ colour role (or nothing), never a dot selector. The gate reports a
 `scripts/validate-skins.py` enforces this as `skin_boundary_violations()`
 (`make validate-skins`); `make test-skins` names every offending rule through
 `skins/tests/test_skin_boundary.py`. Enforcement is staged by
-`BOUNDARY_TARGETS`: the bar target (`ags`) is the surface the owner reviewed
-and fails now; the other seven app targets are measured in the gate notes with
-the same law but are not failed in this slice (owner decision 2026-11-13:
+`BOUNDARY_TARGETS`: the bar target (`ags`) and the wallpaper overlay target
+(`ags-wallpaper-selector`, REQ-005) are the surfaces the owner reviewed and
+fail now; the other six app targets are measured in the gate notes with the
+same law but are not failed in this slice (owner decision 2026-11-13:
 migration-documented, not corpus-wide red). Extending the tuple is the
 migration switch. Layout tokens (`layout.<app>`) stay TSX-owned either way.
+
+The wallpaper selector is a **layer-shell overlay**, so its outer role is
+`surface.panel` (never `surface.window`). It is also paint-only: the control
+bar, settings popover, grid, search, looks and commit action are styled by
+role and state; the app owns the live dot, the selected ring and the commit
+progress nodes.

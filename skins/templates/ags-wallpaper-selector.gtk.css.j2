@@ -1,208 +1,271 @@
 /*
- * skins/templates/ags-wallpaper-selector.gtk.css.j2 — selector dialog paint.
+ * skins/templates/ags-wallpaper-selector.gtk.css.j2 — wallpaper overlay paint.
  *
- * Extracted from ../ags-wallpaper-selector/style.css. The dialog panel takes
- * surface.panel.bg/surface.panel.border-width/border/radius/shadow/blur. Cards, the crumb and the
- * hover bar take surface.card.bg/surface.card.radius + surface.*.border-width; fields and back/quick
- * controls take surface.control.radius; the LIVE badge and Apply pill take surface.pill.radius.
- * Ink, ink-dim, accent and type.size-title/type.size-body are skin knobs. Thumbnail radii,
- * margins, dock sizes and small type stay source literals.
+ * The wallpaper selector is a layer-shell overlay: `surface.panel` is its
+ * outer role (never `surface.window`). The app owns layout, components and
+ * content; this sheet declares only role paint/type/ink for the app's declared
+ * surfaces plus their state variants.
  *
- * The selected-card ring is the source selection literal (@primary plus a
- * primary-container tint), not a skin token.
+ * Paint map:
+ *   .ws-control-bar, .ws-grid          surface.panel
+ *   .ws-settings                       surface.card + panel shadow/blur
+ *   .ws-search, .ws-gear, .ws-nav      surface.control
+ *   .ws-set, .ws-state-pill, .ws-kbd   surface.pill
+ *   .ws-look, .ws-seg-button           surface.control with state fill/ring
+ *   .ws-toast                          surface.pill
+ *
+ * The live dot, the selected-look ring and the commit progress are app-owned
+ * content/state; the skin may supply the accent role but never the node.
  */
 window#wallpaper-selector-window {
-  background-color: {{SKIN_SURFACE_CONTROL_BG}};
   color: {{SKIN_INK_INK}};
   font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
-.ws-root {
-  min-width: 920px;
-  min-height: 600px;
-}
-
-.ws-panel {
+.ws-control-bar {
   background-color: {{SKIN_SURFACE_PANEL_BG}};
   border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
   border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
-  padding: 14px 16px 12px;
   box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
   backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
-.ws-search {
-  background-color: @surface_container;
+.ws-name {
+  font-size: {{SKIN_TYPE_SIZE_DISPLAY}};
   color: {{SKIN_INK_INK}};
-  border: none;
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 8px;
-  min-height: 26px;
 }
 
-.ws-search placeholder {
-  color: alpha({{SKIN_INK_INK}}, 0.55);
-}
-
-.ws-ui-icon {
-  opacity: 0.9;
-}
-
-.ws-crumb {
-  background-color: {{SKIN_SURFACE_CARD_BG}};
-  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
-  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: {{SKIN_SURFACE_CARD_PADDING}} 14px;
-}
-
-.ws-crumb-thumb {
-  border-radius: 8px;
-}
-
-.ws-crumb-name {
-  font-size: {{SKIN_TYPE_SIZE_TITLE}};
-  font-weight: 700;
-}
-
-.ws-crumb-sub {
-  font-size: {{SKIN_TYPE_SIZE_BODY}};
-  color: {{SKIN_INK_INK_DIM}};
-}
-
-.ws-back {
-  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid alpha({{SKIN_INK_INK}}, 0.25);
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
-}
-
-.ws-back:hover {
-  border-color: {{SKIN_STATE_HOVER_RING}};
-}
-
-.ws-title {
-  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: {{SKIN_INK_INK_DIM}};
-}
-
-.ws-scroll {
-  border-radius: 8px;
-}
-
-.ws-card {
-  background-color: {{SKIN_SURFACE_CARD_BG}};
-  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
-  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: 0;
-}
-
-.ws-card:hover {
-  border-color: {{SKIN_STATE_HOVER_RING}};
-}
-
-.ws-card.selected {
-  border: 2px solid @primary;
-  background-color: alpha(@primary_container, 0.12);
-}
-
-.ws-thumb {
-  border-radius: 11px 11px 0 0;
-}
-
-.ws-thumb-loading {
-  background-color: alpha({{SKIN_INK_INK}}, 0.07);
-}
-
-.ws-card-name {
-  font-size: {{SKIN_TYPE_SIZE_BODY}};
-  margin: 6px 10px 0;
-}
-
-.ws-card-sub {
+.ws-meta {
   font-size: {{SKIN_TYPE_SIZE_META}};
   color: {{SKIN_INK_INK_DIM}};
-  margin: 0 10px 8px;
 }
 
-.ws-live {
-  font-size: 10px;
-  font-weight: 700;
-  background-color: {{SKIN_INK_ACCENT}};
-  color: @on_primary;
+.ws-meta.is-step {
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.ws-meta.is-error {
+  color: @error;
+}
+
+.ws-state-pill {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
   border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
-  padding: {{SKIN_SURFACE_PILL_PADDING}} 7px;
-  margin: 6px 6px 0 0;
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+  letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
 }
 
-.ws-hoverbar {
+.ws-state-text {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.ws-kbd {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+  letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-look {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.ws-look:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  border-color: {{SKIN_STATE_HOVER_RING}};
+}
+
+.ws-look.selected {
+  border-color: {{SKIN_INK_ACCENT}};
+}
+
+.ws-look:disabled {
+  background-color: {{SKIN_STATE_DISABLED_FILL}};
+  border-color: {{SKIN_STATE_DISABLED_RING}};
+}
+
+.ws-look-name,
+.ws-looks-word,
+.ws-looks-empty,
+.ws-hints {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-nav {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.ws-nav:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.ws-nav:focus-visible {
+  outline-color: {{SKIN_STATE_FOCUS_RING}};
+}
+
+.ws-gear {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-gear:hover,
+.ws-gear:active,
+.ws-gear.is-active {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.ws-gear:focus-visible {
+  outline-color: {{SKIN_STATE_FOCUS_RING}};
+}
+
+.ws-set {
+  background-color: {{SKIN_INK_ACCENT}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+  font-weight: {{SKIN_TYPE_FONT_WEIGHT}};
+  letter-spacing: {{SKIN_SURFACE_PILL_LETTER_SPACING}};
+  color: @on_primary;
+}
+
+.ws-set.is-live,
+.ws-set:disabled {
+  background-color: {{SKIN_STATE_DISABLED_FILL}};
+  border-color: {{SKIN_STATE_DISABLED_RING}};
+  color: {{SKIN_STATE_DISABLED_INK}};
+}
+
+.ws-set.is-committing {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+.ws-grid-search {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: {{SKIN_INK_INK}};
+}
+
+.ws-grid {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+}
+
+.ws-grid-close {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-grid-close:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.ws-grid-title {
+  font-size: {{SKIN_TYPE_SIZE_DISPLAY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.ws-grid-count,
+.ws-grid-sub,
+.ws-grid-meta,
+.ws-grid-empty {
+  font-size: {{SKIN_TYPE_SIZE_META}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-grid-name {
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
+}
+
+.ws-settings {
   background-color: {{SKIN_SURFACE_CARD_BG}};
   border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
   border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: {{SKIN_SURFACE_CARD_PADDING}};
-  margin: 0 6px 6px 0;
-  min-height: 0;
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
 }
 
-.ws-busy .ws-variant-apply,
-.ws-busy .ws-quick {
-  opacity: 0.38;
-}
-
-.ws-quick {
-  background-color: @primary_container;
-  color: @on_primary_container;
-  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
-  margin: 0;
-  min-height: 0;
-  font-size: {{SKIN_TYPE_SIZE_BODY}};
-}
-
-.ws-quick:hover {
-  background-color: @primary;
-  color: @on_primary;
-}
-
-.ws-variant {
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-
-.ws-variant .ws-thumb {
-  border-radius: 8px;
-}
-
-.ws-variant-name {
-  font-size: {{SKIN_TYPE_SIZE_BODY}};
-  color: alpha({{SKIN_INK_INK}}, 0.85);
-  margin-top: 6px;
-}
-
-.ws-variant-apply {
-  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
-  background-color: alpha({{SKIN_INK_INK}}, 0.14);
+.ws-settings-title {
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
   color: {{SKIN_INK_INK}};
-  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 14px;
-  margin-top: 4px;
 }
 
-.ws-variant-apply:hover {
-  background-color: @primary;
-  color: @on_primary;
-}
-
-.ws-empty {
+.ws-settings-label,
+.ws-settings-desc,
+.ws-settings-sub,
+.ws-settings-foot {
+  font-size: {{SKIN_TYPE_SIZE_META}};
   color: {{SKIN_INK_INK_DIM}};
-  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} dashed alpha({{SKIN_INK_INK}}, 0.25);
-  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
 }
 
-.ws-status {
+.ws-settings-error {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: @error;
+}
+
+.ws-seg {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.ws-seg-button {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-seg-button:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.ws-seg-button.selected {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+.ws-stepper-button {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.ws-stepper-button:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.ws-stepper-value {
   font-size: {{SKIN_TYPE_SIZE_BODY}};
-  color: {{SKIN_INK_INK_DIM}};
+  color: {{SKIN_INK_INK}};
+}
+
+.ws-toast {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  font-size: {{SKIN_TYPE_SIZE_BODY}};
+  color: {{SKIN_INK_INK}};
 }

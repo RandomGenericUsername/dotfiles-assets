@@ -1,3 +1,15 @@
+## 0.22.2 — wallpaper selector paint-only skin
+
+- **Wallpaper selector overlay skin (REQ-005).** `ags-wallpaper-selector` is now
+  paint-only: the control bar, settings popover, contact sheet, search, looks
+  strip and commit action are painted by role and state, while the app owns the
+  live dot, selected ring, commit progress nodes and all layout.
+- The overlay's outer role is `surface.panel` (layer-shell overlay), never
+  `surface.window`.
+- `BOUNDARY_TARGETS` now enforces `ags-wallpaper-selector` alongside `ags`
+  (`make validate-skins`, `make test-skins`); the remaining six app targets stay
+  measured-but-not-failed per the staged-migration decision.
+
 ## 0.22.1 — absolute line numbers
 
 - Neovim uses absolute line numbers (`number=true`, `relativenumber=false`)

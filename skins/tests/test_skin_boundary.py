@@ -107,13 +107,14 @@ def test_ags_template_has_no_boundary_violation() -> None:
     )
 
 
-def test_the_enforced_target_is_the_bar_and_is_registered() -> None:
-    assert validate_skins.BOUNDARY_TARGETS == ("ags",)
+def test_the_enforced_targets_are_registered() -> None:
+    """The bar + the wallpaper overlay are the reviewed, enforced surfaces."""
+    assert validate_skins.BOUNDARY_TARGETS == ("ags", "ags-wallpaper-selector")
     for target in validate_skins.BOUNDARY_TARGETS:
         assert (TEMPLATES / f"{target}.gtk.css.j2").is_file(), target
 
 
-#: Owner decision 2026-11-13: the seven other app targets are migration-staged,
+#: Owner decision 2026-11-13: the remaining app targets are migration-staged,
 #: not failed. The list is frozen here so a future change that silently widens
 #: enforcement (or drops a target) fails this test.
 STAGED_TARGETS = (
@@ -122,7 +123,6 @@ STAGED_TARGETS = (
     "ags-clipboard",
     "ags-icme",
     "ags-notifications",
-    "ags-wallpaper-selector",
     "wlogout",
 )
 
@@ -234,6 +234,27 @@ def test_semantic_signal_dots_are_app_owned() -> None:
             f"{selector} {{ background-color: @primary; }}"
         )
         assert "semantic signal dot" in categories, (selector, categories)
+
+
+def test_wallpaper_selector_template_has_no_boundary_violation() -> None:
+    """The REQ-005 overlay surface is paint-only: layout/components are app-owned."""
+    text = (TEMPLATES / "ags-wallpaper-selector.gtk.css.j2").read_text()
+    violations = _violations(text)
+    assert violations == [], "\n".join(
+        f"ags-wallpaper-selector.gtk.css.j2:{line}: {category}: {detail}"
+        for category, line, detail in violations
+    )
+
+
+def test_wallpaper_selector_template_paints_the_panel_role() -> None:
+    """A layer-shell overlay uses surface.panel, never surface.window."""
+    text = (TEMPLATES / "ags-wallpaper-selector.gtk.css.j2").read_text()
+    assert "SKIN_SURFACE_PANEL_BG" in text
+    assert "SKIN_SURFACE_WINDOW_BG" not in text
+    assert ".ws-control-bar" in text
+    # No dot node: the app owns the live marker and its behaviour.
+    assert "ws-look-live-dot" not in text
+    assert "ws-state-dot" not in text
 
 
 def test_ags_template_owns_no_semantic_signal_dot() -> None:
