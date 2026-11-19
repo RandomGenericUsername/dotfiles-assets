@@ -1,3 +1,10 @@
+## Unreleased — req-036 generated Neovim palette
+
+- LazyVim's colorscheme is now a function: it loads `dotfiles-palette` when the
+  runtime/provisioning seed has published it, and falls back to Catppuccin when
+  the pointer is absent. No host path in the corpus; plugin installation stays
+  with LazyVim.
+
 ## 0.21.7 — resolved LazyVim lock
 
 - Refresh `configs/nvim/lazy-lock.json` to the stable plugin set LazyVim
