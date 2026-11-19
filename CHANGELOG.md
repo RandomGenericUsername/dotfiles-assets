@@ -1,3 +1,14 @@
+## Unreleased
+
+### Added
+
+- **Live Neovim palette reload.** `configs/nvim/lua/config/autocmds.lua` now
+  drops the cached `dotfiles-palette` module and reloads it on `SIGUSR1` or
+  `:DotfilesColorsReload`, then fires the `dotfiles` `ColorScheme` event and
+  redraws. The runtime/provisioning seed can republish the palette without
+  restarting Neovim; a host before the first seed no-ops safely. No polling
+  timer and no host path in the corpus.
+
 ## 0.21.8 — generated Neovim palette
 
 - LazyVim's colorscheme is now a function: it loads `dotfiles-palette` when the

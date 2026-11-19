@@ -44,6 +44,7 @@
 - [req-035-nvim-lock-refresh](./req-035-nvim-lock-refresh/ticket.md) — Refresh `lazy-lock.json` to the stable resolved LazyVim set | `done` | lane 2 — bounded implementation | tag `v0.21.7` | worktree `.worktrees/req-035/`, branch `ticket/req-035-nvim-lock-refresh`
 
 - [req-036-nvim-generated-palette](./req-036-nvim-generated-palette/ticket.md) — Load the generated Neovim palette with a Catppuccin fallback | `done` | lane 2 — bounded implementation | tag `v0.21.8` | worktree `.worktrees/req-036/`, branch `ticket/req-036-nvim-generated-palette`
+- [req-038-nvim-signal-reload](./req-038-nvim-signal-reload/ticket.md) — Reload the generated Neovim palette on `SIGUSR1` / `:DotfilesColorsReload` | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-038/`, branch `ticket/req-038-nvim-signal-reload`
 ## Bugs
 
 - [bug-001-wlogout-logout-uwsm-stop](./bug-001-wlogout-logout-uwsm-stop/ticket.md) — wlogout Logout runs `terminate-user` and leaves SDDM on a black VT | `done` | lane 2 — bounded config change | severity: high | fix `uwsm stop` + static guard in `v0.6.1` (f8cc828, tag object b2ad3a9; CI 40403377594 green; release published); VM matrix waived 2026-10-26; deployed via engine `v0.1.16` / v3 `PIN-0115`; host accepted 2 clean cycles (17:26:34→17:26:44, 17:36:33→17:36:54); formal 5-cycle run stopped at 3/5, user accepted — 5/5 not claimed; checker over-counted 3 successes as 5 attempts (failed password 17:36:47)
