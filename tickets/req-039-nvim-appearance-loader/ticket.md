@@ -2,7 +2,7 @@
 id: req-039
 title: "Neovim consumes the generated skin appearance for editor chrome"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -100,3 +100,6 @@ NVIM APPEARANCE VERIFICATION PASSED
 ```
 
 `make gates` → exit 0 (see the commit for the run).
+
+
+- Release: v0.22.0
