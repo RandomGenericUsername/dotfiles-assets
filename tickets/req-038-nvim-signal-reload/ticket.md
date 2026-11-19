@@ -2,7 +2,7 @@
 id: req-038
 title: "Reload the generated Neovim palette on SIGUSR1"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -51,3 +51,6 @@ reapply colors without a polling timer or a host path in the corpus.
   `missing: colorscheme-state exists=no`).
 - `make gates` → exit 0; every class `PASS`, `hermetic: PASS -- the corpus
   validates with no HOME, no XDG state and a foreign cwd`.
+
+
+- Release: v0.21.9

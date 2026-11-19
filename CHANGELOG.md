@@ -1,4 +1,4 @@
-## Unreleased
+## 0.21.9 — live Neovim palette reload
 
 ### Added
 
