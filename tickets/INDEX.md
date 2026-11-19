@@ -41,7 +41,7 @@
 
 - [req-028-sound-panel-skin](./req-028-sound-panel-skin/ticket.md) — Skin the AGS sound panel from the v3 roles: all five skins paint the popover/tray/strip/settings, app CSS structural only | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-028/`, branch `ticket/req-028-sound-panel-skin`
 - [req-029-nvim-lazyvim-config](./req-029-nvim-lazyvim-config/ticket.md) — Neovim config: adopt LazyVim with Catppuccin, commit the lockfile, keep plugin installation in LazyVim | `done` | lane 2 — bounded implementation | tag `v0.21.6` | worktree `.worktrees/req-029/`, branch `ticket/req-029-nvim-lazyvim-config` | released; no host apply
-- [req-035-nvim-lock-refresh](./req-035-nvim-lock-refresh/ticket.md) — Refresh `lazy-lock.json` to the stable resolved LazyVim set | `in-progress` | lane 2 — bounded implementation | worktree `.worktrees/req-035/`, branch `ticket/req-035-nvim-lock-refresh`
+- [req-035-nvim-lock-refresh](./req-035-nvim-lock-refresh/ticket.md) — Refresh `lazy-lock.json` to the stable resolved LazyVim set | `done` | lane 2 — bounded implementation | tag `v0.21.7` | worktree `.worktrees/req-035/`, branch `ticket/req-035-nvim-lock-refresh`
 
 ## Bugs
 

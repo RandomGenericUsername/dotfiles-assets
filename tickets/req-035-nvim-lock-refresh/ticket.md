@@ -2,7 +2,7 @@
 id: req-035
 title: "Refresh lazy-lock.json to the resolved LazyVim set"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -31,7 +31,10 @@ next provision flip those plugins again.
 
 ## Acceptance
 
-- [ ] The committed lock equals the host's stable resolved lock.
-- [ ] `make gates` PASS.
-- [ ] `v0.21.7` tagged/pushed/released.
-- [ ] No host apply/install in this ticket.
+- [x] The committed lock equals the host's stable resolved lock.
+- [x] `make gates` PASS.
+- [x] `v0.21.7` tagged/pushed/released.
+- [x] No host apply/install in this ticket.
+
+
+- Release: https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.21.7
