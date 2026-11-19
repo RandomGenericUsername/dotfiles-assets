@@ -2,7 +2,7 @@
 id: req-029
 title: "Neovim config: adopt LazyVim with Catppuccin (lockfile committed)"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -145,3 +145,14 @@ or bump pins.
 At release time the assets repo had tags through `v0.21.5`. This branch was
 rebased onto `master` at `2b758f7` and the gates were rerun; pick the next
 available tag at release (do not reuse an existing tag).
+
+
+## Release evidence
+
+- `dotfiles-assets v0.21.6` tagged, pushed and released:
+  https://github.com/RandomGenericUsername/dotfiles-assets/releases/tag/v0.21.6
+- Tag content: `configs/nvim` is the LazyVim starter (init.lua + four config
+  modules + two local overrides) plus the committed `lazy-lock.json`; old
+  hand-rolled modules removed.
+- `make gates` PASS before tagging.
+- No host apply/install was run.
