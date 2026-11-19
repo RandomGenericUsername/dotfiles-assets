@@ -1,0 +1,116 @@
+{
+  "ink": {
+    "accent": "@primary",
+    "accent-muted": "alpha(@primary, 0.18)",
+    "ink": "@on_surface",
+    "ink-dim": "@on_surface_variant",
+    "ink-over": "auto"
+  },
+  "layout": {
+    "ags": {
+      "bt-list-spacing": 4,
+      "panel-width": 312
+    },
+    "ags-clipboard": {
+      "card-width": 260
+    },
+    "ags-icme": {
+      "root-height": 800,
+      "root-width": 1280
+    },
+    "ags-notifications": {
+      "card-width": 380
+    },
+    "ags-wallpaper-selector": {
+      "root-height": 640,
+      "root-width": 960
+    }
+  },
+  "state": {
+    "disabled": {
+      "fill": "transparent",
+      "ink": "alpha(@on_surface, 0.38)",
+      "ring": "transparent"
+    },
+    "focus": {
+      "fill": "transparent",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "hover": {
+      "fill": "alpha(@on_surface, 0.08)",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "selected": {
+      "fill": "@primary",
+      "ink": "@on_primary",
+      "ring": "@primary"
+    }
+  },
+  "surface": {
+    "card": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "padding": 10,
+      "radius": 0
+    },
+    "cell": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "hover-bg": "alpha(@on_surface, 0.08)",
+      "padding": 7,
+      "radius": 0
+    },
+    "control": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "font-size": 11,
+      "font-weight": 600,
+      "padding": 4,
+      "radius": 0
+    },
+    "panel": {
+      "bg": "transparent",
+      "blur": "none",
+      "border": "transparent",
+      "border-width": 0,
+      "padding": 11,
+      "radius": 0,
+      "shadow": "none"
+    },
+    "pill": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "font-size": 9.5,
+      "letter-spacing": 0.05,
+      "padding": 2,
+      "radius": 999
+    },
+    "window": {
+      "bg": "transparent",
+      "blur": "none",
+      "border": "transparent",
+      "border-width": 0,
+      "opacity": 1.0,
+      "padding": 11,
+      "radius": 0,
+      "shadow": "none"
+    }
+  },
+  "type": {
+    "font-family": "system-ui, \"Cantarell\", \"Noto Sans\", sans-serif",
+    "font-weight": 400,
+    "letter-spacing": 0,
+    "size-body": 13,
+    "size-caption": 10.5,
+    "size-display": 16,
+    "size-meta": 11,
+    "size-title": 15
+  },
+  "version": 2
+}

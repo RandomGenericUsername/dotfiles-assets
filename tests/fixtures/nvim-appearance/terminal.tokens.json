@@ -1,0 +1,116 @@
+{
+  "ink": {
+    "accent": "@primary",
+    "accent-muted": "alpha(@primary, 0.5)",
+    "ink": "@on_surface",
+    "ink-dim": "alpha(@on_surface, 0.62)",
+    "ink-over": "auto"
+  },
+  "layout": {
+    "ags": {
+      "bt-list-spacing": 4,
+      "panel-width": 312
+    },
+    "ags-clipboard": {
+      "card-width": 260
+    },
+    "ags-icme": {
+      "root-height": 800,
+      "root-width": 1280
+    },
+    "ags-notifications": {
+      "card-width": 380
+    },
+    "ags-wallpaper-selector": {
+      "root-height": 640,
+      "root-width": 960
+    }
+  },
+  "state": {
+    "disabled": {
+      "fill": "alpha(@on_surface, 0.06)",
+      "ink": "alpha(@on_surface, 0.38)",
+      "ring": "transparent"
+    },
+    "focus": {
+      "fill": "transparent",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "hover": {
+      "fill": "alpha(@on_surface, 0.10)",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "selected": {
+      "fill": "@primary_container",
+      "ink": "@on_primary_container",
+      "ring": "@primary"
+    }
+  },
+  "surface": {
+    "card": {
+      "bg": "@surface_container",
+      "border": "alpha(@on_surface, 0.18)",
+      "border-width": 1,
+      "padding": 8,
+      "radius": 0
+    },
+    "cell": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "hover-bg": "alpha(@on_surface, 0.10)",
+      "padding": 5,
+      "radius": 0
+    },
+    "control": {
+      "bg": "transparent",
+      "border": "alpha(@on_surface, 0.30)",
+      "border-width": 1,
+      "font-size": 10,
+      "font-weight": 600,
+      "padding": 3,
+      "radius": 2
+    },
+    "panel": {
+      "bg": "@surface",
+      "blur": "none",
+      "border": "alpha(@on_surface, 0.22)",
+      "border-width": 1,
+      "padding": 9,
+      "radius": 0,
+      "shadow": "none"
+    },
+    "pill": {
+      "bg": "alpha(@on_surface, 0.12)",
+      "border": "alpha(@on_surface, 0.18)",
+      "border-width": 1,
+      "font-size": 9,
+      "letter-spacing": 0.04,
+      "padding": 1,
+      "radius": 2
+    },
+    "window": {
+      "bg": "@surface",
+      "blur": "none",
+      "border": "alpha(@on_surface, 0.22)",
+      "border-width": 1,
+      "opacity": 1.0,
+      "padding": 9,
+      "radius": 0,
+      "shadow": "none"
+    }
+  },
+  "type": {
+    "font-family": "JetBrainsMono Nerd Font, monospace",
+    "font-weight": 500,
+    "letter-spacing": 0,
+    "size-body": 12,
+    "size-caption": 9,
+    "size-display": 14,
+    "size-meta": 10,
+    "size-title": 13
+  },
+  "version": 2
+}

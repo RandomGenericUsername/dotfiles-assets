@@ -1,0 +1,116 @@
+{
+  "ink": {
+    "accent": "@primary",
+    "accent-muted": "alpha(@primary, 0.18)",
+    "ink": "@on_surface",
+    "ink-dim": "alpha(@on_surface, 0.62)",
+    "ink-over": "auto"
+  },
+  "layout": {
+    "ags": {
+      "bt-list-spacing": 4,
+      "panel-width": 312
+    },
+    "ags-clipboard": {
+      "card-width": 260
+    },
+    "ags-icme": {
+      "root-height": 800,
+      "root-width": 1280
+    },
+    "ags-notifications": {
+      "card-width": 380
+    },
+    "ags-wallpaper-selector": {
+      "root-height": 640,
+      "root-width": 960
+    }
+  },
+  "state": {
+    "disabled": {
+      "fill": "transparent",
+      "ink": "alpha(@on_surface, 0.38)",
+      "ring": "transparent"
+    },
+    "focus": {
+      "fill": "transparent",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "hover": {
+      "fill": "alpha(@on_surface, 0.08)",
+      "ink": "@on_surface",
+      "ring": "@primary"
+    },
+    "selected": {
+      "fill": "@primary_container",
+      "ink": "@on_primary_container",
+      "ring": "@primary"
+    }
+  },
+  "surface": {
+    "card": {
+      "bg": "alpha(@surface_container_high, 0.18)",
+      "border": "alpha(@on_surface, 0.10)",
+      "border-width": 1,
+      "padding": 10,
+      "radius": 4
+    },
+    "cell": {
+      "bg": "transparent",
+      "border": "transparent",
+      "border-width": 0,
+      "hover-bg": "alpha(@on_surface, 0.08)",
+      "padding": 8,
+      "radius": 4
+    },
+    "control": {
+      "bg": "transparent",
+      "border": "alpha(@on_surface, 0.26)",
+      "border-width": 1,
+      "font-size": 11,
+      "font-weight": 600,
+      "padding": 4,
+      "radius": 4
+    },
+    "panel": {
+      "bg": "alpha(@surface, 0.94)",
+      "blur": "none",
+      "border": "@primary",
+      "border-width": 2,
+      "padding": 11,
+      "radius": 8,
+      "shadow": "none"
+    },
+    "pill": {
+      "bg": "alpha(@on_surface, 0.12)",
+      "border": "alpha(@on_surface, 0.14)",
+      "border-width": 1,
+      "font-size": 9.5,
+      "letter-spacing": 0.05,
+      "padding": 2,
+      "radius": 20
+    },
+    "window": {
+      "bg": "alpha(@surface, 0.94)",
+      "blur": "none",
+      "border": "@primary",
+      "border-width": 2,
+      "opacity": 0.94,
+      "padding": 11,
+      "radius": 8,
+      "shadow": "none"
+    }
+  },
+  "type": {
+    "font-family": "inherit",
+    "font-weight": 400,
+    "letter-spacing": 0,
+    "size-body": 13,
+    "size-caption": 10.5,
+    "size-display": 16,
+    "size-meta": 11,
+    "size-title": 12.5
+  },
+  "version": 2
+}

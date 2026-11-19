@@ -1,0 +1,59 @@
+{
+  "flat": {
+    "degraded": {},
+    "float_bg": "#101014",
+    "float_border": null,
+    "normal_bg": "#101014",
+    "provenance": {
+      "float_bg": "surface.card.bg",
+      "normal_bg": "surface.window.bg",
+      "statusline_bg": "surface.panel.bg",
+      "winborder": "surface.window.border-width"
+    },
+    "separator": "#b8b8c8",
+    "statusline_bg": "#101014",
+    "statusline_bold": false,
+    "visual_bg": "#7aa2f7",
+    "visual_fg": "#0b1020",
+    "winborder": "none",
+    "window_border": null
+  },
+  "glass": {
+    "degraded": {},
+    "float_bg": "#1b1b21",
+    "float_border": "#2f2f36",
+    "normal_bg": "#18181e",
+    "provenance": {
+      "float_bg": "surface.card.bg",
+      "normal_bg": "surface.window.bg",
+      "statusline_bg": "surface.panel.bg",
+      "winborder": "surface.window.border-width"
+    },
+    "separator": "#2f2f36",
+    "statusline_bg": "#18181f",
+    "statusline_bold": false,
+    "visual_bg": "#2b4a8a",
+    "visual_fg": "#d6e2ff",
+    "winborder": "single",
+    "window_border": "#7aa2f7"
+  },
+  "terminal": {
+    "degraded": {},
+    "float_bg": "#1e1e26",
+    "float_border": "#42424a",
+    "normal_bg": "#18181f",
+    "provenance": {
+      "float_bg": "surface.card.bg",
+      "normal_bg": "surface.window.bg",
+      "statusline_bg": "surface.panel.bg",
+      "winborder": "surface.window.border-width"
+    },
+    "separator": "#42424a",
+    "statusline_bg": "#18181f",
+    "statusline_bold": false,
+    "visual_bg": "#2b4a8a",
+    "visual_fg": "#d6e2ff",
+    "winborder": "single",
+    "window_border": "#45454d"
+  }
+}
