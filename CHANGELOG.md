@@ -1,4 +1,4 @@
-## Unreleased — req-036 generated Neovim palette
+## 0.21.8 — generated Neovim palette
 
 - LazyVim's colorscheme is now a function: it loads `dotfiles-palette` when the
   runtime/provisioning seed has published it, and falls back to Catppuccin when

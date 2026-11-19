@@ -2,7 +2,7 @@
 id: req-036
 title: "Load the generated Neovim palette with a Catppuccin fallback"
 kind: requirement
-status: in-progress
+status: done
 lane: 2 — bounded implementation
 links:
   openspec: none
@@ -34,3 +34,6 @@ branch: ticket/req-036-nvim-generated-palette
 - Module: `dotfiles-v3` REQ-123 / provisioning link
   `config/nvim/lua/dotfiles-palette.lua -> current/palette/colors.nvim.lua`.
 - LazyVim accepts a function: `LazyVim/lua/lazyvim/config/init.lua:11-15,250-263`.
+
+
+- Release: v0.21.8
