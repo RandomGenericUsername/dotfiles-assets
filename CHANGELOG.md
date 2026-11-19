@@ -1,3 +1,28 @@
+## Unreleased
+
+### Added
+
+- **Neovim skin appearance chrome (REQ-124 implementation slice).**
+  `configs/nvim/lua/dotfiles-appearance.lua` reads the generation's resolved
+  `lua/dotfiles-appearance.json` through `stdpath("config")`, resolves the
+  documented `@role` / `alpha(@role, n)` / `transparent` / `none` paint forms
+  against the generated palette role map, and overlays chrome only: Normal
+  background, floats and borders, statusline/tabline, separators,
+  `Visual`/`CursorLine`/`PmenuSel`, gutters, folds, `ColorColumn` and
+  `winborder`. Syntax, LSP and diagnostics stay palette-owned.
+- The loader fails soft: an absent, malformed, wrong-version or
+  missing-`surface.window` document returns `false` (palette-only), and a single
+  unknown token degrades only its group. The full role map (`M.roles`) is used
+  when the palette projection exposes it; otherwise the documented surface-role
+  aliases are used and recorded.
+- `lazyvim.lua` applies appearance after `palette.load()`; `SIGUSR1` and
+  `:DotfilesColorsReload` now reload both the palette and the appearance.
+- Headless fixtures and verifier: `tests/fixtures/nvim-appearance/` plus
+  `tests/nvim-appearance/verify.sh` prove different glass/flat/terminal chrome,
+  provenance, `winborder`, apply-through-stdpath and the fallback paths with no
+  UI. Not a `make gates` member (needs `nvim`; the corpus gates stay
+  runner-independent).
+
 ## 0.21.9 — live Neovim palette reload
 
 ### Added
