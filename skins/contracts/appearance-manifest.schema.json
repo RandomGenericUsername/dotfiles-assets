@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://dotfiles.local/schemas/appearance-manifest.schema.json",
   "title": "Appearance manifest (schemaVersion 2)",
-  "description": "Canonical appearance manifest for the v2 appearance plane. The nested token groups describe six required surface roles (window, panel, card, cell, control, pill), interaction states, type, ink and namespaced layout metrics; optional mode.dark/mode.light groups are same-shape overrides selected from the palette mode. surface.window is the outer/application toplevel role and is required: there is no panel alias or fallback. The optional root host policy delegates only an explicit allowlist of logical token paths to a live host and never changes a token type. All lengths are unitless JSON numbers rendered as CSS px (letter-spacing renders as em, font-weight stays unitless); only surface.window.opacity is a unitless [0,1] number and is never derived from an alpha() paint. Paint values are palette role expressions only: no literal hex, no transitions and no structure/variant tokens.",
+  "description": "Canonical appearance manifest for the v2 appearance plane. The nested token groups describe six required surface roles (plus an optional overlay role) (window, panel, card, cell, control, pill), interaction states, type, ink and namespaced layout metrics; optional mode.dark/mode.light groups are same-shape overrides selected from the palette mode. surface.window is the outer/application toplevel role and is required: there is no panel alias or fallback. The optional root host policy delegates only an explicit allowlist of logical token paths to a live host and never changes a token type. All lengths are unitless JSON numbers rendered as CSS px (letter-spacing renders as em, font-weight stays unitless); only surface.window.opacity is a unitless [0,1] number and is never derived from an alpha() paint. Paint values are palette role expressions only: no literal hex, no transitions and no structure/variant tokens.",
   "status": "frozen",
   "type": "object",
   "additionalProperties": false,
@@ -621,6 +621,9 @@
         },
         "pill": {
           "$ref": "#/definitions/pillRole"
+        },
+        "overlay": {
+          "$ref": "#/definitions/overlayRole"
         }
       },
       "required": [
@@ -837,6 +840,46 @@
         }
       },
       "description": "Optional mode.dark / mode.light group overrides. Generation selects exactly one from the palette mode and expands templates afterwards."
+    },
+    "overlayRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "properties": {
+        "bg": {
+          "$ref": "#/definitions/paint"
+        },
+        "border": {
+          "$ref": "#/definitions/borderPaint"
+        },
+        "border-width": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "radius": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "padding": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "shadow": {
+          "$ref": "#/definitions/shadowValue"
+        },
+        "blur": {
+          "$ref": "#/definitions/blurValue"
+        }
+      },
+      "required": [
+        "bg",
+        "border",
+        "border-width",
+        "radius",
+        "padding",
+        "shadow",
+        "blur"
+      ],
+      "description": "Optional layer-shell overlay role (AGS overlays such as the wallpaper selector). Same paint/geometry shape as panel; the app owns layout and content, the skin owns this surface paint. Additive: manifests that predate it stay valid."
     }
   }
 }

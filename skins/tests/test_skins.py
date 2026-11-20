@@ -7,7 +7,7 @@ Run with the repository's development dependencies:
 The corpus itself is validated by the stdlib-only ``make validate-skins`` gate;
 these tests add the positive frozen-value assertions and the negative fixtures
 that prove the gate actually bites. The model is the v2 Appearance token set
-from ``contracts`` v0.12.0, not the frozen v1 skin vocabulary. The required
+from ``contracts`` v0.14.0, not the frozen v1 skin vocabulary. The required
 six-role surface includes ``window`` (never aliased from ``panel``); the
 optional root ``[host]`` policy is a delegation object, not a token group and
 delegates window/panel geometry plus the card/control/cell rectangle radii;
@@ -193,14 +193,17 @@ APP_TEMPLATES = {
             ".ws-toast",
         ],
         "tokens": {
+            "SKIN_SURFACE_OVERLAY_BG",
+            "SKIN_SURFACE_OVERLAY_BORDER",
+            "SKIN_SURFACE_OVERLAY_BORDER_WIDTH",
+            "SKIN_SURFACE_OVERLAY_RADIUS",
+            "SKIN_SURFACE_OVERLAY_SHADOW",
+            "SKIN_SURFACE_OVERLAY_BLUR",
             "SKIN_SURFACE_PANEL_BG",
-            "SKIN_SURFACE_PANEL_BORDER",
-            "SKIN_SURFACE_PANEL_BORDER_WIDTH",
-            "SKIN_SURFACE_PANEL_RADIUS",
             "SKIN_SURFACE_PANEL_SHADOW",
             "SKIN_SURFACE_PANEL_BLUR",
-            "SKIN_SURFACE_CARD_BG",
             "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_BORDER_WIDTH",
             "SKIN_SURFACE_CARD_RADIUS",
             "SKIN_SURFACE_CONTROL_BG",
             "SKIN_SURFACE_CONTROL_BORDER",
@@ -503,7 +506,7 @@ def test_corpus_passes_the_gate() -> None:
         "templates": 12,
         "targets": sorted(REQUIRED_TARGETS),
         "artifacts": ["kitty:conf", "rofi:rasi"],
-        "tokens": 65,
+        "tokens": 72,
         "roles": 51,
         "expansions": 10,
         "host_resolutions": 6,
@@ -1637,7 +1640,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
         "schemas/skin-json.schema.json",
     }
     assert canonical["vendored"] is True
-    assert canonical["tag"] == "v0.12.0"
+    assert canonical["tag"] == "v0.14.0"
     assert canonical["pin"] == "skins/contracts/PIN"
     assert canonical["delegates"] == {
         "manifest": "skins/contracts/appearance-manifest.schema.json",
@@ -1655,7 +1658,7 @@ def test_schema_vendors_the_pinned_contracts_set() -> None:
     assert "tokens.json" in canonical["resolved_document"]["note"]
     metadata, _hashes = pin_metadata()
     assert metadata["contracts"] == canonical["tag"]
-    assert metadata["source-commit"] == "a03b5632828df8012c02a6117c3be438eca4264b"
+    assert metadata["source-commit"] == "2b4a6629e23967d68a3e9ae6319e1a0a85f56d54"
     assert set(canonical["vendored_paths"]) == set(VENDORED.values())
 
 
@@ -2274,7 +2277,7 @@ def test_paper_declares_explicit_light_mode_overrides() -> None:
     light = paper["mode"]["light"]
 
     # A complete same-shape surface group, not a partial merge.
-    assert set(light["surface"]) == {"window", "panel", "card", "cell", "control", "pill"}
+    assert set(light["surface"]) == {"window", "panel", "overlay", "card", "cell", "control", "pill"}
     assert light["surface"]["window"]["border"] == "alpha(@on_surface, 0.16)"
     assert light["surface"]["window"]["opacity"] == 1.0
     assert light["surface"]["panel"]["border"] == "alpha(@on_surface, 0.16)"

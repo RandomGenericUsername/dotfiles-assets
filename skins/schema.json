@@ -17,7 +17,7 @@
       "schemas/skin-manifest.schema.json",
       "schemas/skin-json.schema.json"
     ],
-    "tag": "v0.12.0",
+    "tag": "v0.14.0",
     "vendored": true,
     "pin": "skins/contracts/PIN",
     "vendored_paths": [
@@ -40,13 +40,13 @@
         "skins/contracts/skin-manifest.schema.json",
         "skins/contracts/skin-json.schema.json"
       ],
-      "note": "The v1 skin schemas are vendored at v0.12.0 for provenance only. This class emits v2 manifests and resolved tokens.json; it never mixes a v1 token map with a v2 artifact."
+      "note": "The v1 skin schemas are vendored at v0.14.0 for provenance only. This class emits v2 manifests and resolved tokens.json; it never mixes a v1 token map with a v2 artifact."
     },
     "resolved_document": {
       "path": "skins/contracts/appearance-json.schema.json",
       "note": "The runtime emits one generation tokens.json: version 2 plus the five fully resolved groups, with mode overrides already applied. Consumers validate that resolved document directly against this vendored schema, without the manifest wrapper."
     },
-    "note": "Byte-for-byte copies of the canonical appearance, generation and frozen v1 skin schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.12.0, the required-window release: every manifest and resolved tokens.json carries six surface roles (window, panel, card, cell, control, pill), and surface.window is never aliased from surface.panel. surface.window owns bg, border, border-width, radius, padding, shadow, blur and the unitless [0,1] opacity; window padding and opacity are not delegable. The optional [host] allowlist covers exactly seven paths: surface.window.radius, surface.window.border-width, surface.panel.radius, surface.panel.border-width, surface.card.radius, surface.control.radius and surface.cell.radius; surface.pill.radius is deliberately absent so the capsule identity stays explicit. The token vocabulary is surface.{window,panel,card,cell,control,pill}, state.{hover,selected,focus,disabled}, type, ink, layout.<app>, optional mode.dark/mode.light overrides and the optional root [host] policy. [host] is a policy object, not a token group, with mode override > host > skin fallback; no padding, gap, type, paint, colour, state, layout or non-panel border-width path is delegable. The generation manifest schema is vendored for contract-byte parity and records the same seven delegated paths in host.defaults; this class emits skin/appearance documents, not generations and never writes an artifact path. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css), including gtk3/gtk4; non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rofi/rasi and kitty/conf required and theme reserved. Layout tokens stay in the manifest and tokens.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS."
+    "note": "Byte-for-byte copies of the canonical appearance, generation and frozen v1 skin schemas are vendored under skins/contracts/ and pinned by sha256 in skins/contracts/PIN. The pinned tag is v0.14.0, the required-window release: every manifest and resolved tokens.json carries six required surface roles (window, panel, card, cell, control, pill) plus the optional overlay role, and surface.window is never aliased from surface.panel. surface.window owns bg, border, border-width, radius, padding, shadow, blur and the unitless [0,1] opacity; window padding and opacity are not delegable. The optional [host] allowlist covers exactly seven paths: surface.window.radius, surface.window.border-width, surface.panel.radius, surface.panel.border-width, surface.card.radius, surface.control.radius and surface.cell.radius; surface.pill.radius is deliberately absent so the capsule identity stays explicit. The token vocabulary is surface.{window,panel,card,cell,control,pill}, state.{hover,selected,focus,disabled}, type, ink, layout.<app>, optional mode.dark/mode.light overrides and the optional root [host] policy. [host] is a policy object, not a token group, with mode override > host > skin fallback; no padding, gap, type, paint, colour, state, layout or non-panel border-width path is delegable. The generation manifest schema is vendored for contract-byte parity and records the same seven delegated paths in host.defaults; this class emits skin/appearance documents, not generations and never writes an artifact path. CSS targets are named <configDir>.gtk.css.j2 (rendered <configDir>.css), including gtk3/gtk4; non-CSS artifacts are named <consumer>.<format>.j2 (rendered <consumer>.<format>), with rofi/rasi and kitty/conf required and theme reserved. Layout tokens stay in the manifest and tokens.json for skinValue() but are TSX-owned: templates MUST NOT expand them into CSS."
   },
   "palette": {
     "vocabulary": "palette.v1",
@@ -145,7 +145,8 @@
         "card",
         "cell",
         "control",
-        "pill"
+        "pill",
+        "overlay"
       ],
       "state": [
         "hover",
@@ -190,6 +191,13 @@
       "surface.panel.padding",
       "surface.panel.shadow",
       "surface.panel.blur",
+      "surface.overlay.bg",
+      "surface.overlay.border",
+      "surface.overlay.border-width",
+      "surface.overlay.radius",
+      "surface.overlay.padding",
+      "surface.overlay.shadow",
+      "surface.overlay.blur",
       "surface.card.bg",
       "surface.card.border",
       "surface.card.border-width",

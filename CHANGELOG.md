@@ -1,3 +1,14 @@
+## 0.23.0 — layer-shell overlay skin role
+
+- Add the optional `surface.overlay` paint/geometry role (contracts v0.14.0)
+  for layer-shell overlays; all five skins provide it.
+- The wallpaper selector's control bar uses `surface.overlay` (glass:
+  `alpha(@surface, .54)`, hairline, radius 20, `blur(28px)`); the contact sheet
+  keeps `surface.panel`, and the settings popover uses the panel bg with the
+  card border/radius.
+- Re-vendor the appearance schemas at contracts **v0.14.0**; the boundary gate
+  covers the overlay placeholders.
+
 ## 0.22.2 — wallpaper selector paint-only skin
 
 - **Wallpaper selector overlay skin (REQ-005).** `ags-wallpaper-selector` is now

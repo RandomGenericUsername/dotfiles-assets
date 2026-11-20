@@ -37,6 +37,15 @@ padding = 9
 shadow = "none"
 blur = "none"
 
+[groups.surface.overlay]
+bg = "@surface"
+border = "alpha(@on_surface, 0.22)"
+border-width = 1
+radius = 0
+padding = 14
+shadow = "none"
+blur = "none"
+
 [groups.surface.window]
 bg = "@surface"
 border = "alpha(@on_surface, 0.22)"

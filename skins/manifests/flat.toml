@@ -16,6 +16,15 @@ padding = 11
 shadow = "none"
 blur = "none"
 
+[groups.surface.overlay]
+bg = "transparent"
+border = "transparent"
+border-width = 0
+radius = 0
+padding = 14
+shadow = "none"
+blur = "none"
+
 [groups.surface.window]
 bg = "transparent"
 border = "transparent"

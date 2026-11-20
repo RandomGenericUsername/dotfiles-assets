@@ -20,6 +20,7 @@ provenance only.
 | --- | --- |
 | `surface.window` | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur`, `opacity` |
 | `surface.panel` | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur` |
+| `surface.overlay` (optional) | `bg`, `border`, `border-width`, `radius`, `padding`, `shadow`, `blur` |
 | `surface.card` | `bg`, `border`, `border-width`, `radius`, `padding` |
 | `surface.cell` | `bg`, `border`, `border-width`, `radius`, `padding`, `hover-bg` |
 | `surface.control` | `bg`, `border`, `border-width`, `radius`, `padding`, `font-size`, `font-weight` |
@@ -34,7 +35,7 @@ provenance only.
 
 `surface.window` is the outer/application toplevel role (rofi/wlogout/GTK outer
 slots and kitty's terminal window); it is never populated from `surface.panel`.
-`surface.panel` stays the AGS bar/layer-shell overlay role. `surface.window.opacity`
+`surface.panel` stays the AGS bar role; the optional `surface.overlay` is the layer-shell overlay role (wallpaper selector), added in contracts v0.14.0. `surface.window.opacity`
 is the only unitless `[0,1]` number; it is never derived from an `alpha()` paint.
 There are no `structure`, `variant`, `density` or `paint` groups. A key outside
 the five groups (plus the optional `mode` overrides and the optional root

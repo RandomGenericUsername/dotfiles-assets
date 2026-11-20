@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validate-skins -- the `skins` class contract, asserted against the corpus.
 
-WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.12.0):
+WHAT THIS GATE PROVES (Appearance token model v2, contracts v0.14.0):
 
   1. THE LOCAL CONTRACT IS HONEST. `skins/schema.json` carries
      `schema_major: 2`, names the canonical `contracts` paths and proves its
@@ -1876,7 +1876,7 @@ def main() -> int:
             print(f"  - {error}")
         return 1
     print(
-        "validate-skins: PASS -- vendored v0.12.0 hashes, v2 manifests, host "
+        "validate-skins: PASS -- vendored v0.14.0 hashes, v2 manifests, host "
         "policy, mode resolution, tokens.json schema, flattened placeholder "
         "coverage, role vocabulary, per-format unit rule and format-specific "
         "GTK3/GTK4/rasi/conf laws agree"

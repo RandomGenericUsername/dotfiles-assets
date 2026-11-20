@@ -4,7 +4,7 @@
 # any vendored file MUST update its sha256 here, and the copy must be re-taken
 # from the tag named below. Do not edit a vendored schema by hand.
 #
-# v0.12.0 makes `surface.window` a required sixth surface role (bg, border,
+# v0.14.0 adds the optional `surface.overlay` paint/geometry role for layer-shell overlays (the wallpaper selector); it is additive, so manifests without it stay valid. v0.12.0 made `surface.window` a required sixth surface role (bg, border,
 # border-width, radius, padding, shadow, blur, opacity) and adds the unitless
 # `[0,1]` opacity value type. It expands the appearance host allowlist from the
 # five rectangle paths to seven: `surface.window.radius`,
@@ -24,10 +24,10 @@
 # provenance; this class no longer emits v1 manifests. All lengths are unitless
 # JSON numbers rendered as CSS px, letter-spacing renders as em and font-weight
 # stays unitless; only `surface.window.opacity` is a unitless [0,1] number.
-contracts=v0.12.0
-source-commit=a03b5632828df8012c02a6117c3be438eca4264b
-sha256  5712ea6480187c5035dd480ce3c4482ed526a3220dd75635f7186ff91aa905c2  appearance-manifest.schema.json
-sha256  f14320a1677b8aeb11a53800f97111e386644dc1dc17237baaad3b676bf72d92  appearance-json.schema.json
+contracts=v0.14.0
+source-commit=2b4a6629e23967d68a3e9ae6319e1a0a85f56d54
+sha256  156f152a0d5120eb42dc44abb2d4152a5c7037b5b3800aa0fb3687c45cebc6b0  appearance-manifest.schema.json
+sha256  d835a846dc3d88d8a87ccabe02105018bb9e4653c4014dca924c15395c6e54c3  appearance-json.schema.json
 sha256  dda28261b7a74372c8643a582eb8a20d63811e8732cd96e2e97b911f33939ac2  appearance-artifact.schema.json
 sha256  f423a09a2a43237232b9968f216832f965d9c363893f16b34fe4e27337bde47b  generation-manifest.schema.json
 sha256  6383165244ecb85c91f51bad7194d68a27881f85cada9a41c97585310a2947b5  skin-token.schema.json

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://dotfiles.local/schemas/appearance-json.schema.json",
   "title": "Resolved appearance token map (version 2)",
-  "description": "A runtime-resolved tokens.json: version 2 plus the six fully resolved surface roles (window, panel, card, cell, control, pill) and the state/type/ink/layout groups. surface.window is required and is never aliased from surface.panel. Mode overrides are already applied, so this document has no mode or palette fields. All lengths are unitless JSON numbers; letter-spacing renders as em, font-weight stays unitless and only surface.window.opacity is a unitless [0,1] number. No structure/variant keys and no literal hex.",
+  "description": "A runtime-resolved tokens.json: version 2 plus the six fully resolved surface roles (plus an optional overlay role) (window, panel, card, cell, control, pill) and the state/type/ink/layout groups. surface.window is required and is never aliased from surface.panel. Mode overrides are already applied, so this document has no mode or palette fields. All lengths are unitless JSON numbers; letter-spacing renders as em, font-weight stays unitless and only surface.window.opacity is a unitless [0,1] number. No structure/variant keys and no literal hex.",
   "status": "frozen",
   "type": "object",
   "additionalProperties": false,
@@ -557,6 +557,9 @@
         },
         "pill": {
           "$ref": "#/definitions/pillRole"
+        },
+        "overlay": {
+          "$ref": "#/definitions/overlayRole"
         }
       },
       "required": [
@@ -773,6 +776,46 @@
         }
       },
       "description": "Optional mode.dark / mode.light group overrides. Generation selects exactly one from the palette mode and expands templates afterwards."
+    },
+    "overlayRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "$ref": "#/definitions/forbiddenName"
+      },
+      "properties": {
+        "bg": {
+          "$ref": "#/definitions/paint"
+        },
+        "border": {
+          "$ref": "#/definitions/borderPaint"
+        },
+        "border-width": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "radius": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "padding": {
+          "$ref": "#/definitions/nonNegativeNumber"
+        },
+        "shadow": {
+          "$ref": "#/definitions/shadowValue"
+        },
+        "blur": {
+          "$ref": "#/definitions/blurValue"
+        }
+      },
+      "required": [
+        "bg",
+        "border",
+        "border-width",
+        "radius",
+        "padding",
+        "shadow",
+        "blur"
+      ],
+      "description": "Optional layer-shell overlay role (AGS overlays such as the wallpaper selector). Same paint/geometry shape as panel; the app owns layout and content, the skin owns this surface paint. Additive: manifests that predate it stay valid."
     }
   }
 }

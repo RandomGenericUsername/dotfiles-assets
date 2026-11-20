@@ -1,14 +1,16 @@
 /*
  * skins/templates/ags-wallpaper-selector.gtk.css.j2 — wallpaper overlay paint.
  *
- * The wallpaper selector is a layer-shell overlay: `surface.panel` is its
- * outer role (never `surface.window`). The app owns layout, components and
- * content; this sheet declares only role paint/type/ink for the app's declared
- * surfaces plus their state variants.
+ * The wallpaper selector is a layer-shell overlay: `surface.overlay` is the
+ * control bar's outer role (never `surface.window`); the contact sheet keeps
+ * `surface.panel` so it stays a near-opaque scrim. The app owns layout,
+ * components and content; this sheet declares only role paint/type/ink for the
+ * app's declared surfaces plus their state variants.
  *
  * Paint map:
- *   .ws-control-bar, .ws-grid          surface.panel
- *   .ws-settings                       surface.card + panel shadow/blur
+ *   .ws-control-bar                    surface.overlay
+ *   .ws-grid                           surface.panel
+ *   .ws-settings                       surface.panel bg + card border/radius
  *   .ws-search, .ws-gear, .ws-nav      surface.control
  *   .ws-set, .ws-state-pill, .ws-kbd   surface.pill
  *   .ws-look, .ws-seg-button           surface.control with state fill/ring
@@ -23,11 +25,11 @@ window#wallpaper-selector-window {
 }
 
 .ws-control-bar {
-  background-color: {{SKIN_SURFACE_PANEL_BG}};
-  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
-  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
-  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
-  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+  background-color: {{SKIN_SURFACE_OVERLAY_BG}};
+  border: {{SKIN_SURFACE_OVERLAY_BORDER_WIDTH}} solid {{SKIN_SURFACE_OVERLAY_BORDER}};
+  border-radius: {{SKIN_SURFACE_OVERLAY_RADIUS}};
+  box-shadow: {{SKIN_SURFACE_OVERLAY_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_OVERLAY_BLUR}};
 }
 
 .ws-name {
@@ -196,7 +198,7 @@ window#wallpaper-selector-window {
 }
 
 .ws-settings {
-  background-color: {{SKIN_SURFACE_CARD_BG}};
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
   border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
   border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
   box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};

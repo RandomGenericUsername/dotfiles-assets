@@ -30,6 +30,15 @@ padding = 11
 shadow = "none"
 blur = "none"
 
+[groups.surface.overlay]
+bg = "alpha(@surface, 0.54)"
+border = "alpha(@on_surface, 0.14)"
+border-width = 1
+radius = 20
+padding = 14
+shadow = "0 24px 70px rgba(0,0,0,0.46)"
+blur = "blur(28px)"
+
 [groups.surface.window]
 bg = "alpha(@surface, 0.94)"
 border = "@primary"
