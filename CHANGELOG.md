@@ -1,3 +1,9 @@
+## 0.22.3 — wallpaper look-frame radius
+
+- The wallpaper selector's app-owned selected-look frame takes
+  `surface.control.radius` from the skin (host-delegated), matching the chip
+  button. The app keeps only the layout and its fallback.
+
 ## 0.22.2 — wallpaper selector paint-only skin
 
 - **Wallpaper selector overlay skin (REQ-005).** `ags-wallpaper-selector` is now

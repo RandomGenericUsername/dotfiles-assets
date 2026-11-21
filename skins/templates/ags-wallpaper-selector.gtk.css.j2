@@ -75,6 +75,11 @@ window#wallpaper-selector-window {
   border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
 }
 
+/* The app-owned selected ring must use the same surface geometry as the chip. */
+.ws-look-frame {
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
 .ws-look:hover {
   background-color: {{SKIN_STATE_HOVER_FILL}};
   border-color: {{SKIN_STATE_HOVER_RING}};
