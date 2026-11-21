@@ -574,3 +574,6 @@ Rules learned in REQ-005:
   composition pins the established **assets v0.22.3**, which maps the overlay
   to `surface.panel`. Do not consume `surface.overlay` and do not copy the
   v0.23.0 template into a new app skin.
+
+Canonical batch record with the live state, architecture rules and the pending
+design index: `dotfiles-v3/docs/117-redesign-batch.md` (workspace path).
