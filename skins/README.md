@@ -540,3 +540,37 @@ The wallpaper selector is a **layer-shell overlay**, so its outer role is
 bar, settings popover, grid, search, looks and commit action are styled by
 role and state; the app owns the live dot, the selected ring and the commit
 progress nodes.
+
+## Overlay app implementation pattern (REQ-005, binding)
+
+AGS layer-shell overlays use **`surface.panel`** (never `surface.window`). The
+optional root `[host]` policy delegates `surface.panel.radius` /
+`border-width` (plus card/control/cell radii), so an overlay follows the
+compositor's rounding and border size.
+
+The app owns layout/structure/content; the skin template styles the
+app-declared classes with role tokens (the sound panel's `.audio-*` pattern).
+The app CSS is layout + fallback only.
+
+Rules learned in REQ-005:
+
+- **No appearance token reads in app code**, and no CSS `inherit` to reproduce
+  role geometry. If an app-owned node needs role geometry, the template styles
+  it directly (e.g. `.ws-look-frame { border-radius:
+  {{SKIN_SURFACE_CONTROL_RADIUS}}; }`, shipped in v0.22.3).
+- **Selected states replace the base role border.** The app suppresses the
+  skin's base control hairline on the selected widget and draws its own ring;
+  otherwise the two stack into a double border.
+- **Per-item/content accent is app-owned.** Content colour (a wallpaper's
+  palette hint) is painted with a per-widget provider at `USER + 1`; the skin
+  still owns the role surfaces. Do not put per-item content colours into a
+  skin.
+- **No `Gtk.Popover` for in-overlay panels.** A popover is a separate
+  compositor popup; its grab/pointer focus can survive the unmap until motion
+  and swallow the next same-spot click. Use the mock's in-page panel
+  (`.settings-pop`) with a full-window catcher; the skin paints the panel.
+- **`surface.overlay` is an experiment, not the release line.** contracts
+  v0.14.0 / assets v0.23.0 added it during the REQ-005 exploration; the
+  composition pins the established **assets v0.22.3**, which maps the overlay
+  to `surface.panel`. Do not consume `surface.overlay` and do not copy the
+  v0.23.0 template into a new app skin.
