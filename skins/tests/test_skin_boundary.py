@@ -38,17 +38,18 @@ Owner decisions recorded (2026-11-13):
 
 1. **Spacing** — the app owns inner component spacing; the skin may declare
    only the surface's single padding token. The strict padding gate stays.
-2. **Scope** — enforce `ags` now; the other seven app targets are staged and
-   migration-documented, not corpus-wide red today.
+2. **Scope** — enforce `ags` and the reviewed overlays now; the other five app
+   targets are staged and migration-documented, not corpus-wide red today.
 6. **Live dot** — app-owned node/behaviour, one semantic green, skin supplies
    only the colour role; the skin's `.audio-mode-dot` ownership is removed.
 
-The bar target (`ags`) is enforced now; the other app targets carry the same
-long-standing defect and are measured, not failed, in this slice
-(`validate_skins.BOUNDARY_TARGETS` is the migration switch).
+The bar target (`ags`) and the wallpaper/clipboard overlays are enforced now;
+the other app targets carry the same long-standing defect and are measured,
+not failed, in this slice (`validate_skins.BOUNDARY_TARGETS` is the migration
+switch).
 
-Run with `make test-skins`. The corpus test is expected to FAIL until the
-templates are split; the unit tests prove each law actually bites.
+Run with `make test-skins`. The corpus test proves every enforced template is
+clean; the unit tests prove each law actually bites.
 """
 
 from __future__ import annotations
@@ -108,8 +109,12 @@ def test_ags_template_has_no_boundary_violation() -> None:
 
 
 def test_the_enforced_targets_are_registered() -> None:
-    """The bar + the wallpaper overlay are the reviewed, enforced surfaces."""
-    assert validate_skins.BOUNDARY_TARGETS == ("ags", "ags-wallpaper-selector")
+    """The bar + both overlays are the reviewed, enforced surfaces."""
+    assert validate_skins.BOUNDARY_TARGETS == (
+        "ags",
+        "ags-wallpaper-selector",
+        "ags-clipboard",
+    )
     for target in validate_skins.BOUNDARY_TARGETS:
         assert (TEMPLATES / f"{target}.gtk.css.j2").is_file(), target
 
@@ -120,7 +125,6 @@ def test_the_enforced_targets_are_registered() -> None:
 STAGED_TARGETS = (
     "ags-btop-studio",
     "ags-capture",
-    "ags-clipboard",
     "ags-icme",
     "ags-notifications",
     "wlogout",
@@ -255,6 +259,29 @@ def test_wallpaper_selector_template_paints_the_panel_role() -> None:
     # No dot node: the app owns the live marker and its behaviour.
     assert "ws-look-live-dot" not in text
     assert "ws-state-dot" not in text
+
+
+def test_clipboard_template_has_no_boundary_violation() -> None:
+    """The REQ-042 overlay surface is paint-only: layout/content are app-owned."""
+    text = (TEMPLATES / "ags-clipboard.gtk.css.j2").read_text()
+    violations = _violations(text)
+    assert violations == [], "\n".join(
+        f"ags-clipboard.gtk.css.j2:{line}: {category}: {detail}"
+        for category, line, detail in violations
+    )
+
+
+def test_clipboard_template_paints_the_panel_role() -> None:
+    """A layer-shell overlay uses surface.panel, never window/overlay."""
+    text = (TEMPLATES / "ags-clipboard.gtk.css.j2").read_text()
+    assert "SKIN_SURFACE_PANEL_BG" in text
+    assert "SKIN_SURFACE_WINDOW_BG" not in text
+    assert "SKIN_SURFACE_OVERLAY_BG" not in text
+    assert ".clipboard-control-bar" in text
+    # Type headers/dots and per-kind rings are app-owned content.
+    assert ".kind-" not in text
+    assert "clipboard-type-dot" not in text
+    assert "clipboard-filter-dot" not in text
 
 
 def test_ags_template_owns_no_semantic_signal_dot() -> None:

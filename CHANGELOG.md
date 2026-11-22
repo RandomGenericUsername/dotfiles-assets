@@ -1,3 +1,19 @@
+## 0.22.4 — clipboard overlay paint-only skin
+
+- **Clipboard overlay skin (REQ-042).** `ags-clipboard` is painted from the
+  established `surface.panel` / `surface.card` / `surface.control` /
+  `surface.pill` roles for its full and compact card-stage UI, including the
+  in-page settings panel + catcher. The overlay remains a layer-shell overlay,
+  so `surface.panel` is its outer role — never `surface.window` or the unused
+  `surface.overlay` experiment.
+- The app owns content and per-item state: type headers, type/filter dots,
+  per-kind selected/focused rings and pin fills come from per-widget providers
+  at `USER + 1`. The template contains no `.kind-*`, dot, per-kind state or
+  pin-fill rules, and no `.clipboard-card` width clamp.
+- `ags-clipboard` joins `BOUNDARY_TARGETS`; its template is enforced as
+  paint-only alongside `ags` and `ags-wallpaper-selector`.
+- Base: assets `v0.22.3`. No tag, push, provision or composition-pin bump.
+
 ## 0.22.3 — wallpaper look-frame radius
 
 - The wallpaper selector's app-owned selected-look frame takes

@@ -129,10 +129,62 @@ APP_TEMPLATES = {
     "ags-clipboard": {
         "selectors": [
             "window#clipboard-window",
+            ".clipboard-root",
             ".clipboard-panel",
-            ".clipboard-search",
+            ".clipboard-full",
+            ".clipboard-compact",
+            ".clipboard-control-bar",
+            ".clipboard-pins-panel",
             ".clipboard-card",
-            ".clipboard-head",
+            ".clipboard-stage-card",
+            ".clipboard-peek-card",
+            ".clipboard-pin-card",
+            ".clipboard-card:hover",
+            ".clipboard-stage-card:hover",
+            ".clipboard-peek-card:hover",
+            ".clipboard-pin-card:hover",
+            ".clipboard-stage-body",
+            ".clipboard-peek-body",
+            ".clipboard-pin-body",
+            ".clipboard-search-box",
+            ".clipboard-search-box.focused",
+            ".clipboard-search",
+            ".clipboard-search:focus",
+            ".clipboard-search:focus-visible",
+            ".clipboard-chip",
+            ".clipboard-pins-pill",
+            ".clipboard-nav-arrow",
+            ".clipboard-strip-arrow",
+            ".clipboard-keycap",
+            ".clipboard-chip:hover",
+            ".clipboard-pins-pill:hover",
+            ".clipboard-nav-arrow:hover",
+            ".clipboard-strip-arrow:hover",
+            ".clipboard-chip.selected",
+            ".clipboard-gear",
+            ".clipboard-bar-button",
+            ".clipboard-open-chip",
+            ".clipboard-view-tab",
+            ".clipboard-segment-button",
+            ".clipboard-incognito",
+            ".clipboard-clear",
+            ".clipboard-gear:hover",
+            ".clipboard-bar-button:hover",
+            ".clipboard-open-chip:hover",
+            ".clipboard-view-tab:hover",
+            ".clipboard-segment-button:hover",
+            ".clipboard-incognito:hover",
+            ".clipboard-clear:hover",
+            ".clipboard-gear:focus-visible",
+            ".clipboard-bar-button:focus-visible",
+            ".clipboard-open-chip:focus-visible",
+            ".clipboard-view-tab:focus-visible",
+            ".clipboard-segment-button:focus-visible",
+            ".clipboard-view-tab.active",
+            ".clipboard-bar-button.is-on",
+            ".clipboard-segment-button.selected",
+            ".clipboard-settings",
+            ".clipboard-settings-catcher",
             ".clipboard-empty",
         ],
         "tokens": {
@@ -144,14 +196,26 @@ APP_TEMPLATES = {
             "SKIN_SURFACE_PANEL_BLUR",
             "SKIN_SURFACE_CARD_BG",
             "SKIN_SURFACE_CARD_BORDER",
+            "SKIN_SURFACE_CARD_BORDER_WIDTH",
             "SKIN_SURFACE_CARD_RADIUS",
+            "SKIN_SURFACE_CONTROL_BG",
+            "SKIN_SURFACE_CONTROL_BORDER",
+            "SKIN_SURFACE_CONTROL_BORDER_WIDTH",
             "SKIN_SURFACE_CONTROL_RADIUS",
+            "SKIN_SURFACE_PILL_BG",
+            "SKIN_SURFACE_PILL_BORDER",
+            "SKIN_SURFACE_PILL_BORDER_WIDTH",
+            "SKIN_SURFACE_PILL_RADIUS",
+            "SKIN_STATE_HOVER_FILL",
+            "SKIN_STATE_HOVER_INK",
+            "SKIN_STATE_HOVER_RING",
+            "SKIN_STATE_FOCUS_RING",
+            "SKIN_STATE_SELECTED_FILL",
+            "SKIN_STATE_SELECTED_INK",
             "SKIN_INK_INK",
             "SKIN_INK_INK_DIM",
-            "SKIN_INK_ACCENT",
             "SKIN_TYPE_FONT_FAMILY",
-            "SKIN_TYPE_SIZE_TITLE",
-            "SKIN_TYPE_SIZE_BODY",
+            "SKIN_TYPE_SIZE_CAPTION",
         },
     },
     "ags-notifications": {
@@ -655,6 +719,116 @@ def test_ags_icon_only_sound_controls_are_bare() -> None:
 def test_ags_removed_muted_note_selector() -> None:
     """Owner QA: the removed note has no dead selector left in the target."""
     assert ".audio-hero-note" not in TEMPLATE.read_text()
+
+
+CLIPBOARD = TEMPLATES / "ags-clipboard.gtk.css.j2"
+
+
+def test_ags_clipboard_is_paint_only_with_no_content_rules() -> None:
+    """REQ-042: type headers/dots and per-kind state belong to the app."""
+    text = CLIPBOARD.read_text()
+    code = validate_skins._strip_comments(text)
+    for owned in (
+        ".kind-",
+        "clipboard-type-dot",
+        "clipboard-filter-dot",
+        "clipboard-head",
+        "clipboard-pin-button",
+    ):
+        assert owned not in code, owned
+    assert not re.search(
+        r"\.clipboard-card\s*\{[^{}]*min-width\s*:\s*260px", text
+    ), "the clipboard card re-clamps the app width"
+
+
+def test_ags_clipboard_uses_panel_not_window_or_overlay() -> None:
+    """REQ-042: the clipboard is a layer-shell overlay on surface.panel."""
+    text = CLIPBOARD.read_text()
+    assert "SKIN_SURFACE_PANEL_BG" in text
+    assert "SKIN_SURFACE_WINDOW_BG" not in text
+    assert "SKIN_SURFACE_OVERLAY_BG" not in text
+    for selector in (
+        ".clipboard-full",
+        ".clipboard-compact",
+        ".clipboard-control-bar",
+        ".clipboard-pins-panel",
+    ):
+        assert selector in text, selector
+
+
+def test_ags_clipboard_roles_follow_each_skins_geometry() -> None:
+    """REQ-042: panel/card/control/pill radii come from the active skin."""
+    text = CLIPBOARD.read_text()
+    for name in MANIFEST_NAMES:
+        css = render(text, name, "dark")
+        tokens = resolved(name)
+        panel = tokens["surface"]["panel"]
+        card = tokens["surface"]["card"]
+        control = tokens["surface"]["control"]
+        pill = tokens["surface"]["pill"]
+        for selector in (
+            ".clipboard-full",
+            ".clipboard-compact",
+            ".clipboard-control-bar",
+            ".clipboard-pins-panel",
+        ):
+            rule = _rule(css, selector)
+            assert f"background-color: {panel['bg']};" in rule, (name, selector)
+            assert f"border-radius: {panel['radius']}px;" in rule, (
+                name,
+                selector,
+            )
+        for selector in (
+            ".clipboard-card",
+            ".clipboard-stage-card",
+            ".clipboard-peek-card",
+            ".clipboard-pin-card",
+        ):
+            rule = _rule(css, selector)
+            assert f"background-color: {card['bg']};" in rule, (name, selector)
+            assert f"border-radius: {card['radius']}px;" in rule, (
+                name,
+                selector,
+            )
+        for selector in (
+            ".clipboard-chip",
+            ".clipboard-pins-pill",
+            ".clipboard-nav-arrow",
+            ".clipboard-strip-arrow",
+        ):
+            rule = _rule(css, selector)
+            assert f"border-radius: {pill['radius']}px;" in rule, (
+                name,
+                selector,
+            )
+        for selector in (
+            ".clipboard-gear",
+            ".clipboard-bar-button",
+            ".clipboard-open-chip",
+        ):
+            rule = _rule(css, selector)
+            assert f"border-radius: {control['radius']}px;" in rule, (
+                name,
+                selector,
+            )
+
+
+def test_ags_clipboard_settings_are_in_page_not_a_popover() -> None:
+    """REQ-042: settings use the in-page panel + catcher, never popover nodes."""
+    text = CLIPBOARD.read_text()
+    code = validate_skins._strip_comments(text)
+    assert ".clipboard-settings {" in code
+    assert ".clipboard-settings-catcher {" in code
+    assert "popover" not in code.lower()
+    assert "> contents" not in code
+    glass = render(text, "glass", "dark")
+    tokens = resolved("glass")
+    card = tokens["surface"]["card"]
+    catcher = _rule(glass, ".clipboard-settings-catcher")
+    settings = _rule(glass, ".clipboard-settings")
+    assert "background-color: transparent;" in catcher, catcher
+    assert f"background-color: {card['bg']};" in settings, settings
+    assert f"border-radius: {card['radius']}px;" in settings, settings
 
 
 @pytest.mark.parametrize("target", sorted(APP_TEMPLATES))

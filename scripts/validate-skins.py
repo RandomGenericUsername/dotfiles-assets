@@ -224,15 +224,16 @@ MODES = ("dark", "light")
 # role, never the dot node.
 #
 # Enforcement is staged: `ags` is the bar surface the owner reviewed (REQ-005 /
-# REQ-018 sound panel), and `ags-wallpaper-selector` is the overlay surface
-# reviewed for the REQ-005 overlay redesign. Both are enforced now. The
-# remaining six app targets are measured and reported but not failed yet,
+# REQ-018 sound panel), `ags-wallpaper-selector` is the overlay surface
+# reviewed for the REQ-005 overlay redesign, and `ags-clipboard` is the
+# card-stage/compact overlay reviewed for REQ-042. All three are enforced now.
+# The remaining five app targets are measured and reported but not failed yet,
 # because the same defect is present in their long-standing extraction (owner
 # decision 2026-11-13: migration-documented, not corpus-wide red). Extending
 # BOUNDARY_TARGETS is the gate's migration switch, not a weakening: every
 # target is checked by the same law.
 # ---------------------------------------------------------------------------
-BOUNDARY_TARGETS = ("ags", "ags-wallpaper-selector")
+BOUNDARY_TARGETS = ("ags", "ags-wallpaper-selector", "ags-clipboard")
 BOUNDARY_LAYOUT_PROPERTIES = frozenset(
     {
         "min-width",

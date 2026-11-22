@@ -527,10 +527,11 @@ colour role (or nothing), never a dot selector. The gate reports a
 `scripts/validate-skins.py` enforces this as `skin_boundary_violations()`
 (`make validate-skins`); `make test-skins` names every offending rule through
 `skins/tests/test_skin_boundary.py`. Enforcement is staged by
-`BOUNDARY_TARGETS`: the bar target (`ags`) and the wallpaper overlay target
-(`ags-wallpaper-selector`, REQ-005) are the surfaces the owner reviewed and
-fail now; the other six app targets are measured in the gate notes with the
-same law but are not failed in this slice (owner decision 2026-11-13:
+`BOUNDARY_TARGETS`: the bar target (`ags`), the wallpaper overlay target
+(`ags-wallpaper-selector`, REQ-005) and the clipboard overlay target
+(`ags-clipboard`, REQ-042) are the surfaces the owner reviewed and fail now;
+the other five app targets are measured in the gate notes with the same law
+but are not failed in this slice (owner decision 2026-11-13:
 migration-documented, not corpus-wide red). Extending the tuple is the
 migration switch. Layout tokens (`layout.<app>`) stay TSX-owned either way.
 

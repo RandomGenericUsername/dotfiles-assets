@@ -1,226 +1,199 @@
 /*
  * skins/templates/ags-clipboard.gtk.css.j2 — clipboard overlay paint.
  *
- * Extracted from ../ags-clipboard/style.css. The window root and the panel are
- * the only global surfaces: surface.panel.bg/surface.panel.border-width/border/radius/shadow/blur
- * come from the skin. Cards take surface.card.bg/surface.card.radius and the hairline width;
- * fields and action buttons take the control radius. Ink, dim ink, accent and
- * type.size-title/type.size-body are skin knobs. Everything else (head plate, kind colours,
- * index badge, body geometry, small type) is a component literal from the
- * source, expressed only as palette.v1 roles/alpha derivatives.
+ * The clipboard is a layer-shell overlay: `surface.panel` is its outer role
+ * (never `surface.window`, never the unused `surface.overlay` experiment). The
+ * app owns layout, structure and content; this sheet declares only role
+ * paint/type/ink for the app's declared surfaces plus their state variants.
  *
- * The per-kind selection colours are per-element state, not skin tokens: they
- * stay the source roles so the card keeps its type-coded outline.
+ * Paint map:
+ *   .clipboard-full / .clipboard-compact / .clipboard-control-bar
+ *   .clipboard-pins-panel / .clipboard-panel       surface.panel
+ *   .clipboard-card / .clipboard-stage-card
+ *   .clipboard-peek-card / .clipboard-pin-card     surface.card
+ *   .clipboard-pin-body / stage / peek bodies       surface.card
+ *   .clipboard-search-box / .clipboard-chip
+ *   .clipboard-pins-pill / .clipboard-nav-arrow
+ *   .clipboard-strip-arrow / .clipboard-keycap      surface.pill
+ *   .clipboard-gear / .clipboard-bar-button
+ *   .clipboard-open-chip / .clipboard-view-tab      surface.control
+ *   .clipboard-settings                             surface.card + panel shadow
  *
- * RADIUS CLIPPING: GTK has no overflow property; the app must set overflow
- * HIDDEN on the widget carrying .clipboard-card and .clipboard-panel when
- * their children can reach a corner.
+ * Type headers, type/filter dots, per-kind selected/focused rings and pin fills
+ * are app-owned content painted by per-widget providers at USER + 1. They do
+ * not appear in this template. Selected states replace the base role border;
+ * the skin supplies only the base role border.
+ *
+ * `[host]` geometry follows surface.panel/card/control/cell radii, so
+ * terminal-host tracks the compositor's rounding and border size.
  */
 window#clipboard-window {
-  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  background-color: transparent;
   color: {{SKIN_INK_INK}};
   font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
-.clipboard-panel {
+.clipboard-root {
+  background-color: transparent;
+  color: {{SKIN_INK_INK}};
+}
+
+/* Outer overlay surfaces: surface.panel, never surface.window/overlay. */
+.clipboard-panel,
+.clipboard-full,
+.clipboard-compact,
+.clipboard-control-bar,
+.clipboard-pins-panel {
   background-color: {{SKIN_SURFACE_PANEL_BG}};
   border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
   border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
   box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
   backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
-}
-
-/* Unified field: the source keeps the solid one-step-above surface. */
-.clipboard-search {
-  background-color: @surface_container;
   color: {{SKIN_INK_INK}};
-  border: none;
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}} 8px;
-  min-height: 26px;
 }
 
-.clipboard-search placeholder {
-  color: alpha({{SKIN_INK_INK}}, 0.55);
-}
-
-.clipboard-incognito {
-  min-width: 120px;
-  background-color: {{SKIN_INK_ACCENT_MUTED}};
-  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_INK_ACCENT}};
-  color: {{SKIN_INK_INK}};
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-}
-
-.clipboard-incognito:hover {
-  background-color: alpha({{SKIN_INK_ACCENT}}, 0.30);
-}
-
-.clipboard-clear {
-  min-width: 64px;
-  background-color: @error_container;
-  color: @on_error_container;
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-}
-
-.clipboard-clear:hover {
-  background-color: alpha(@error_container, 0.82);
-}
-
-.clipboard-ui-icon {
-  opacity: 0.9;
-}
-
-.clipboard-list {
-  min-height: 150px;
-}
-
-.clipboard-card {
-  min-width: 260px;
-  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+/* Cards and their bodies take surface.card paint/geometry. */
+.clipboard-card,
+.clipboard-stage-card,
+.clipboard-peek-card,
+.clipboard-pin-card {
   background-color: {{SKIN_SURFACE_CARD_BG}};
   border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  color: {{SKIN_INK_INK}};
 }
 
-.clipboard-card:hover {
+.clipboard-card:hover,
+.clipboard-stage-card:hover,
+.clipboard-peek-card:hover,
+.clipboard-pin-card:hover {
   border-color: {{SKIN_STATE_HOVER_RING}};
 }
 
-.kind-text.selected {
-  border-color: @tertiary;
-  background-color: alpha(@tertiary, 0.12);
-  box-shadow: 0 0 0 2px alpha(@tertiary, 0.6);
+.clipboard-stage-body,
+.clipboard-peek-body,
+.clipboard-pin-body {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  color: {{SKIN_INK_INK}};
 }
 
-.kind-code.selected {
-  border-color: @surface_container_lowest;
-  background-color: alpha(@surface_container_lowest, 0.12);
-  box-shadow: 0 0 0 2px alpha(@surface_container_lowest, 0.6);
+/* Search: the pill owns the box; the inner entry must not draw its own ring. */
+.clipboard-search-box {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  color: {{SKIN_INK_INK}};
 }
 
-.kind-color.selected {
-  border-color: @error;
-  background-color: alpha(@error, 0.12);
-  box-shadow: 0 0 0 2px alpha(@error, 0.6);
+.clipboard-search-box.focused {
+  border-color: {{SKIN_STATE_FOCUS_RING}};
+  box-shadow: 0 0 0 1px {{SKIN_STATE_FOCUS_RING}};
 }
 
-.kind-image.selected {
-  border-color: @error_container;
-  background-color: alpha(@error_container, 0.12);
-  box-shadow: 0 0 0 2px alpha(@error_container, 0.6);
-}
-
-.kind-link.selected {
-  border-color: @primary;
-  background-color: alpha(@primary, 0.12);
-  box-shadow: 0 0 0 2px alpha(@primary, 0.6);
-}
-
-.kind-emoji.selected {
-  border-color: @secondary;
-  background-color: alpha(@secondary, 0.12);
-  box-shadow: 0 0 0 2px alpha(@secondary, 0.6);
-}
-
-.clipboard-head {
-  min-height: 36px;
-  padding: 0 12px;
-}
-
-.clipboard-head.on-dark {
-  color: @on_surface;
-}
-
-.clipboard-head.on-light {
-  color: @on_primary;
-}
-
-.kind-text .clipboard-head {
-  background-color: @tertiary;
-}
-
-.kind-code .clipboard-head {
-  background-color: @surface_container_lowest;
-}
-
-.kind-color .clipboard-head {
-  background-color: @error;
-}
-
-.kind-image .clipboard-head {
-  background-color: @error_container;
-}
-
-.kind-link .clipboard-head {
-  background-color: @primary;
-}
-
-.kind-emoji .clipboard-head {
-  background-color: @secondary;
-}
-
-.clipboard-index {
-  min-width: 18px;
-  min-height: 18px;
-  padding: 0;
+.clipboard-search {
+  background-color: transparent;
+  border: none;
   border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-  font-size: 0.75rem;
-  font-weight: 800;
-  background-color: alpha(@surface, 0.32);
-  color: inherit;
-}
-
-.clipboard-head-label {
-  font-size: {{SKIN_TYPE_SIZE_TITLE}};
-  font-weight: 700;
-}
-
-.clipboard-time {
-  font-size: 0.7rem;
-  font-weight: 500;
-  opacity: 0.85;
-}
-
-.clipboard-body {
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
-  min-height: 122px;
-}
-
-.clipboard-text,
-.clipboard-code {
   color: {{SKIN_INK_INK}};
 }
 
-.clipboard-text {
-  font-size: {{SKIN_TYPE_SIZE_BODY}};
+.clipboard-search:focus,
+.clipboard-search:focus-within,
+.clipboard-search:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 
-.clipboard-code {
-  font-family: monospace;
-  font-size: 0.72rem;
-}
-
-.clipboard-link {
-  color: {{SKIN_INK_ACCENT}};
-}
-
-.clipboard-emoji {
-  font-size: 2rem;
-}
-
-.clipboard-thumb-wrap,
-.clipboard-swatch-wrap {
-  border-radius: 8px;
-}
-
-.clipboard-hex {
-  font-family: monospace;
-  font-size: 0.75rem;
+/* Pills: chips, view tabs, pills, arrows and keycaps. */
+.clipboard-chip,
+.clipboard-pins-pill,
+.clipboard-nav-arrow,
+.clipboard-strip-arrow,
+.clipboard-keycap {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
   color: {{SKIN_INK_INK}};
+}
+
+.clipboard-chip:hover,
+.clipboard-pins-pill:hover,
+.clipboard-nav-arrow:hover,
+.clipboard-strip-arrow:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  border-color: {{SKIN_STATE_HOVER_RING}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.clipboard-chip.selected {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  border-color: {{SKIN_STATE_FOCUS_RING}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+.clipboard-keycap {
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+/* Controls: gear, bar buttons, open chip, view tabs and segments. */
+.clipboard-gear,
+.clipboard-bar-button,
+.clipboard-open-chip,
+.clipboard-view-tab,
+.clipboard-segment-button,
+.clipboard-incognito,
+.clipboard-clear {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.clipboard-gear:hover,
+.clipboard-bar-button:hover,
+.clipboard-open-chip:hover,
+.clipboard-view-tab:hover,
+.clipboard-segment-button:hover,
+.clipboard-incognito:hover,
+.clipboard-clear:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  border-color: {{SKIN_STATE_HOVER_RING}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.clipboard-gear:focus-visible,
+.clipboard-bar-button:focus-visible,
+.clipboard-open-chip:focus-visible,
+.clipboard-view-tab:focus-visible,
+.clipboard-segment-button:focus-visible {
+  outline-color: {{SKIN_STATE_FOCUS_RING}};
+}
+
+.clipboard-view-tab.active,
+.clipboard-bar-button.is-on,
+.clipboard-segment-button.selected {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  border-color: {{SKIN_STATE_FOCUS_RING}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+}
+
+/* In-page settings panel over a transparent catcher; no popover nodes. */
+.clipboard-settings {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+  color: {{SKIN_INK_INK}};
+}
+
+.clipboard-settings-catcher {
+  background-color: transparent;
 }
 
 .clipboard-empty {
   color: {{SKIN_INK_INK_DIM}};
-  padding: {{SKIN_SURFACE_CONTROL_PADDING}};
 }
