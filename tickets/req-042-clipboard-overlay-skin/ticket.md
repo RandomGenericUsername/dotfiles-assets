@@ -108,3 +108,12 @@ make test-skins       # 209 passed, 3 skipped
 make gates-ci         # PASS (all validators + lint + hermetic)
 make lint             # compileall ok; shellcheck clean (1 script)
 ```
+
+## Closure (2026-11-22)
+
+Released as **v0.22.4** on base **v0.22.3** (not the `surface.overlay` line).
+The clipboard template is paint-only on `surface.panel`/`card`/`control`/`pill`,
+has no content/type rules, and `ags-clipboard` is enforced in
+`BOUNDARY_TARGETS`. Gates: `make gates` PASS (validate-skins, test-skins
+213 passed/3 skipped, gates-ci, lint, hermetic). Composition pin follows in
+`dotfiles-v3`.

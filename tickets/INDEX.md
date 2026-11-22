@@ -48,7 +48,7 @@
 - [req-039-nvim-appearance-loader](./req-039-nvim-appearance-loader/ticket.md) — Neovim consumes the generated skin appearance for editor chrome, palette-owned syntax stays intact | `done` | lane 2 — bounded implementation | tag `v0.22.0` | worktree `.worktrees/req-039/`, branch `ticket/req-039-nvim-appearance-loader`
 
 - [req-040-absolute-line-numbers](./req-040-absolute-line-numbers/ticket.md) — Use absolute line numbers in Neovim | `done` | lane 2 — bounded implementation | tag `v0.22.1` | worktree `.worktrees/req-040/`, branch `ticket/req-040-absolute-line-numbers`
-- [req-042-clipboard-overlay-skin](./req-042-clipboard-overlay-skin/ticket.md) — Clipboard overlay paint-only skin on `surface.panel` | `done` | lane 2 — bounded implementation | base `v0.22.3` | worktree `.worktrees/req-042/`, branch `ticket/req-042-clipboard-overlay-skin` | no tag, push, provision, or composition pin
+- [req-042-clipboard-overlay-skin](./req-042-clipboard-overlay-skin/ticket.md) — Clipboard overlay paint-only skin on `surface.panel` | `done` | lane 2 — bounded implementation | base `v0.22.3` | worktree `.worktrees/req-042/`, branch `ticket/req-042-clipboard-overlay-skin` | released v0.22.4
 
 ## Bugs
 

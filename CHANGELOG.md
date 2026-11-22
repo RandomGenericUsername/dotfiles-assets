@@ -12,7 +12,7 @@
   pin-fill rules, and no `.clipboard-card` width clamp.
 - `ags-clipboard` joins `BOUNDARY_TARGETS`; its template is enforced as
   paint-only alongside `ags` and `ags-wallpaper-selector`.
-- Base: assets `v0.22.3`. No tag, push, provision or composition-pin bump.
+- Base: assets `v0.22.3`. Released as **v0.22.4**; composition pin follows in `dotfiles-v3`.
 
 ## 0.22.3 — wallpaper look-frame radius
 
