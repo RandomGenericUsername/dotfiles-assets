@@ -793,7 +793,17 @@ window.wifi-popup {
   font-family: {{SKIN_TYPE_FONT_FAMILY}};
 }
 
-.wifi-surface,
+.wifi-surface {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  /* No skin padding here: the mock's popover chrome has no outer inset, and
+     the header/sections/footer own their 16 px inset. A role padding token
+     here added a second inset and shifted every row away from the mock. */
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+}
+
 .wifi-settings-surface {
   background-color: {{SKIN_SURFACE_PANEL_BG}};
   border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
@@ -930,8 +940,6 @@ window.wifi-popup {
   border-color: {{SKIN_INK_ACCENT}};
 }
 
-.network-widget.wifi-open {
-  background-color: {{SKIN_STATE_SELECTED_FILL}};
-  color: {{SKIN_STATE_SELECTED_INK}};
-  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
-}
+/* The bar glyph is app chrome, not a skinnable surface. The base bar rule is
+   "no button chrome"; the app owns the soft open-state plate. Painting it
+   here with state.selected.fill made the Wi-Fi icon a primary-filled block. */
