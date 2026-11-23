@@ -779,3 +779,159 @@ window.tray-popup {
   outline: 2px solid {{SKIN_STATE_FOCUS_RING}};
   outline-offset: 2px;
 }
+
+/* ── Wi-Fi popover — REQ-007 ────────────────────────────────────────────────
+   The bar-anchored Wi-Fi popover is a layer-shell surface, so its chrome is
+   `surface.panel` (never `surface.window`, never the unconsumed
+   `surface.overlay` role). Rows are cells, the Run/Join/Scan actions and the
+   password field are controls, and the footer/settings text is ink/type.
+   Widths, spacing, section separators and the connected/warn semantic signal
+   stay in `../ags-bar/style.css`: this template paints roles only. */
+
+window.wifi-popup {
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
+}
+
+.wifi-surface,
+.wifi-settings-surface {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  padding: {{SKIN_SURFACE_PANEL_PADDING}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+}
+
+.wifi-head-title,
+.wifi-hero-ssid,
+.wifi-row-name,
+.wifi-pw-title,
+.wifi-off-title,
+.wifi-empty-title,
+.wifi-settings-head,
+.wifi-foot-title,
+.wifi-settings-name {
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+}
+
+.wifi-head-sub,
+.wifi-hero-meta,
+.wifi-detail-val,
+.wifi-row-sub,
+.wifi-pw-sub,
+.wifi-off-copy,
+.wifi-empty-copy,
+.wifi-list-title,
+.wifi-settings-label,
+.wifi-settings-help,
+.wifi-settings-sub,
+.wifi-settings-foot,
+.wifi-foot-sub,
+.wifi-test-title {
+  color: {{SKIN_INK_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.wifi-detail-key,
+.wifi-list-count,
+.wifi-list-empty,
+.wifi-pw-kicker,
+.wifi-pw-label,
+.wifi-test-label,
+.wifi-test-unit,
+.wifi-test-foot,
+.wifi-foot-hint,
+.wifi-nearby-chevron {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.wifi-row {
+  background-color: {{SKIN_SURFACE_CELL_BG}};
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.wifi-row:hover {
+  background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
+}
+
+.wifi-row-action {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+}
+
+.wifi-row-action:hover {
+  border-color: {{SKIN_STATE_HOVER_RING}};
+}
+
+.wifi-gear:hover,
+.wifi-gear.is-active,
+.wifi-scan:hover,
+.wifi-nearby-toggle:hover,
+.wifi-notice-dismiss:hover,
+.wifi-foot-row:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.wifi-scan {
+  color: {{SKIN_INK_INK_DIM}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+}
+
+.wifi-nearby-chevron {
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+.wifi-pw-field {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
+
+.wifi-btn.cancel {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.wifi-btn.cancel:hover {
+  border-color: {{SKIN_STATE_HOVER_RING}};
+}
+
+.wifi-btn.join {
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_INK_ACCENT}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.wifi-run-btn,
+.wifi-run-now,
+.wifi-empty-action {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_STATE_HOVER_RING}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.wifi-run-btn:hover,
+.wifi-run-now:hover,
+.wifi-empty-action:hover {
+  border-color: {{SKIN_INK_ACCENT}};
+}
+
+.network-widget.wifi-open {
+  background-color: {{SKIN_STATE_SELECTED_FILL}};
+  color: {{SKIN_STATE_SELECTED_INK}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+}
