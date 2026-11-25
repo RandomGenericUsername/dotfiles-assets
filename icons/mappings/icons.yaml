@@ -577,8 +577,8 @@ settings-panel:
       template: settings-panel/bluetooth-signal-full/default/icon.svg
       output: settings-panel-bluetooth-signal-full.svg
       color_mappings:
-        COLOR_BACKGROUND: primary_container
-        COLOR_FOREGROUND: on_primary_container
+        COLOR_BACKGROUND: surface_container_high
+        COLOR_FOREGROUND: on_surface
     - name: bluetooth-signal-good
       template: settings-panel/bluetooth-signal-good/default/icon.svg
       output: settings-panel-bluetooth-signal-good.svg
