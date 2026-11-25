@@ -770,6 +770,19 @@ def test_ags_bluetooth_panel_is_paint_only_on_the_panel_role() -> None:
         assert "border-radius:" in declarations
     assert "box-shadow:" in surface
     assert "backdrop-filter:" in surface
+    # State paint survives the USER-priority composed provider.
+    for selector in (
+        ".bt-card.is-connected",
+        ".bt-card.is-connected.is-confirming",
+        ".bt-card.is-connected.is-busy",
+        ".bt-row.is-confirming",
+        ".bt-row.is-busy",
+    ):
+        assert selector in block, selector
+    connected = _rule(glass, ".bt-card.is-connected")
+    assert "SKIN_INK_ACCENT" not in connected  # tokens are already expanded
+    assert "background-color:" in connected
+    assert "border-color:" in connected
 
 
 CLIPBOARD = TEMPLATES / "ags-clipboard.gtk.css.j2"

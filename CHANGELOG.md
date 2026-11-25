@@ -6,9 +6,11 @@
   `surface.control` for actions and `surface.pill` for the Connected badge.
   The template adds no outer inset, height or margin: the app's header,
   sections, pinned adapter line and footer own their layout.
-- The skin supplies ink/type and role geometry only. The connected accent,
-  the scanning cue, the out-of-range dim and the danger action stay app-owned
-  semantic state (`@primary` / `@error` in the app fallback).
+- The skin supplies ink/type, role geometry and the semantic connected/busy
+  accent + confirming neutral fills so the states survive the USER-priority
+  composed provider. The app still owns the state decisions; the scanning cue,
+  out-of-range dim and danger action remain app fallback (`@primary` /
+  `@error`).
 - Base: assets `v0.22.4` plus the unreleased REQ-007 Wi-Fi candidate. Implied
   next patch: **v0.22.5**. Tag/release NOT created.
 

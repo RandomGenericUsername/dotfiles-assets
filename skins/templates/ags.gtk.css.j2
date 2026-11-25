@@ -1019,6 +1019,36 @@ window.bluetooth-popup {
   background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
 }
 
+/* Semantic state paint. The app owns the decision (connected / busy /
+   confirming / out-of-range); the skin supplies the accent and neutral fills
+   so the state survives the USER-priority composed provider. Out-of-range is
+   only an app opacity, which no base role rule here overrides. */
+.bt-card.is-connected {
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.10);
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.30);
+}
+
+.bt-card.is-connected:hover {
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.55);
+}
+
+.bt-card.is-connected.is-confirming {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border-color: {{SKIN_SURFACE_CARD_BORDER}};
+}
+
+.bt-card.is-connected.is-busy {
+  border-color: alpha({{SKIN_INK_ACCENT}}, 0.42);
+}
+
+.bt-row.is-confirming {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+}
+
+.bt-row.is-busy {
+  background-color: alpha({{SKIN_INK_ACCENT}}, 0.08);
+}
+
 .bt-pill {
   background-color: {{SKIN_SURFACE_CONTROL_BG}};
   border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
