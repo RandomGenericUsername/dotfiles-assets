@@ -80,6 +80,19 @@ APP_TEMPLATES = {
             ".audio-app-tile-fallback",
             ".audio-player-identity",
             ".audio-tray-player-identity",
+            ".bt-surface",
+            ".bt-head-title",
+            ".bt-section-label",
+            ".bt-card",
+            ".bt-row",
+            ".bt-pill",
+            ".bt-pill.accent",
+            ".bt-pill.danger",
+            ".bt-badge",
+            ".bt-nearby-toggle",
+            ".bt-adapter",
+            ".bt-foot-row",
+            ".bt-foot-icon",
         ],
         "tokens": {
             "SKIN_SURFACE_PANEL_BG",
@@ -719,6 +732,44 @@ def test_ags_icon_only_sound_controls_are_bare() -> None:
 def test_ags_removed_muted_note_selector() -> None:
     """Owner QA: the removed note has no dead selector left in the target."""
     assert ".audio-hero-note" not in TEMPLATE.read_text()
+
+
+def test_ags_bluetooth_panel_is_paint_only_on_the_panel_role() -> None:
+    """REQ-009: the Bluetooth popover is a layer-shell surface.panel overlay."""
+    text = TEMPLATE.read_text()
+    assert "Bluetooth popover — REQ-009" in text
+    block = text[text.index("Bluetooth popover — REQ-009") :]
+    assert "SKIN_SURFACE_PANEL_BG" in block
+    assert "SKIN_SURFACE_WINDOW_BG" not in block
+    assert "SKIN_SURFACE_OVERLAY_BG" not in block
+    for selector in (
+        ".bt-surface",
+        ".bt-card",
+        ".bt-row",
+        ".bt-pill",
+        ".bt-pill.accent",
+        ".bt-pill.danger",
+        ".bt-badge",
+        ".bt-adapter",
+        ".bt-foot-row",
+    ):
+        assert selector in block, selector
+    # No app layout may be re-declared: insets, heights and margins are
+    # TSX/app-CSS-owned. Radius/border-width/padding roles are the exception
+    # (padding is absent here entirely).
+    for prop in ("min-height", "min-width", "margin", "padding", "gap"):
+        assert not re.search(rf"(?m)^\s*{prop}\s*:", block), prop
+    # Role geometry follows each skin rather than a literal.
+    glass = render(text, "glass")
+    surface = _rule(glass, ".bt-surface")
+    card = _rule(glass, ".bt-card")
+    row = _rule(glass, ".bt-row")
+    pill = _rule(glass, ".bt-pill")
+    badge = _rule(glass, ".bt-badge")
+    for declarations in (surface, card, row, pill, badge):
+        assert "border-radius:" in declarations
+    assert "box-shadow:" in surface
+    assert "backdrop-filter:" in surface
 
 
 CLIPBOARD = TEMPLATES / "ags-clipboard.gtk.css.j2"

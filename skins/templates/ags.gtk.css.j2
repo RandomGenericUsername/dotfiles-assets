@@ -943,3 +943,134 @@ window.wifi-popup {
 /* The bar glyph is app chrome, not a skinnable surface. The base bar rule is
    "no button chrome"; the app owns the soft open-state plate. Painting it
    here with state.selected.fill made the Wi-Fi icon a primary-filled block. */
+
+/* ── Bluetooth popover — REQ-009 ────────────────────────────────────────────
+   The bar-anchored Bluetooth popover is a layer-shell surface, so its chrome
+   is `surface.panel` (never `surface.window`, never the unconsumed
+   `surface.overlay` role). Connected cards are cards, flat paired/nearby rows
+   are cells, actions are controls, the Connected badge is a pill, and the
+   adapter/footer text is ink/type. Widths, spacing, section separators and the
+   connected/scanning semantic signals stay in `../ags-bar/style.css`: this
+   template paints roles only and adds no outer inset (the app's sections own
+   their 16 px insets — the REQ-007 extra-inset lesson). */
+
+window.bluetooth-popup {
+  color: {{SKIN_INK_INK}};
+  font-family: {{SKIN_TYPE_FONT_FAMILY}};
+}
+
+.bt-surface {
+  background-color: {{SKIN_SURFACE_PANEL_BG}};
+  border: {{SKIN_SURFACE_PANEL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PANEL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PANEL_RADIUS}};
+  box-shadow: {{SKIN_SURFACE_PANEL_SHADOW}};
+  backdrop-filter: {{SKIN_SURFACE_PANEL_BLUR}};
+}
+
+.bt-head-title,
+.bt-dev-name,
+.bt-state-title,
+.bt-foot-title {
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_TYPE_SIZE_TITLE}};
+}
+
+.bt-head-sub,
+.bt-dev-sub,
+.bt-dev-note,
+.bt-meta-stat,
+.bt-busy-line,
+.bt-busy-meta,
+.bt-confirm-q,
+.bt-nearby-label,
+.bt-state-copy,
+.bt-empty-title {
+  color: {{SKIN_INK_INK_DIM}};
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.bt-section-label,
+.bt-nearby-count,
+.bt-scan-cue,
+.bt-adapter,
+.bt-foot-sub,
+.bt-foot-cue,
+.bt-placeholder-row,
+.bt-empty-copy,
+.bt-nearby-chevron {
+  color: alpha({{SKIN_INK_INK}}, 0.4);
+  font-size: {{SKIN_TYPE_SIZE_CAPTION}};
+}
+
+.bt-card {
+  background-color: {{SKIN_SURFACE_CARD_BG}};
+  border: {{SKIN_SURFACE_CARD_BORDER_WIDTH}} solid {{SKIN_SURFACE_CARD_BORDER}};
+  border-radius: {{SKIN_SURFACE_CARD_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.bt-row {
+  background-color: {{SKIN_SURFACE_CELL_BG}};
+  border-radius: {{SKIN_SURFACE_CELL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+}
+
+.bt-row:hover {
+  background-color: {{SKIN_SURFACE_CELL_HOVER_BG}};
+}
+
+.bt-pill {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border: {{SKIN_SURFACE_CONTROL_BORDER_WIDTH}} solid {{SKIN_SURFACE_CONTROL_BORDER}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK}};
+  font-size: {{SKIN_SURFACE_CONTROL_FONT_SIZE}};
+  font-weight: {{SKIN_SURFACE_CONTROL_FONT_WEIGHT}};
+}
+
+.bt-pill:hover {
+  border-color: {{SKIN_STATE_HOVER_RING}};
+}
+
+.bt-pill.quiet {
+  color: {{SKIN_INK_INK_DIM}};
+}
+
+/* The primary action and the Connected badge use the skin accent, the same
+   owner-approved treatment as the Wi-Fi connected state. */
+.bt-pill.accent {
+  background-color: {{SKIN_INK_ACCENT_MUTED}};
+  border-color: {{SKIN_INK_ACCENT}};
+  color: {{SKIN_INK_ACCENT}};
+}
+
+.bt-pill.danger {
+  border-color: @error;
+  color: @error;
+}
+
+.bt-badge {
+  background-color: {{SKIN_SURFACE_PILL_BG}};
+  border: {{SKIN_SURFACE_PILL_BORDER_WIDTH}} solid {{SKIN_SURFACE_PILL_BORDER}};
+  border-radius: {{SKIN_SURFACE_PILL_RADIUS}};
+  color: {{SKIN_INK_ACCENT}};
+  font-size: {{SKIN_SURFACE_PILL_FONT_SIZE}};
+}
+
+.bt-nearby-toggle,
+.bt-foot-row {
+  background-color: transparent;
+  color: {{SKIN_INK_INK}};
+}
+
+.bt-nearby-toggle:hover,
+.bt-foot-row:hover {
+  background-color: {{SKIN_STATE_HOVER_FILL}};
+  color: {{SKIN_STATE_HOVER_INK}};
+}
+
+.bt-foot-icon {
+  background-color: {{SKIN_SURFACE_CONTROL_BG}};
+  border-radius: {{SKIN_SURFACE_CONTROL_RADIUS}};
+  color: {{SKIN_INK_INK_DIM}};
+}

@@ -1,3 +1,17 @@
+## Unreleased — Bluetooth panel paint-only skin
+
+- **Bluetooth popover skin (REQ-009).** The bar-anchored Bluetooth popover is
+  painted from `surface.panel` (layer-shell overlay) plus `surface.card` for
+  connected devices, `surface.cell` for flat paired/nearby rows,
+  `surface.control` for actions and `surface.pill` for the Connected badge.
+  The template adds no outer inset, height or margin: the app's header,
+  sections, pinned adapter line and footer own their layout.
+- The skin supplies ink/type and role geometry only. The connected accent,
+  the scanning cue, the out-of-range dim and the danger action stay app-owned
+  semantic state (`@primary` / `@error` in the app fallback).
+- Base: assets `v0.22.4` plus the unreleased REQ-007 Wi-Fi candidate. Implied
+  next patch: **v0.22.5**. Tag/release NOT created.
+
 ## 0.22.4 — clipboard overlay paint-only skin
 
 - **Clipboard overlay skin (REQ-042).** `ags-clipboard` is painted from the
