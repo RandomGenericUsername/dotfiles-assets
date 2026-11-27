@@ -1,3 +1,48 @@
+## 1.0.0 — icons schema_major 2 and the canonical-art collapse
+
+- **`icons/schema.json` is `schema_major: 2`** (REQ-149 slice 3; a MAJOR tag
+  because a `schema_major` bump is a contract break even when no path moved).
+  Two typed token families replace the single `{{COLOR_*}}` vocabulary:
+  `{{COLOR_*}}` resolves to a declared role (or a `#rrggbb` literal) and
+  `{{OPACITY_*}}` to a numeric literal in `[0, 1]`; any other token name, and a
+  value outside its family's value space, is invalid.
+- **`styles` is a declared group dimension.** A variant row is one
+  `state x style` cell (`name`, `state`, `style`, `template`, `output`, its own
+  token map); `bar_mappings.states` stays the fixed state → variant table and
+  resolves to the default-style row. Several rows may name one template.
+- **`serves` is the surface dimension**: a group lists every surface it renders
+  on and the ink derives from the surface contract (`wallpaper → on_backdrop`,
+  `dark-glass`/`solid` → the on-surface family). The 12 `system-*` rows
+  (battery ×5, volume ×5, microphone ×2) retire: one row now serves the bar and
+  the dark-glass panel. A variant pin that restates an inherited value fails
+  (the redundant `ui.search`, `settings-panel.settings`/`wifi-off`/
+  `bluetooth-off` and `battery.plugged` `on_surface`/`on_backdrop` pins are
+  dropped; renders unchanged).
+- **Canonical-art collapse, measured (123 → 106 templates, 142 → 130 rows).**
+  The three panel ladders (`signal`, `wifi-signal`, `bluetooth-signal`), the
+  `default`/`rounded` network ladders and `volume/{medium,max}` each collapse to
+  one canonical template plus `OPACITY_*` params; the three byte-identical
+  duplicates (`ethernet-connected/{bold,rounded}`,
+  `settings-panel/settings` ≡ `status-bar/settings`, `wallpaper-progress` ≡
+  `ui/image`) are single-sourced and both rows re-pointed. Geometry-identical
+  art that differs per level (`bold` network, `volume/{muted,low,lowest}`,
+  battery, `repeat-once`) stays as-is.
+- **State language unchanged (owner decree):** every level state draws all
+  strips, the level dims them outside-in, `muted`/`not-connected` stay the X, and
+  no art is redesigned. The collapse preserves the dimming as parameters.
+- `scripts/validate-icons.py` implements the v2 contract and asserts
+  `schema_major 2` itself (the checker and the contract are bumped together):
+  per-family token patterns, the `0..1` value space, the surface-ink rule for
+  every rendered surface, styles/state/state-table consistency, the
+  redundant-pin rule, and the existing single-manifest/role/proposal/XML checks.
+- Byte-faithfulness evidence: `tickets/req-149-icon-schema-v2/verify-collapse.py`
+  renders all 142 pre-collapse rows and their replacements with the pinned itr
+  and proves identical geometry and effective paint under the same ink. The only
+  byte difference is the identity normalisation the value space requires (a
+  fully lit path now carries `fill-opacity="1"`; paint unchanged).
+- Deleted the stale contrast-guard comments in `icons.yaml` (the runtime
+  `icon_contrast.py` they cited no longer exists).
+
 ## 0.23.0 — layer-shell overlay skin role
 
 - Add the optional `surface.overlay` paint/geometry role (contracts v0.14.0)

@@ -8,7 +8,7 @@ created this repository.
 **Workspace.** The corpus is developed beside its consumers under `~/Development/dotfiles/`. The
 canonical ownership/pin map is
 [`../dotfiles-v3/docs/WORKSPACE.md`](../dotfiles-v3/docs/WORKSPACE.md). This repo's release tag is
-`v0.19.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
+`v1.0.0`; the composition's pin is bumped in its own commit after this repository's gates are green.
 
 ```text
 icons/       templates/  (one directory per icon group)      mappings/  (group -> color, + defaults)
@@ -23,7 +23,7 @@ skins/       v2 Appearance manifests + CSS targets (<configDir>.gtk.css.j2) + no
 says what the corpus *is*; it deliberately names no destination and no path outside this
 repository — that map belongs to whoever deploys the corpus.
 
-**Status: all six classes are populated.** `icons/` holds 117 SVG templates in 12 template
+**Status: all six classes are populated.** `icons/` holds 106 SVG templates in 13 template
 directories plus one group map and its vocabulary; `content/` holds the unmodified wallpaper archive
 and the authored btop-theme class (empty today); `configs/` holds 25 deployment-fixed config files in
 six tool directories — the compositor, editor, prompt and wlogout layout (one file,
@@ -108,12 +108,20 @@ A published tag is **never moved or deleted**; a fix ships as a new tag. A consu
 
 ## Contracts
 
-- `icons/schema.json` — `schema_major: 1`; group → `color_mappings` →
-  `variants[{name, template, output}]`, where `template` is relative to the group's template root
-  (`icons/templates/<template_dir>`, `template_dir` defaulting to `"."`); the `{{COLOR_*}}`
-  placeholder vocabulary and merge order. `make validate-icons` enforces it against the corpus:
-  every mapping template resolves, every used placeholder is declared, every SVG parses, and no
-  second group-map file exists beside `icons.yaml`.
+- `icons/schema.json` — `schema_major: 2`; two typed token families (`{{COLOR_*}}` →
+  a declared role or `#rrggbb`; `{{OPACITY_*}}` → a numeric literal `0..1`), group →
+  `surface`/`serves`/`styles` → `color_mappings` →
+  `variants[{name, state, style, template, output}]`, where `template` is relative to
+  the group's template root (`icons/templates/<template_dir>`, `template_dir`
+  defaulting to `"."`) and several rows may share one canonical drawing; `serves` is
+  the surface dimension that replaces the retired `system-*` rows, `styles` the
+  declared state×style axis, `bar_mappings.states` the fixed state→variant table, and
+  the surface-ink rule (`wallpaper → on_backdrop`, `dark-glass`/`solid` → the
+  on-surface family) is the contract. `make validate-icons` enforces it against the
+  corpus: every mapping template resolves, every used token is declared and typed,
+  every opacity is in `[0,1]`, every rendered surface satisfies the ink rule, every
+  `(state, style)` agrees with the state table, no variant pin restates an inherited
+  value, every SVG parses, and no second group-map file exists beside `icons.yaml`.
 - `templates/<group>/<name>.vars.schema.json` — one contract per template: JSON Schema for the
   render context plus `schema_major`, `template` and `optional`, closed with
   `additionalProperties: false`. `required` equals the names the template body reads (in `{{ }}`
@@ -168,7 +176,7 @@ Every verb is anchored on the repository root, so `make -C <clone> gates` works 
 ```bash
 make help             # the verbs below
 make validate         # catalog <-> class dirs, schema JSON, and the generated-artifact absence check
-make validate-icons   # mapping templates resolve, {{COLOR_*}} tokens declared, every SVG parses
+make validate-icons   # mapping templates resolve, COLOR_*/OPACITY_* tokens declared and typed, surfaces/styles consistent, every SVG parses
 make validate-content # the tarball holds a top-level default.png; every *.theme is non-empty
 make validate-templates # one vars schema per *.j2/*.tpl; the schema equals the body it describes
 make validate-configs # deployment-fixed configs; one reviewed render token; wlogout Logout = uwsm stop; rofi appearance imported last

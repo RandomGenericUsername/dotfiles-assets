@@ -19,7 +19,7 @@
 
 catalog: 1
 repo: dotfiles-assets
-tag: v0.19.0
+tag: v1.0.0
 
 classes:
   icons:
@@ -29,8 +29,8 @@ classes:
       - mappings
       - tests
     schema: icons/schema.json
-    schema_major: 1
-    contents: 123 SVGs in 13 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml); a declared role vocabulary (vocabulary.json, 50 Material roles + on_backdrop), the reviewed role proposal (ROLE-MIGRATION.md) and the icon corpus tests
+    schema_major: 2
+    contents: "106 SVGs in 13 template directories; one group map (icons.yaml) plus the group-independent vocabulary (defaults.yaml); schema_major 2's two typed token families (COLOR_* -> declared role or #rrggbb, OPACITY_* -> numeric 0..1), the group surface/serves dimension that replaces the 12 retired system-* rows, the declared styles axis, and 130 variant rows (canonical-art collapse — one template per panel/network/volume ladder plus three single-sourced byte-identical pairs); a declared role vocabulary (vocabulary.json, 50 Material roles + on_backdrop), the reviewed role proposal (ROLE-MIGRATION.md) and the icon corpus tests"
   templates:
     dir: templates
     subdirs:
