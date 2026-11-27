@@ -1,8 +1,8 @@
 {
-  "$comment": "The icons contract. This file is data, not a JSON Schema meta-schema: it states the shape the consumer relies on and the placeholder vocabulary rules, so a mapping entry and a template can be checked against a written contract instead of against a renderer's behaviour. `schema_major` is the consumer-compatibility version (spine AD-12) and moves independently of the repo tag; raising it requires a MAJOR tag.",
-  "schema_major": 1,
+  "$comment": "The icons contract. This file is data, not a JSON Schema meta-schema: it states the shape the consumer relies on and the token/value rules, so a mapping entry and a template can be checked against a written contract instead of against a renderer's behaviour. `schema_major` is the consumer-compatibility version (spine AD-12) and moves independently of the repo tag; raising it requires a MAJOR tag, and the validator that implements a version is bumped in the same commit as this file.",
+  "schema_major": 2,
   "contract": "icons",
-  "status": "populated (v0.2.0)",
+  "status": "populated (schema_major 2, v1.0.0)",
   "paths": {
     "templates_root": "icons/templates",
     "mappings_root": "icons/mappings",
@@ -11,31 +11,62 @@
     "role_proposal": "icons/mappings/ROLE-MIGRATION.md",
     "note": "Both roots are repo-local and relative to this repository's root. This file names no deployment path and no consumer destination (spine AD-2/AD-6). `vocabulary.json` is the role vocabulary of record and `ROLE-MIGRATION.md` the reviewed role proposal; neither is a mapping file and neither is loaded by a consumer."
   },
+  "token_families": {
+    "description": "The ONLY two placeholder families. A token's family is carried by its name, and its value space follows from the family: a colour role is NOT a number and an opacity is NOT a role. Any other token name is invalid, declared or used.",
+    "families": {
+      "COLOR": {
+        "name_pattern": "^COLOR_[A-Z0-9_]+$",
+        "value": "a role declared in `mappings/vocabulary.json`, or a `#rrggbb` literal",
+        "value_pattern": "^#[0-9a-fA-F]{6}$",
+        "note": "The `#rrggbb` literal is the documented exception for brand art that must not be recoloured; it is not a palette role and the producer never resolves it."
+      },
+      "OPACITY": {
+        "name_pattern": "^OPACITY_[A-Z0-9_]+$",
+        "value": "a numeric literal in [0, 1] (1 = fully present, 0 = removed)",
+        "value_grammar": "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$",
+        "note": "Emitted verbatim after the range check. `nan`, `inf`, `1_0`, a role name and anything outside 0..1 are rejected. An opacity value is a rendering parameter, never a state language of its own: adjacent bar states must differ by shape (the corpus's bluetooth rule), and the level families below dim strips that are always drawn."
+      }
+    },
+    "syntax": "{{NAME}} — exactly two opening braces, the family-prefixed name, two closing braces, no whitespace inside, nothing else on the token",
+    "rules": [
+      "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings` (or a variant override), or in `icons/mappings/defaults.yaml` (the group-independent COLOR_* vocabulary).",
+      "Every COLOR_* value MUST be a role declared in `icons/mappings/vocabulary.json` or a `#rrggbb` literal. `colorN` carrier indices and the producer aliases (`foreground`, `accent`, `accent-muted`, `warning`) are rejected: their meaning is positional or re-mapped, not semantic. The one exception is `phase_a_legacy_baseline` in `vocabulary.json`, an exact, shrink-only list of the pre-migration values that Phase B must empty.",
+      "Every OPACITY_* value MUST be a numeric literal in [0, 1]. Assigning it a role, or assigning a number to a COLOR_* token, is a family violation, not a typo.",
+      "Declaring a token no SVG uses is allowed (forward compatibility); `make validate-icons` reports it, it does not fail the tag.",
+      "No defaults, filters, conditionals or nesting inside a token: `{{COLOR_BG|#000}}`, `{{ COLOR_BG }}` and `{{{{...}}}}` are invalid.",
+      "A token is substituted by the CONSUMER at render time. No rendered SVG, no generated icon index and no palette state is ever committed here (spine AD-11), so a preview of this corpus lives in the consumer, not in this repository.",
+      "`output` values and mapping keys may not contain `{{`: a placeholder in a destination is not renderable by any consumer."
+    ]
+  },
   "shape": {
     "description": "`icons/mappings/icons.yaml` is THE group map: a YAML document whose TOP-LEVEL KEYS are icon groups. A group is a logical name, not necessarily a directory: `battery`, `network` and `wifi-*` all live under `status-bar/`, addressed by their variant `template` paths. The only directory knob is the group's optional `template_dir`. `icons/mappings/defaults.yaml` is the exception: its top-level key is `defaults`, the group-independent COLOR_* vocabulary, not a group. No other mapping file may exist beside these two.",
     "mapping_file": {
       "root": "mapping of group name -> group entry",
       "consumer": "exactly one group map, `icons.yaml`, plus the vocabulary `defaults.yaml`. Per-group splitting is deliberately not supported: a consumer loads ONE mapping file, so a second group map would be a second source of truth that drifts. `make validate-icons` fails if any other `*.yaml` appears under `mappings/`. The six legacy per-concern files (battery, email-client, network, power-menu, wallpaper-selector, wlogout) were retired in v0.2.0 because they duplicated groups owned by `icons.yaml` and nothing loaded them.",
-      "companions": "`vocabulary.json` (the declared role vocabulary) and `ROLE-MIGRATION.md` (the reviewed group/variant -> role proposal) live beside the two mapping files. They are contracts and documentation, not mappings: the consumer loads neither, they carry no templates, and the `*.yaml` single-manifest rule above is unchanged. `make validate-icons` reads `vocabulary.json` as the authority for mapping values and `ROLE-MIGRATION.md` as the coverage record."
+      "companions": "`vocabulary.json` (the declared role vocabulary) and `ROLE-MIGRATION.md` (the reviewed group/variant -> role proposal) live beside the two mapping files. They are contracts and documentation, not mappings: the consumer loads neither, they carry no templates, and the `*.yaml` single-manifest rule above is unchanged. `make validate-icons` reads `vocabulary.json` as the authority for COLOR_* values and `ROLE-MIGRATION.md` as the coverage record."
     },
     "group_entry": {
-      "id": "string \u2014 the group name; the key itself, unique within its mapping file",
-      "template_dir": "string \u2014 OPTIONAL directory under `templates_root` that variant templates are joined under; defaults to \".\" (the templates root itself). Must stay inside `templates_root`",
-      "surface": "string \u2014 OPTIONAL surface class the group's glyphs are composed for: `wallpaper`, `dark-glass` or `solid`. Inherited by every variant; a variant that paints its own container or sits on a different layer overrides it. Optional in the role-migration Phase A (declaring a surface is a render input, so Phase B declares the values); once declared, the validator holds `surface: wallpaper` variants to `on_backdrop` ink",
-      "color_mappings": "object \u2014 OPTIONAL COLOR_NAME -> value. The value MUST be a declared role in `mappings/vocabulary.json`; `colorN` carrier indices and producer aliases (`foreground`, `accent`, `accent-muted`, `warning`) are rejected, because their meaning is positional, not semantic",
-      "variants": "array \u2014 REQUIRED, at least one; see variant_entry",
-      "consumer_metadata": "`bar_mappings`, `output_dir` and `unsafe` are passed through by the consumer (AGS state -> variant tables, per-group output directory, unsafe-render flag). This repository ships them as data and `make validate-icons` does not interpret them."
+      "id": "string — the group name; the key itself, unique within its mapping file",
+      "template_dir": "string — OPTIONAL directory under `templates_root` that variant templates are joined under; defaults to \".\" (the templates root itself). Must stay inside `templates_root`",
+      "surface": "string — REQUIRED; the group's default surface class: `wallpaper`, `dark-glass` or `solid`. It is the surface a bare render uses and the one whose ink the group's own `COLOR_FOREGROUND` pin must satisfy",
+      "serves": "array — OPTIONAL list of the surfaces this group serves, each one of the three classes, unique, and containing `surface`. Defaults to `[surface]`. A group that renders on more than one surface lists every surface here instead of shipping `system-*` duplicate rows; the non-default surfaces take their ink from the surface-ink contract at render time. The surface dimension is a render input: `make validate-icons` checks every surface a row actually renders on",
+      "styles": "array — OPTIONAL declared style dimension (e.g. `[default, bold, rounded]`). When present it must be unique, non-empty, and every variant MUST declare a `style` from it; when absent the group has the single implicit style `default`. A style redraws the whole state set; it never becomes part of the state vocabulary (`bar_mappings.states` stays the state -> variant table)",
+      "color_mappings": "object — OPTIONAL token map for the group: COLOR_NAME -> declared role (or `#rrggbb`), and OPACITY_NAME -> numeric literal. Group-scoped values are the defaults every variant inherits; the map is the same map the renderer merges, so both families live side by side and their names disambiguate them",
+      "variants": "array — REQUIRED, at least one; see variant_entry",
+      "consumer_metadata": "`bar_mappings`, `output_dir` and `unsafe` are passed through by the consumer (AGS state -> variant tables, per-group output directory, unsafe-render flag). `bar_mappings.states` is the fixed state -> variant resolution table: `make validate-icons` requires every value to name a variant in the same group, but never treats it as an editing surface. This repository ships the rest as data and does not interpret it"
     },
     "variant_entry": {
-      "name": "string \u2014 REQUIRED, unique within the group; the selector a consumer asks for",
-      "template": "string \u2014 REQUIRED path to the SVG RELATIVE TO THE GROUP'S TEMPLATE ROOT (`templates_root/<template_dir>`, where `template_dir` defaults to \".\"): forward slashes, no leading `/`, no `..`. The consumer joins it under that root \u2014 not under the mapping file's directory",
-      "output": "string \u2014 REQUIRED; the rendered file name the consumer writes. A bare file name: no path separators, no `..`, no placeholder",
-      "surface": "string \u2014 OPTIONAL per-variant override of the group's `surface`, same enum. Use it when the variant is not on the group's layer: a variant that paints its own filled container (`solid`), or a `system-*` copy that serves a panel instead of the bar (`dark-glass` vs `wallpaper`)",
-      "color_mappings": "object \u2014 OPTIONAL per-variant override, highest priority in the merge"
+      "name": "string — REQUIRED, unique within the group; the frozen selector a consumer asks for and the value side of `bar_mappings.states`",
+      "state": "string — OPTIONAL state key this row draws (`wifi-full`, `low`, ...). Defaults to `name`. Required when the group declares `styles`, because a row is then one cell of the `state x style` grid. Unique per `(state, style)` pair within the group",
+      "style": "string — OPTIONAL style this row draws, one of the group's `styles`. Required when the group declares `styles`; absent means the implicit `default` style. It is a redraw axis, not a state",
+      "template": "string — REQUIRED path to the SVG RELATIVE TO THE GROUP'S TEMPLATE ROOT (`templates_root/<template_dir>`, where `template_dir` defaults to \".\"): forward slashes, no leading `/`, no `..`. The consumer joins it under that root — not under the mapping file's directory. Several variants may name the SAME template (one canonical drawing rendered with different params), including a row re-exported from another group, as `capture-tool/mic` re-exports the bar microphone art",
+      "output": "string — REQUIRED; the rendered file name stem the consumer writes. A bare file name: no path separators, no `..`, no placeholder. It stays explicit and unchanged by this contract: for a group serving more than one surface the runtime derives `<stem>@<surface>.svg` mechanically from this stem; that artifact-naming rule is a runtime/platform concern, not a row in this repository",
+      "surface": "string — OPTIONAL per-variant override of the effective surface, one of the group's `serves` values. Use it when the variant is not on the group's default layer: a variant that paints its own filled container (`solid`)",
+      "color_mappings": "object — OPTIONAL per-variant token map, highest priority in the merge. It carries the row's params (`OPACITY_*`) and the variant role pins that are GENUINE TINTS (accent-on, caution, on-container for self-painted art). A pin that resolves to the same value the variant already inherits is dead data and fails the gate"
     },
     "merge_order": {
       "lowest_to_highest": [
-        "icons/mappings/defaults.yaml (vocabulary defaults)",
+        "icons/mappings/defaults.yaml (COLOR_* vocabulary defaults)",
         "the group's color_mappings",
         "the variant's color_mappings"
       ]
@@ -43,22 +74,42 @@
     "example": {
       "example-group": {
         "surface": "dark-glass",
+        "serves": [
+          "dark-glass"
+        ],
+        "styles": [
+          "default",
+          "bold"
+        ],
         "color_mappings": {
-          "COLOR_BG": "surface",
-          "COLOR_FG": "on_surface"
+          "COLOR_FOREGROUND": "on_surface",
+          "COLOR_ACCENT": "primary",
+          "OPACITY_STEP_1": "1"
         },
         "variants": [
           {
-            "name": "default",
-            "template": "example-group/base.svg",
-            "output": "example-group.svg"
+            "name": "example-default",
+            "state": "example",
+            "style": "default",
+            "template": "example-group/default/icon.svg",
+            "output": "example-default.svg"
+          },
+          {
+            "name": "example-bold",
+            "state": "example",
+            "style": "bold",
+            "template": "example-group/bold/icon.svg",
+            "output": "example-bold.svg",
+            "color_mappings": {
+              "OPACITY_STEP_1": "0.5"
+            }
           }
         ]
       }
     }
   },
   "surface_classes": {
-    "description": "The composition layer a glyph is drawn for. It is the missing datum behind the legacy `colorN` pins: the same carrier index is fine on a panel and wrong over the wallpaper. A group declares its surface; a variant overrides it when it is not on the group's layer (a `system-*` panel copy, or a variant that paints its own container). Declaring a surface is a render input, so the role-migration Phase A adds the field and only Phase B sets the values.",
+    "description": "The composition layer a glyph is drawn for. It is the missing datum behind the legacy `colorN` pins: the same carrier index is fine on a panel and wrong over the wallpaper. A group declares its default surface and the surfaces it serves; a variant overrides the surface only when it is not on the group's default layer. The surface is a render dimension, never a variant naming convention — that is what retires the `system-*` rows.",
     "enum": [
       "wallpaper",
       "dark-glass",
@@ -66,33 +117,42 @@
     ],
     "contract": {
       "wallpaper": "Composited directly over the wallpaper (floating bar glyph, full-screen wallpaper button). Glyph ink MUST resolve to `on_backdrop`. Decorative accents may use `primary`/`tertiary`/`error`, but the shape must still carry the state when they miss contrast.",
-      "dark-glass": "On a translucent sheet, `alpha(surface*, ~0.9)` over a transparent window. Use the on-surface / on-container family for that sheet (`on_surface`, `on_surface_variant`, `on_primary`, `on_primary_container`). `on_backdrop` is wrong here: no wallpaper band is behind the glyph.",
+      "dark-glass": "On a translucent sheet, `alpha(surface*, ~0.9)` over a transparent window. Use the on-surface / on-container family for that sheet (`on_surface`, `on_surface_variant`, `on_primary`, `on_primary_container`, ...). `on_backdrop` is wrong here: no wallpaper band is behind the glyph.",
       "solid": "On an opaque surface, field, or a container the variant paints itself. Use the on-surface / on-container family for that surface. `on_backdrop` is wrong here for the same reason as dark-glass."
     },
-    "phase_b_rule": "Once a variant declares `surface: wallpaper`, every `COLOR_FOREGROUND` / `COLOR_JOIN` it resolves to MUST be `on_backdrop`. The validator enforces this only for declared surfaces, so the rule is vacuous in Phase A and live in Phase B."
+    "surface_ink_rule": "For every surface a row renders on (its own `surface`, else the group's default): if the row does not pin the ink token, the inherited ink must satisfy that surface's contract (`wallpaper` -> `on_backdrop`, `dark-glass`/`solid` -> a role in the on-surface family). A variant-level ink pin is an explicit tint and is not re-derived; it must still sit on a declared surface. A group's own `COLOR_FOREGROUND` pin is checked against the group's default `surface`."
   },
   "placeholder_vocabulary": {
     "description": "Placeholders are the only variable part of a template. The vocabulary is a contract: renaming a token breaks every consumer that supplies it, so a rename is a MAJOR change even though no file moved.",
-    "syntax": "{{COLOR_NAME}} \u2014 exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
-    "name_pattern": "^COLOR_[A-Z0-9_]+$",
+    "syntax": "{{NAME}} — exactly two opening braces, the name, two closing braces, no whitespace inside, nothing else on the token",
+    "name_patterns": [
+      "^COLOR_[A-Z0-9_]+$",
+      "^OPACITY_[A-Z0-9_]+$"
+    ],
     "rules": [
       "Every token used by any .svg under a group's template directory MUST be declared in that group's `color_mappings` (or a variant override), or in `icons/mappings/defaults.yaml` (the group-independent vocabulary).",
-      "Every mapping VALUE (defaults, group or variant) MUST be a role declared in `icons/mappings/vocabulary.json`. `colorN` carrier indices and the producer aliases (`foreground`, `accent`, `accent-muted`, `warning`) are rejected: their meaning is positional or re-mapped, not semantic. The one exception is `phase_a_legacy_baseline` in `vocabulary.json`, an exact, shrink-only list of the pre-migration values that Phase B must empty.",
+      "Every mapping VALUE follows its token's family: COLOR_* is a declared role or `#rrggbb`, OPACITY_* is a numeric literal in [0, 1].",
       "Declaring a token no SVG uses is allowed (forward compatibility); `make validate-icons` reports it, it does not fail the tag.",
-      "No defaults, filters, conditionals or nesting inside a token: `{{COLOR_BG|#000}}`, `{{ COLOR_BG }}` and `{{{{...}}}}` are invalid.",
-      "A token is substituted by the CONSUMER at render time. No rendered SVG, no generated icon index and no palette state is ever committed here (spine AD-11), so a preview of this corpus lives in the consumer, not in this repository.",
-      "`output` values and mapping keys may not contain `{{`: a placeholder in a destination is not renderable by any consumer."
+      "No defaults, filters, conditionals or nesting inside a token.",
+      "A token is substituted by the CONSUMER at render time. No rendered SVG, no generated icon index and no palette state is ever committed here (spine AD-11).",
+      "`output` values and mapping keys may not contain `{{`."
     ]
   },
   "validation": {
     "make validate": "The envelope: valid JSON, integer `schema_major`, and the `shape` / `placeholder_vocabulary` sections present (scripts/validate-catalog.py).",
     "make validate-icons": [
       "`mappings/` holds exactly one group map (`icons.yaml`) plus the vocabulary (`defaults.yaml`); any other `*.yaml` fails, because the consumer loads one file and a split is a second source of truth",
-      "every `template:` in `icons.yaml` resolves to a real file under `icons/templates/<template_dir>/`",
-      "every `{{COLOR_*}}` token used by a template is declared in `defaults.yaml` or that group's / variant's `color_mappings`",
-      "every mapping VALUE is a role declared in `mappings/vocabulary.json`; `colorN` and aliases fail unless they are an exact entry in `phase_a_legacy_baseline`, and a baseline entry that no longer matches a live pin also fails (shrink-only ratchet)",
+      "`schema_major` is exactly 2 — the checker implements one version and asserts it, so the contract file and the checker are bumped together",
+      "every `template:` in `icons.yaml` resolves to a real file under `icons/templates/<template_dir>/` (several variants may share one template)",
+      "every token used by a template is declared in `defaults.yaml` or that group's / variant's `color_mappings`, and the token name is a legal `COLOR_*` / `OPACITY_*` name",
+      "every COLOR_* value is a role declared in `mappings/vocabulary.json` or a `#rrggbb` literal; `colorN` and aliases fail unless they are an exact entry in `phase_a_legacy_baseline`, and a baseline entry that no longer matches a live pin also fails (shrink-only ratchet)",
+      "every OPACITY_* value is a numeric literal in [0, 1]; a role as an opacity, or a number as a colour, fails the family check",
       "`mappings/vocabulary.json` declares 50 Material roles plus `on_backdrop`, unique, with its source note and the three surface classes",
-      "any `surface` declared at group or variant level is one of `wallpaper | dark-glass | solid`, and a declared `surface: wallpaper` variant's ink resolves to `on_backdrop`",
+      "every group declares a valid `surface`, every `serves` entry is a valid surface and `serves` contains `surface`, and every variant `surface` is one the group serves",
+      "the surface-ink rule holds for every row: wallpaper -> `on_backdrop`, dark-glass/solid -> the on-surface family when the row does not pin the ink (a pin is a tint)",
+      "`styles` is declared per group, unique, and every variant of a styled group declares a `style` from it; `(state, style)` is unique within the group",
+      "every `bar_mappings.states` value names a variant in the same group, and a variant's declared `state` resolves through the table on the default style",
+      "a variant pin that resolves to the same value it already inherits is dead data and fails (pins are tints, not restatements)",
       "`mappings/ROLE-MIGRATION.md` names every group and variant in `icons.yaml` (the reviewed proposal cannot silently miss new art)",
       "every SVG under `icons/templates/` parses as XML",
       "every `variant.name` is unique within its group",
@@ -101,9 +161,9 @@
     "reported_not_failed": [
       "a token declared for a group but unused by its templates (forward compatibility)",
       "a template no variant references",
-      "a group or variant with no `surface` declared yet (Phase A: the field is optional; Phase B declares the values)"
+      "a `(state, style)` grid cell a styled group does not draw (a consumer blanks loudly rather than inventing art)"
     ],
     "make validate-content": "The content class: `content/wallpapers/wallpapers.tar.gz` holds a top-level `default.png`, every `*.theme` is non-empty, and no archive member escapes the archive root.",
-    "new_work": "No schema file existed anywhere in the dotfiles corpus before this repository. The shape above is written from what the consumer's loader already expects (icon_templates_renderer `YamlIconConfigLoader` + `PathResolutionService`), and since v0.2.0 it is enforced against the shipped corpus by `make validate-icons`, not only stated."
+    "new_work": "schema_major 2 lands with the canonical-art collapse (REQ-149 slice 3): 123 -> 106 templates, 142 -> 130 rows. The 12 `system-*` rows retire because the surface dimension replaces them; the 3 panel ladders, the network ladders in the `default`/`rounded` styles and `volume/{medium,max}` collapse to one canonical template each plus `OPACITY_*` params; three byte-identical duplicates are single-sourced. Every collapsed/deleted/re-pointed variant was rendered before and after with the pinned renderer and holds its geometry and effective paint; the harness is `tickets/req-149-icon-schema-v2/verify-collapse.py`."
   }
 }

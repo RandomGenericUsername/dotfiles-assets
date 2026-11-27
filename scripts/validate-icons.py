@@ -1,55 +1,65 @@
 #!/usr/bin/env python3
-"""validate-icons -- the icons corpus: mappings resolve, tokens are declared, SVGs parse.
+"""validate-icons -- the icons corpus: mappings resolve, tokens are typed, SVGs parse.
 
-WHAT THIS GATE PROVES, and why each part is separate:
+WHAT THIS GATE PROVES, and why each part is separate (schema_major 2, REQ-149):
 
   1. EVERY MAPPING TEMPLATE RESOLVES. Each `variants[].template` in the ONE
      group-map file (`icons/mappings/icons.yaml`) names a real file under
      `icons/templates/`, joined EXACTLY as the consumer joins it: relative to the
      group's template root (`templates/<template_dir>`, default `.`), not to the
      mapping file's directory. A stale entry here is otherwise discovered at render
-     time on a user's machine, never at release time.
+     time on a user's machine, never at release time. Several variants MAY share
+     one template -- that is the canonical-art collapse (one drawing, params per
+     row), not a missing file.
 
-  2. EVERY PLACEHOLDER IS DECLARED. Each `{{COLOR_*}}` token used by a template
-     the mapping renders must be declared for that group: in `mappings/defaults.yaml`
-     (the group-independent vocabulary) or in that group's `color_mappings` /
-     variant `color_mappings`. This mirrors the consumer's merge order
-     (defaults < group < variant), so an undeclared token is a token no palette
-     can satisfy.
+  2. EVERY PLACEHOLDER IS DECLARED, AND TYPED. Each token used by a template the
+     mapping renders must be declared for that group: in `mappings/defaults.yaml`
+     (the group-independent COLOR_* vocabulary) or in that group's
+     `color_mappings` / variant `color_mappings`. This mirrors the consumer's merge
+     order (defaults < group < variant). Only two families exist:
+
+       - `{{COLOR_*}}` -> a role declared in `mappings/vocabulary.json`, or a
+         `#rrggbb` literal;
+       - `{{OPACITY_*}}` -> a numeric literal in [0, 1].
+
+     Any other token name is invalid, and a value outside its family's value space
+     (a role as an opacity, a number as a colour) is an error, not a typo.
 
   3. EVERY SVG IS WELL-FORMED XML. A malformed template fails the tag here, not
      in a renderer.
 
-  4. THE SMALL SHAPE RULES THE CONTRACT STATES. `variants[].name` is unique inside
-     its group, `output` is a bare file name (no path separators, no `..`, no
-     placeholder), and a `template` may not escape the templates root.
+  4. THE SHAPE RULES THE CONTRACT STATES. `variants[].name` is unique inside its
+     group; `output` is a bare file name (no path separators, no `..`, no
+     placeholder); a `template` may not escape the templates root. A group
+     declares its default `surface`, the surfaces it `serves`, and the `styles`
+     axis; a styled group's rows each declare a `style`, `(state, style)` is
+     unique, and `bar_mappings.states` values name live variants.
 
-  5. ONE MANIFEST, ONE VOCABULARY. `icons/mappings/` holds exactly `icons.yaml`
+  5. THE SURFACE-INK CONTRACT. For every surface a row renders on: wallpaper ink
+     must be `on_backdrop`; dark-glass/solid ink must be in the on-surface family
+     when the row does not pin it (a pin is a genuine tint). This is the rule that
+     retires the `system-*` duplicate rows: one row renders per surface.
+
+  6. ONE MANIFEST, ONE VOCABULARY. `icons/mappings/` holds exactly `icons.yaml`
      (the group map) and `defaults.yaml` (the COLOR_* vocabulary). A second
      `*.yaml` there is a contract violation: the consumer loads ONE mapping file,
      so a per-group split is a second source of truth that drifts by construction.
-     The six legacy per-concern files (battery, email-client, network, power-menu,
-     wallpaper-selector, wlogout) were retired in v0.2.0 for exactly that reason.
 
-  6. EVERY MAPPING VALUE IS A DECLARED ROLE. The value side of a mapping (defaults,
-     group or variant) must be a role named in `mappings/vocabulary.json` (the 50
-     Material roles + `on_backdrop`). Legacy `colorN` carrier indices and producer
-     aliases (`foreground`, `accent`, `accent-muted`, `warning`) are rejected: the
-     same index meant something different in the previous 16-colour list, which is
-     how an "accent" pin became `surface_container`. The single exception is the
-     `phase_a_legacy_baseline` in `vocabulary.json`: an exact, shrink-only list of
-     the pins a role migration has not converted yet. An entry that no longer
-     matches a live pin fails, so Phase B removals cannot leave an exemption behind
-     and a new `colorN` cannot hide behind the list.
+  7. EVERY COLOR VALUE IS A DECLARED ROLE (or a `#rrggbb` literal). Legacy `colorN`
+     carrier indices and producer aliases (`foreground`, `accent`, `accent-muted`,
+     `warning`) are rejected. The single exception is `phase_a_legacy_baseline` in
+     `vocabulary.json`: an exact, shrink-only list of pins a role migration has not
+     converted yet. An entry that no longer matches a live pin fails.
 
-  7. SURFACES AND THE ROLE PROPOSAL. A group or variant may declare
-     `surface: wallpaper | dark-glass | solid`; a declared `wallpaper` surface's
-     ink must resolve to `on_backdrop` (a wallpaper glyph cannot use a panel ink).
-     `mappings/ROLE-MIGRATION.md` must name every group and variant, so new art
-     cannot land without a reviewed role proposal.
+  8. SCHEMA AND CHECKER MOVE TOGETHER. This validator implements `schema_major 2`
+     and asserts the contract file says 2 (and repeats the same token patterns).
+     Raising the version without teaching the checker is the failure this rule
+     exists to prevent.
 
 WHAT IT REPORTS WITHOUT FAILING: a token declared for one group and unused there
-(forward compatibility is allowed) and a template no variant references.
+(forward compatibility), a template no variant references, and a `(state, style)`
+grid cell a styled group does not draw (the consumer blanks loudly instead of
+inventing art).
 
 WHY NO PyYAML. A fresh clone must pass `make gates` with no virtualenv and no
 network. The mapping files use a deliberately small YAML subset: nested mappings,
@@ -80,13 +90,21 @@ VOCABULARY = "icons/mappings/vocabulary.json"
 PROPOSAL = "icons/mappings/ROLE-MIGRATION.md"
 VOCABULARY_FILES = ("icons.yaml", "defaults.yaml")
 SURFACES = ("wallpaper", "dark-glass", "solid")
+EXPECTED_SCHEMA_MAJOR = 2
 INK_TOKENS = ("COLOR_FOREGROUND", "COLOR_JOIN")
 ROLE_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 
 TOKEN = re.compile(r"\{\{\s*([^{}]*?)\s*\}\}")
-BARE_TOKEN = re.compile(r"\{\{(COLOR_[A-Z0-9_]+)\}\}")
+STRICT_TOKEN = re.compile(r"\{\{((?:COLOR|OPACITY)_[A-Z0-9_]+)\}\}")
 COLOR_NAME = re.compile(r"^COLOR_[A-Z0-9_]+$")
+OPACITY_NAME = re.compile(r"^OPACITY_[A-Z0-9_]+$")
+HEX_LITERAL = re.compile(r"^#[0-9a-fA-F]{6}$")
+# Exactly the numeric grammar the ITR substitution accepts, so a value this gate
+# passes cannot be rejected by the renderer later.
+NUMERIC_LITERAL = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 OUTPUT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+STYLE_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
+STATE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
 class CorpusError(Exception):
@@ -95,6 +113,50 @@ class CorpusError(Exception):
 
 class YamlSubsetError(Exception):
     """A mapping file used YAML this parser deliberately refuses to guess at."""
+
+
+def token_family(token: str) -> str | None:
+    """Return "COLOR", "OPACITY", or None for a token name outside the grammar."""
+    if COLOR_NAME.match(token):
+        return "COLOR"
+    if OPACITY_NAME.match(token):
+        return "OPACITY"
+    return None
+
+
+def opacity_value(value: object) -> float | None:
+    """Parse a YAML scalar as an OPACITY value in [0, 1]; None when invalid."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        text = str(value)
+    elif isinstance(value, float):
+        text = repr(value)
+    elif isinstance(value, str):
+        text = value
+    else:
+        return None
+    if NUMERIC_LITERAL.match(text) is None:
+        return None
+    number = float(text)
+    if 0.0 <= number <= 1.0:
+        return number
+    return None
+
+
+def on_surface_family(role: object) -> bool:
+    """The dark-glass/solid ink family: on_surface/on_*_container/on_primary/..."""
+    return (
+        isinstance(role, str)
+        and role.startswith("on_")
+        and role != "on_backdrop"
+    )
+
+
+def ink_satisfies(surface: str, value: object) -> bool:
+    if surface == "wallpaper":
+        return value == "on_backdrop"
+    return on_surface_family(value)
 
 
 # --------------------------------------------------------------------------- #
@@ -170,14 +232,24 @@ def _sequence(lines, i, indent, source):
         body = text[2:].strip()
         if not body:
             raise YamlSubsetError(f"{source}:{lineno}: empty list item")
-        key, sep, rest = body.partition(":")
-        if not sep or not key.strip():
-            raise YamlSubsetError(
-                f"{source}:{lineno}: a sequence item must start with `key: value` "
-                f"(the mappings' shape); got {text!r}"
-            )
+        if body[0] in "\"'":
+            # A quoted scalar item (a `styles`/`serves` entry).
+            out.append(_scalar(body, source, lineno))
+            i += 1
+            continue
+        key, sep, rest = body.partition(": ")
+        if not sep:
+            # A plain scalar item (a `styles`/`serves` entry), e.g. `- wallpaper`.
+            out.append(_scalar(body, source, lineno))
+            i += 1
+            continue
         item: dict[str, object] = {}
         key, rest = key.strip(), rest.strip()
+        if not key:
+            raise YamlSubsetError(
+                f"{source}:{lineno}: a sequence item must be `key: value` or a scalar; "
+                f"got {text!r}"
+            )
         i += 1
         if rest:
             item[key] = _scalar(rest, source, lineno)
@@ -266,35 +338,31 @@ def load_schema(root: Path, errors: list[str]) -> None:
     if not isinstance(data, dict):
         errors.append(f"{SCHEMA}: a schema document must be a JSON object")
         return
-    if not isinstance(data.get("schema_major"), int):
+    major = data.get("schema_major")
+    if not isinstance(major, int):
         errors.append(f"{SCHEMA}: missing an integer `schema_major` (spine AD-12)")
+    elif major != EXPECTED_SCHEMA_MAJOR:
+        errors.append(
+            f"{SCHEMA}: `schema_major` is {major}; this validator implements "
+            f"{EXPECTED_SCHEMA_MAJOR}. The schema and its checker are bumped in the "
+            f"same commit -- teach the checker, then raise the contract (or fix one)"
+        )
     paths = data.get("paths")
     if not isinstance(paths, dict):
         errors.append(f"{SCHEMA}: `paths` must be a mapping")
         return
-    if paths.get("templates_root") != TEMPLATES:
-        errors.append(
-            f"{SCHEMA}: paths.templates_root is {paths.get('templates_root')!r}; this "
-            f"validator joins every template under {TEMPLATES!r} -- keep the contract and "
-            f"the checker in step"
-        )
-    if paths.get("mappings_root") != MAPPINGS:
-        errors.append(
-            f"{SCHEMA}: paths.mappings_root is {paths.get('mappings_root')!r}; this "
-            f"validator reads {MAPPINGS!r}"
-        )
-    if paths.get("defaults") != DEFAULTS:
-        errors.append(f"{SCHEMA}: paths.defaults is {paths.get('defaults')!r}; expected {DEFAULTS!r}")
-    if paths.get("vocabulary") != VOCABULARY:
-        errors.append(
-            f"{SCHEMA}: paths.vocabulary is {paths.get('vocabulary')!r}; this validator "
-            f"reads {VOCABULARY!r} as the role authority"
-        )
-    if paths.get("role_proposal") != PROPOSAL:
-        errors.append(
-            f"{SCHEMA}: paths.role_proposal is {paths.get('role_proposal')!r}; this "
-            f"validator reads {PROPOSAL!r} as the coverage record"
-        )
+    for key, expected in (
+        ("templates_root", TEMPLATES),
+        ("mappings_root", MAPPINGS),
+        ("defaults", DEFAULTS),
+        ("vocabulary", VOCABULARY),
+        ("role_proposal", PROPOSAL),
+    ):
+        if paths.get(key) != expected:
+            errors.append(
+                f"{SCHEMA}: paths.{key} is {paths.get(key)!r}; this validator reads "
+                f"{expected!r} -- keep the contract and the checker in step"
+            )
     surfaces = data.get("surface_classes")
     if not isinstance(surfaces, dict):
         errors.append(f"{SCHEMA}: `surface_classes` must be a mapping (the surface enum)")
@@ -304,6 +372,15 @@ def load_schema(root: Path, errors: list[str]) -> None:
             f"{SCHEMA}: surface_classes.enum is {surfaces.get('enum')!r}; this validator "
             f"enforces {list(SURFACES)!r} -- keep the contract and the checker in step"
         )
+    families = (data.get("token_families") or {}).get("families") or {}
+    for name, pattern in (("COLOR", COLOR_NAME), ("OPACITY", OPACITY_NAME)):
+        declared = (families.get(name) or {}).get("name_pattern")
+        if declared != pattern.pattern:
+            errors.append(
+                f"{SCHEMA}: token_families.families.{name}.name_pattern is "
+                f"{declared!r}; this validator enforces {pattern.pattern!r} -- keep the "
+                f"contract and the checker in step"
+            )
 
 
 def load_vocabulary(
@@ -424,13 +501,17 @@ def load_defaults(root: Path, errors: list[str]) -> dict[str, object]:
         return {}
     for name, value in defaults.items():
         if not COLOR_NAME.match(str(name)):
-            errors.append(f"{DEFAULTS}: {name!r} is not a COLOR_* token name")
+            errors.append(
+                f"{DEFAULTS}: {name!r} is not a COLOR_* token name -- the vocabulary "
+                f"defaults are colour roles; an OPACITY_* param belongs to a group or "
+                f"a variant row"
+            )
         if not isinstance(value, str) or not value:
             errors.append(f"{DEFAULTS}: {name!r} must map to a non-empty palette role")
     return defaults
 
 
-def _check_role_value(
+def _check_token_value(
     scope: str,
     where: str,
     token: str,
@@ -440,9 +521,28 @@ def _check_role_value(
     used_baseline: set[tuple[str, str, str]],
     errors: list[str],
 ) -> None:
-    """One mapping value must be a declared role or an exact legacy-baseline entry."""
+    """One mapping value must satisfy the value space of its token's family."""
+    family = token_family(token)
+    if family == "OPACITY":
+        if opacity_value(value) is None:
+            errors.append(
+                f"{where}: {token!r} must be a numeric literal in [0, 1], got {value!r} "
+                f"-- an opacity is not a role"
+            )
+        return
     if not isinstance(value, str) or not value:
-        errors.append(f"{where}: {token!r} must map to a non-empty palette role")
+        errors.append(
+            f"{where}: {token!r} must map to a non-empty palette role or a #rrggbb "
+            f"literal, got {value!r} -- a colour is not a number"
+        )
+        return
+    if HEX_LITERAL.match(value):
+        return
+    if NUMERIC_LITERAL.match(value):
+        errors.append(
+            f"{where}: {token!r} maps to the number {value!r} -- a colour is not a "
+            f"number; use a role or a #rrggbb literal"
+        )
         return
     if value in roles:
         return
@@ -458,12 +558,13 @@ def _check_role_value(
         )
     errors.append(
         f"{where}: {token!r} maps to {value!r}, which is not a declared role in "
-        f"{VOCABULARY} and not an exact `phase_a_legacy_baseline` entry{hint}. Use a "
-        f"semantic role (on_backdrop / on_surface / primary / tertiary / error, ...)"
+        f"{VOCABULARY}, not a #rrggbb literal, and not an exact "
+        f"`phase_a_legacy_baseline` entry{hint}. Use a semantic role "
+        f"(on_backdrop / on_surface / primary / tertiary / error, ...)"
     )
 
 
-def _check_color_mappings(
+def _check_token_map(
     scope: str,
     where: str,
     value: object,
@@ -471,21 +572,27 @@ def _check_color_mappings(
     baseline_keys: set[tuple[str, str, str]],
     used_baseline: set[tuple[str, str, str]],
     errors: list[str],
-) -> set[str]:
+) -> dict[str, object]:
+    """Validate a token map; return the declared names mapped to their values."""
     if value is None:
-        return set()
+        return {}
     if not isinstance(value, dict):
         errors.append(f"{where}: `color_mappings` must be a mapping")
-        return set()
-    names: set[str] = set()
-    for name, role in value.items():
-        if not COLOR_NAME.match(str(name)):
-            errors.append(f"{where}: {name!r} is not a COLOR_* token name")
-        _check_role_value(
-            scope, where, str(name), role, roles, baseline_keys, used_baseline, errors
+        return {}
+    declared: dict[str, object] = {}
+    for name, raw in value.items():
+        name = str(name)
+        if token_family(name) is None:
+            errors.append(
+                f"{where}: {name!r} is not a token name -- the grammar is "
+                f"`COLOR_[A-Z0-9_]+` or `OPACITY_[A-Z0-9_]+`"
+            )
+            continue
+        _check_token_value(
+            scope, where, name, raw, roles, baseline_keys, used_baseline, errors
         )
-        names.add(str(name))
-    return names
+        declared[name] = raw
+    return declared
 
 
 def check_mappings(
@@ -508,7 +615,7 @@ def check_mappings(
     # The vocabulary defaults are mapping values too: `accent` / `accent-muted`
     # were aliases whose names contradicted the pole they resolved to.
     for token, value in defaults.items():
-        _check_role_value(
+        _check_token_value(
             "defaults",
             DEFAULTS,
             str(token),
@@ -552,7 +659,9 @@ def check_mappings(
     globally_declared: set[str] = set(defaults)
     referenced_paths: set[Path] = set()
     groups_count = variants_count = 0
-    surface_undeclared = wallpaper_checked = 0
+    wallpaper_checked = 0
+    surface_checked = 0
+    style_cells_missing = 0
 
     for group_name, entry in data.items():
         group_name = str(group_name)
@@ -561,15 +670,59 @@ def check_mappings(
             continue
         groups_count += 1
         group_surface = entry.get("surface")
-        if group_surface is not None and group_surface not in SURFACES:
+        if group_surface not in SURFACES:
             errors.append(
-                f"{rel}:{group_name}: `surface` is {group_surface!r}; must be one of "
-                f"{list(SURFACES)!r}"
+                f"{rel}:{group_name}: `surface` is {group_surface!r}; every group "
+                f"declares one of {list(SURFACES)!r} (schema_major 2)"
             )
             group_surface = None
-        if group_surface is None:
-            surface_undeclared += 1
-        group_tokens = _check_color_mappings(
+        serves_raw = entry.get("serves", [group_surface] if group_surface else [])
+        serves: list[str] = []
+        if not isinstance(serves_raw, list) or not serves_raw:
+            errors.append(
+                f"{rel}:{group_name}: `serves` must be a non-empty list of surfaces"
+            )
+            serves_raw = [group_surface] if group_surface else []
+        for surface in serves_raw:
+            if surface not in SURFACES:
+                errors.append(
+                    f"{rel}:{group_name}: `serves` holds {surface!r}; must be one of "
+                    f"{list(SURFACES)!r}"
+                )
+                continue
+            if surface in serves:
+                errors.append(f"{rel}:{group_name}: `serves` lists {surface!r} twice")
+                continue
+            serves.append(surface)
+        if group_surface and group_surface not in serves:
+            errors.append(
+                f"{rel}:{group_name}: `serves` {serves!r} does not contain the "
+                f"group's default `surface` {group_surface!r}"
+            )
+        group_styles_raw = entry.get("styles")
+        styles: list[str] = []
+        if group_styles_raw is not None:
+            if not isinstance(group_styles_raw, list) or not group_styles_raw:
+                errors.append(
+                    f"{rel}:{group_name}: `styles` must be a non-empty list when declared"
+                )
+            else:
+                for style in group_styles_raw:
+                    if not isinstance(style, str) or not STYLE_NAME.match(style):
+                        errors.append(
+                            f"{rel}:{group_name}: style {style!r} is not a "
+                            f"lowercase name"
+                        )
+                        continue
+                    if style in styles:
+                        errors.append(
+                            f"{rel}:{group_name}: style {style!r} is declared twice"
+                        )
+                        continue
+                    styles.append(style)
+        default_style = styles[0] if styles else "default"
+
+        group_tokens = _check_token_map(
             f"{group_name}",
             f"{rel}:{group_name}",
             entry.get("color_mappings"),
@@ -578,11 +731,29 @@ def check_mappings(
             used_baseline,
             errors,
         )
-        group_mappings = entry.get("color_mappings") or {}
-        if not isinstance(group_mappings, dict):
-            group_mappings = {}
-        globally_declared |= group_tokens
-        declared = set(defaults) | group_tokens
+        globally_declared |= set(group_tokens)
+        declared = set(defaults) | set(group_tokens)
+
+        # The group's own ink pin answers for its default surface. A group that
+        # serves more surfaces derives the rest at render time; the row-level
+        # check below covers every surface a row actually renders on.
+        if group_surface is not None:
+            for ink in INK_TOKENS:
+                if ink not in declared:
+                    continue
+                resolved = group_tokens.get(ink, defaults.get(ink))
+                surface_checked += 1
+                if not ink_satisfies(group_surface, resolved):
+                    expected = (
+                        "on_backdrop"
+                        if group_surface == "wallpaper"
+                        else "a role in the on-surface family (on_*)"
+                    )
+                    errors.append(
+                        f"{rel}:{group_name}: surface is {group_surface!r} but {ink} "
+                        f"resolves to {resolved!r}; a {group_surface} glyph's ink must "
+                        f"be {expected}"
+                    )
 
         template_dir = entry.get("template_dir", ".")
         if not isinstance(template_dir, str) or not template_dir:
@@ -603,6 +774,10 @@ def check_mappings(
             errors.append(f"{rel}:{group_name}: `variants` must be a non-empty list")
             continue
         names: set[str] = set()
+        cells: set[tuple[str, str]] = set()
+        states_seen: set[str] = set()
+        variant_states: dict[str, str] = {}
+        group_used: set[str] = set()
         for index, variant in enumerate(variants):
             where = f"{rel}:{group_name}[{index}]"
             if not isinstance(variant, dict):
@@ -618,17 +793,61 @@ def check_mappings(
             elif name in names:
                 errors.append(f"{rel}:{group_name}: duplicate variant name {name!r}")
             names.add(str(name))
-            variant_surface = variant.get("surface")
-            if variant_surface is not None and variant_surface not in SURFACES:
+
+            state = variant.get("state", name)
+            if not isinstance(state, str) or not STATE_NAME.match(state):
                 errors.append(
-                    f"{where} ({name}): `surface` is {variant_surface!r}; must be one "
-                    f"of {list(SURFACES)!r}"
+                    f"{where} ({name}): `state` must be a lowercase state key, got "
+                    f"{state!r}"
                 )
-                variant_surface = None
+                state = str(name)
+            style = variant.get("style")
+            if styles:
+                if style is None:
+                    errors.append(
+                        f"{where} ({name}): group declares `styles` {styles!r}, so the "
+                        f"variant must declare its `style`"
+                    )
+                    style = default_style
+                elif style not in styles:
+                    errors.append(
+                        f"{where} ({name}): `style` {style!r} is not declared in the "
+                        f"group's styles {styles!r}"
+                    )
+            elif style is not None:
+                errors.append(
+                    f"{where} ({name}): `style` is {style!r} but the group declares no "
+                    f"`styles` axis"
+                )
+                style = None
+            state = str(state)
+            style = str(style) if style is not None else default_style
+            if (state, style) in cells:
+                errors.append(
+                    f"{where} ({name}): the (state, style) cell "
+                    f"({state!r}, {style!r}) is already drawn by another variant"
+                )
+            cells.add((state, style))
+            variant_states[str(name)] = state
+            states_seen.add(state)
+
+            variant_surface = variant.get("surface")
+            if variant_surface is not None:
+                if variant_surface not in SURFACES:
+                    errors.append(
+                        f"{where} ({name}): `surface` is {variant_surface!r}; must be "
+                        f"one of {list(SURFACES)!r}"
+                    )
+                    variant_surface = None
+                elif variant_surface not in serves:
+                    errors.append(
+                        f"{where} ({name}): `surface` {variant_surface!r} is not in the "
+                        f"group's `serves` {serves!r} -- declare the surface dimension "
+                        f"on the group instead of a name-convention row"
+                    )
             surface = variant_surface or group_surface
-            if surface is None:
-                surface_undeclared += 1
-            variant_tokens = _check_color_mappings(
+
+            variant_tokens = _check_token_map(
                 f"{group_name}/{name}",
                 f"{where} ({name})",
                 variant.get("color_mappings"),
@@ -637,30 +856,44 @@ def check_mappings(
                 used_baseline,
                 errors,
             )
-            variant_mappings = variant.get("color_mappings") or {}
-            if not isinstance(variant_mappings, dict):
-                variant_mappings = {}
-            globally_declared |= variant_tokens
-            allowed = declared | variant_tokens
+            globally_declared |= set(variant_tokens)
+            allowed = declared | set(variant_tokens)
 
-            # A wallpaper glyph's ink is `on_backdrop`: the producer's role for
-            # exactly this band. Panel ink here is what made the old pins read
-            # muted. Only declared surfaces are checked, so Phase A is vacuous.
-            if surface == "wallpaper":
-                wallpaper_checked += 1
+            # A pin that restates what the row already inherits is dead data: the
+            # schema_major 2 contract keeps variant pins for genuine tints and
+            # params only.
+            for token, value in variant_tokens.items():
+                inherited = group_tokens.get(token, defaults.get(token))
+                if token in group_tokens or token in defaults:
+                    if value == inherited:
+                        errors.append(
+                            f"{where} ({name}): {token!r} pins {value!r}, which is what "
+                            f"the row already inherits -- a variant pin is reserved for "
+                            f"a genuine tint or param; delete the redundant pin"
+                        )
+
+            # The surface-ink contract for the surface this row renders on. A
+            # variant-level ink pin is an explicit tint and is not re-derived.
+            if surface is not None:
                 for ink in INK_TOKENS:
                     if ink not in allowed:
                         continue
-                    resolved = (
-                        variant_mappings.get(ink)
-                        or group_mappings.get(ink)
-                        or defaults.get(ink)
-                    )
-                    if resolved != "on_backdrop":
+                    if ink in variant_tokens:
+                        continue
+                    resolved = group_tokens.get(ink, defaults.get(ink))
+                    surface_checked += 1
+                    if surface == "wallpaper":
+                        wallpaper_checked += 1
+                    if not ink_satisfies(surface, resolved):
+                        expected = (
+                            "on_backdrop"
+                            if surface == "wallpaper"
+                            else "a role in the on-surface family (on_*)"
+                        )
                         errors.append(
-                            f"{where} ({name}): surface is `wallpaper` but {ink} resolves "
-                            f"to {resolved!r}; a wallpaper glyph's ink must be "
-                            f"`on_backdrop`"
+                            f"{where} ({name}): surface is {surface!r} but {ink} "
+                            f"resolves to {resolved!r}; a {surface} glyph's ink must "
+                            f"be {expected} (or an explicit variant tint)"
                         )
 
             if not isinstance(output, str) or not output:
@@ -704,19 +937,98 @@ def check_mappings(
             text = template_path.read_text()
             used: set[str] = set()
             for match in TOKEN.finditer(text):
-                body = match.group(1).strip()
-                if not BARE_TOKEN.fullmatch(match.group(0)):
+                strict = STRICT_TOKEN.fullmatch(match.group(0))
+                if strict is None:
                     errors.append(
                         f"{template_path.relative_to(root)}: malformed placeholder "
-                        f"{match.group(0)!r} (syntax is exactly {{{{COLOR_NAME}}}})"
+                        f"{match.group(0)!r} (syntax is exactly {{{{COLOR_NAME}}}} or "
+                        f"{{{{OPACITY_NAME}}}})"
                     )
                     continue
-                used.add(body)
+                used.add(strict.group(1))
             for token in sorted(used - allowed):
                 errors.append(
                     f"{template_path.relative_to(root)}: placeholder {token} is not "
                     f"declared for group {group_name!r} ({rel}) in {DEFAULTS} or its "
                     f"color_mappings"
+                )
+            group_used |= used
+
+        # A token declared at group level that no template of the group reads is
+        # forward compatibility, not a failure -- but it is reported, so a leftover
+        # param from a retired row does not hide.
+        unused_tokens = sorted(set(group_tokens) - group_used)
+        if unused_tokens:
+            notes.append(
+                f"{group_name}: declared but unused by its templates: "
+                + ", ".join(unused_tokens)
+            )
+
+        # The state -> variant table is fixed resolution data, not an editing
+        # surface: every value must name a live variant, and a variant's declared
+        # state must resolve through it.
+        bar = entry.get("bar_mappings")
+        states: dict[str, object] = {}
+        if bar is not None:
+            if not isinstance(bar, dict):
+                errors.append(f"{rel}:{group_name}: `bar_mappings` must be a mapping")
+            else:
+                raw_states = bar.get("states")
+                if raw_states is not None and not isinstance(raw_states, dict):
+                    errors.append(
+                        f"{rel}:{group_name}: `bar_mappings.states` must be a mapping"
+                    )
+                elif isinstance(raw_states, dict):
+                    for key, value in raw_states.items():
+                        key = str(key)
+                        if key in ("true", "false", "on", "off", "yes", "no"):
+                            errors.append(
+                                f"{rel}:{group_name}: state key {key!r} is a YAML 1.1 "
+                                f"boolean trap; use a prefixed key (e.g. `bluetooth-on`)"
+                            )
+                        if not isinstance(value, str) or value not in names:
+                            errors.append(
+                                f"{rel}:{group_name}: bar_mappings.states[{key!r}] is "
+                                f"{value!r}, which names no variant in this group"
+                            )
+                            continue
+                        states[key] = value
+        if styles and states:
+            for name, state in variant_states.items():
+                style = next(
+                    (s for (st, s) in cells if st == state and s == default_style),
+                    default_style,
+                )
+                if state in states and states[state] != name:
+                    target = states[state]
+                    if variant_states.get(str(target)) != state:
+                        errors.append(
+                            f"{rel}:{group_name}: bar_mappings.states[{state!r}] -> "
+                            f"{target!r}, whose declared state is "
+                            f"{variant_states.get(str(target))!r}; a state must resolve "
+                            f"to a row of that state"
+                        )
+            for state in sorted(states_seen):
+                if state not in states:
+                    errors.append(
+                        f"{rel}:{group_name}: variants draw state {state!r} but "
+                        f"`bar_mappings.states` has no entry for it"
+                    )
+        if styles:
+            missing_cells = [
+                (state, style)
+                for state in sorted(states_seen)
+                for style in styles
+                if (state, style) not in cells
+            ]
+            style_cells_missing += len(missing_cells)
+            if missing_cells:
+                preview = ", ".join(
+                    f"{state}@{style}" for state, style in missing_cells[:6]
+                )
+                notes.append(
+                    f"{group_name}: {len(missing_cells)} (state, style) cell(s) not "
+                    f"drawn: {preview}" + (" ..." if len(missing_cells) > 6 else "")
                 )
 
     # Global rule + XML well-formedness for EVERY template, referenced or not.
@@ -730,11 +1042,14 @@ def check_mappings(
             continue
         text = svg.read_text()
         for match in TOKEN.finditer(text):
-            body = match.group(1).strip()
-            if BARE_TOKEN.fullmatch(match.group(0)) and body not in globally_declared:
+            strict = STRICT_TOKEN.fullmatch(match.group(0))
+            if strict is None:
+                continue  # reported through the per-group scan when referenced
+            body = strict.group(1)
+            if body not in globally_declared:
                 errors.append(
-                    f"{svg_rel}: placeholder {body} is declared in neither {DEFAULTS} nor "
-                    f"any group's color_mappings"
+                    f"{svg_rel}: placeholder {body} is declared in neither {DEFAULTS} "
+                    f"nor any group's color_mappings"
                 )
     unreferenced = [
         p.relative_to(root).as_posix()
@@ -764,15 +1079,20 @@ def check_mappings(
             f"{len(baseline)} pin(s) still carry a pre-migration value (Phase A legacy "
             f"baseline); Phase B drives this to 0"
         )
-    if surface_undeclared:
-        notes.append(
-            f"{surface_undeclared} group/variant(s) declare no `surface` yet "
-            f"(Phase A: the field is optional; Phase B declares the values)"
-        )
     if wallpaper_checked:
         notes.append(
-            f"{wallpaper_checked} variant(s) declare `surface: wallpaper` and were "
-            f"held to `on_backdrop` ink"
+            f"{wallpaper_checked} row(s) render on `wallpaper` and were held to "
+            f"`on_backdrop` ink"
+        )
+    if surface_checked:
+        notes.append(
+            f"{surface_checked} surface-ink check(s) passed (wallpaper -> on_backdrop, "
+            f"dark-glass/solid -> on-surface family)"
+        )
+    if style_cells_missing:
+        notes.append(
+            f"{style_cells_missing} (state, style) grid cell(s) are not drawn; a "
+            f"consumer selecting one blanks loudly instead of inventing art"
         )
 
     # The reviewed proposal must name every group and variant: new art cannot land
@@ -827,6 +1147,7 @@ def main() -> int:
 
     print(
         f"validate-icons: root={root} manifest={MANIFEST} "
+        f"schema_major={EXPECTED_SCHEMA_MAJOR} "
         f"groups={counts.get('groups', 0)} variants={counts.get('variants', 0)} "
         f"svgs={counts.get('svgs', 0)} defaults={len(defaults)} "
         f"roles={counts.get('roles', 0)} "
@@ -841,10 +1162,10 @@ def main() -> int:
         return 1
     print(
         "validate-icons: PASS -- one group map (" + MANIFEST + "), every template "
-        f"resolves under {TEMPLATES}/, every used placeholder is declared, every "
-        f"mapping value is a declared role or an exact legacy-baseline entry, every "
-        f"declared wallpaper surface resolves to on_backdrop, the proposal names every "
-        f"group and variant, every SVG parses"
+        f"resolves under {TEMPLATES}/, every COLOR_*/OPACITY_* token is declared and "
+        f"typed, every surface a row renders on satisfies the ink contract, styles/"
+        f"state are consistent, the proposal names every group and variant, every SVG "
+        f"parses"
     )
     return 0
 
