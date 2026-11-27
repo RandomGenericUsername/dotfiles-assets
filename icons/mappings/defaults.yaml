@@ -6,6 +6,10 @@
 # as long as it is mapped — either here (for the four standard names) or in the icon's
 # own color_mappings block.
 #
+# schema_major 2: this file carries the group-independent COLOR_* vocabulary only.
+# An OPACITY_* param belongs to the group/row whose level ladder it describes, not to
+# a global default (a global "0.5" would silently dim every glyph of that name).
+#
 # Priority (lowest to highest):
 #   1. This file (vocabulary defaults)
 #   2. IconGroup.color_mappings (per-icon group override)

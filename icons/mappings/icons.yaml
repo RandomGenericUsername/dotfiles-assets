@@ -1,5 +1,11 @@
 battery:
   surface: wallpaper
+  # One row serves both the bar (wallpaper ink) and the battery panel (dark-glass
+  # ink). The surface dimension replaces the five `system-battery-*` rows that
+  # existed only to re-render this art with the panel ink.
+  serves:
+    - wallpaper
+    - dark-glass
   color_mappings:
     COLOR_ACCENT: primary
     COLOR_FOREGROUND: on_backdrop
@@ -37,40 +43,6 @@ battery:
     - name: plugged
       template: status-bar/battery/plugged/default/icon.svg
       output: plugged.svg
-
-      color_mappings:
-        COLOR_FOREGROUND: on_backdrop
-    # System-surface copies: variant-level pin exempts them from the bar contrast guard.
-    - name: system-battery-0
-      template: status-bar/battery/battery-0/default/icon.svg
-      output: system-battery-0.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-battery-25
-      template: status-bar/battery/battery-25/default/icon.svg
-      output: system-battery-25.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-battery-50
-      template: status-bar/battery/battery-50/default/icon.svg
-      output: system-battery-50.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-battery-75
-      template: status-bar/battery/battery-75/default/icon.svg
-      output: system-battery-75.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-battery-100
-      template: status-bar/battery/battery-100/default/icon.svg
-      output: system-battery-100.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
   bar_mappings:
     widget: battery
     icon_size: 24
@@ -89,78 +61,160 @@ battery:
 
 network:
   surface: wallpaper
+  # Three declared styles, one state vocabulary. A row is one `state x style`
+  # cell; the state table below still resolves a state key to its DEFAULT-style
+  # row, so the bar keeps asking for `wifi-full` while a panel may select the
+  # bold or rounded drawing of the same state.
+  styles:
+    - default
+    - bold
+    - rounded
   color_mappings:
     COLOR_FOREGROUND: on_backdrop
     COLOR_CROSS: error
     COLOR_WARNING: tertiary
+    # Level params: every arc is drawn, the level dims the outer ones. Each row
+    # overrides only the arcs its level de-emphasises.
+    OPACITY_ARC_1: "1"
+    OPACITY_ARC_2: "1"
+    OPACITY_ARC_3: "1"
+    OPACITY_ARC_4: "1"
   variants:
     - name: wifi-full-default
+      state: wifi-full
+      style: default
       template: status-bar/network/wifi-full/default/icon.svg
       output: wifi-full-default.svg
     - name: wifi-full-bold
+      state: wifi-full
+      style: bold
       template: status-bar/network/wifi-full/bold/icon.svg
       output: wifi-full-bold.svg
     - name: wifi-full-rounded
+      state: wifi-full
+      style: rounded
       template: status-bar/network/wifi-full/rounded/icon.svg
       output: wifi-full-rounded.svg
+    # high/medium/low default share one canonical drawing (one template, three
+    # param sets); `wifi-full` keeps its own art because its path data differs.
     - name: wifi-high-default
-      template: status-bar/network/wifi-high/default/icon.svg
+      state: wifi-high
+      style: default
+      template: status-bar/network/wifi/default/icon.svg
       output: wifi-high-default.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
     - name: wifi-high-bold
+      state: wifi-high
+      style: bold
       template: status-bar/network/wifi-high/bold/icon.svg
       output: wifi-high-bold.svg
     - name: wifi-high-rounded
-      template: status-bar/network/wifi-high/rounded/icon.svg
+      state: wifi-high
+      style: rounded
+      template: status-bar/network/wifi/rounded/icon.svg
       output: wifi-high-rounded.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
     - name: wifi-medium-default
-      template: status-bar/network/wifi-medium/default/icon.svg
+      state: wifi-medium
+      style: default
+      template: status-bar/network/wifi/default/icon.svg
       output: wifi-medium-default.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
     - name: wifi-medium-bold
+      state: wifi-medium
+      style: bold
       template: status-bar/network/wifi-medium/bold/icon.svg
       output: wifi-medium-bold.svg
     - name: wifi-medium-rounded
-      template: status-bar/network/wifi-medium/rounded/icon.svg
+      state: wifi-medium
+      style: rounded
+      template: status-bar/network/wifi/rounded/icon.svg
       output: wifi-medium-rounded.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
     - name: wifi-low-default
-      template: status-bar/network/wifi-low/default/icon.svg
+      state: wifi-low
+      style: default
+      template: status-bar/network/wifi/default/icon.svg
       output: wifi-low-default.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
+        OPACITY_ARC_3: "0.5"
     - name: wifi-low-bold
+      state: wifi-low
+      style: bold
       template: status-bar/network/wifi-low/bold/icon.svg
       output: wifi-low-bold.svg
     - name: wifi-low-rounded
-      template: status-bar/network/wifi-low/rounded/icon.svg
+      state: wifi-low
+      style: rounded
+      template: status-bar/network/wifi/rounded/icon.svg
       output: wifi-low-rounded.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
+        OPACITY_ARC_3: "0.5"
     - name: wifi-not-connected-default
+      state: wifi-not-connected
+      style: default
       template: status-bar/network/wifi-not-connected/default/icon.svg
       output: wifi-not-connected-default.svg
     - name: wifi-not-connected-bold
+      state: wifi-not-connected
+      style: bold
       template: status-bar/network/wifi-not-connected/bold/icon.svg
       output: wifi-not-connected-bold.svg
     - name: wifi-not-connected-rounded
+      state: wifi-not-connected
+      style: rounded
       template: status-bar/network/wifi-not-connected/rounded/icon.svg
       output: wifi-not-connected-rounded.svg
     - name: wifi-no-internet-default
+      state: wifi-no-internet
+      style: default
       template: status-bar/network/wifi-no-internet/default/icon.svg
       output: wifi-no-internet-default.svg
     - name: wifi-no-internet-bold
+      state: wifi-no-internet
+      style: bold
       template: status-bar/network/wifi-no-internet/bold/icon.svg
       output: wifi-no-internet-bold.svg
     - name: wifi-no-internet-rounded
+      state: wifi-no-internet
+      style: rounded
       template: status-bar/network/wifi-no-internet/rounded/icon.svg
       output: wifi-no-internet-rounded.svg
+    # bold and rounded are byte-identical for this glyph, so both rows name the
+    # one surviving drawing.
     - name: ethernet-connected-default
+      state: ethernet-connected
+      style: default
       template: status-bar/network/ethernet-connected/default/icon.svg
       output: ethernet-connected-default.svg
     - name: ethernet-connected-bold
+      state: ethernet-connected
+      style: bold
       template: status-bar/network/ethernet-connected/bold/icon.svg
       output: ethernet-connected-bold.svg
     - name: ethernet-connected-rounded
-      template: status-bar/network/ethernet-connected/rounded/icon.svg
+      state: ethernet-connected
+      style: rounded
+      template: status-bar/network/ethernet-connected/bold/icon.svg
       output: ethernet-connected-rounded.svg
     - name: ethernet-no-internet-default
+      state: ethernet-no-internet
+      style: default
       template: status-bar/network/ethernet-no-internet/default/icon.svg
       output: ethernet-no-internet-default.svg
     - name: ethernet-not-connected-default
+      state: ethernet-not-connected
+      style: default
       template: status-bar/network/ethernet-not-connected/default/icon.svg
       output: ethernet-not-connected-default.svg
 
@@ -206,6 +260,9 @@ wlogout:
 
 power-menu:
   surface: wallpaper
+  serves:
+    - wallpaper
+    - solid
   color_mappings:
     COLOR_BACKGROUND: primary_container
     COLOR_SECONDARY: secondary
@@ -238,19 +295,10 @@ power-menu:
 # Deliberately NOT a bar group. These glyphs are consumed by the battery
 # panel's power-mode list, whose rows sit on the DARK GLASS panel surface
 # (alpha(@color_00, 0.94) over a transparent window), never over the
-# wallpaper. The icon-contrast guard retargets BAR_GROUPS to the highest-contrast
-# palette token against the wallpaper's top band; applying that here would
-# actively break the glyph on dark glass (a light wallpaper would push the token
-# bright against an already-dark surface). So `power-mode` is absent from
-# BAR_GROUPS in src/runtime/src/runtime/domain/icon_contrast.py and declares
-# `surface: dark-glass`, with `COLOR_FOREGROUND` pinned to the panel ink
-# (`on_surface`); the glyph reads correctly on dark glass. Contrast `battery`,
-# which floats over the wallpaper and pins `on_backdrop`.
-#
-# For the same reason there are NO `system-*` duplicates here: that convention
-# exists so ONE render can serve both the transparent bar AND dark glass. This
-# group has no BAR widget (it is not in BAR_GROUPS), so a second output per glyph
-# would be a duplicate that nothing resolves.
+# wallpaper. So the group declares `surface: dark-glass` and pins
+# `COLOR_FOREGROUND` to the panel ink (`on_surface`); the glyph reads correctly
+# on dark glass. Contrast `battery`, which floats over the wallpaper and pins
+# `on_backdrop`.
 #
 # `balanced` / `powersave` / `performance` are the only variants on purpose —
 # the daemon's `Powersave++` and `Performance++` tiers are the SAME mode pushed
@@ -277,8 +325,7 @@ power-mode:
   # mode glyph resolves through the same chain as every other icon. An undeclared
   # tier folds to the `unknown` glyph, whose `power-mode-unknown` key is absent
   # here by design: it blanks rather than crashing (the cell still renders its
-  # label). `widget`/`icon_size` are the shared table shape; the group is NOT in
-  # BAR_GROUPS and has no bar widget.
+  # label). `widget`/`icon_size` are the shared table shape.
   bar_mappings:
     widget: power-mode
     icon_size: 24
@@ -341,9 +388,9 @@ capture-tool:
       output: capture-tool-stop.svg
     # Notification tints: the same glyphs recoloured per outcome so the cards
     # read at a glance (success = primary, the action role of the capture
-    # stack; failure = error). Variant-level color_mappings win over the
-    # group's, so these render as tinted copies while the base variants stay
-    # on_surface-coloured for the capture window and bar.
+    # stack; failure = error). A variant pin is reserved for a genuine tint, so
+    # these render as tinted copies while the base variants stay on the group's
+    # panel ink.
     - name: camera-accent
       template: capture-tool/default/camera.svg
       output: capture-tool-camera-accent.svg
@@ -380,11 +427,13 @@ wallpaper-selector:
 
 wallpaper-progress:
   surface: dark-glass
+  # The picture glyph is byte-identical to `ui/image`, so the one drawing is
+  # re-exported here instead of carried twice.
   color_mappings:
     COLOR_FOREGROUND: on_surface
   variants:
     - name: picture
-      template: status-bar/wallpaper-progress/default/icon.svg
+      template: ui/image/default/icon.svg
       output: wallpaper-progress-picture.svg
     - name: check-circle
       template: status-bar/wallpaper-progress/default/check-circle.svg
@@ -427,14 +476,6 @@ ui:
     - name: search
       template: ui/search/default/icon.svg
       output: ui-search.svg
-      # The magnifier sits on the SOLID search field (`@color_01`), not directly
-      # on the wallpaper, so it must follow the panel ink like the entry text.
-      # Variant-level mappings are exempt from the bar-icon contrast guard (it
-      # only retargets group-level placeholders), which otherwise recolours this
-      # glyph against the wallpaper and can wash it out on the field.
-      # See gui-unification-ux-spec §4/§5.
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
     - name: text
       template: ui/text/default/icon.svg
       output: ui-text.svg
@@ -474,14 +515,9 @@ settings:
 # "Off" therefore reads as SHAPE, not as dimness, which survives any wallpaper
 # and any colour-vision profile.
 #
-# WHY GROUP-LEVEL MAPPINGS ONLY, AND NO VARIANT-LEVEL PINS: this glyph floats
-# over the wallpaper, so it must stay in the runtime contrast guard
-# (`BAR_GROUPS` in runtime/domain/icon_contrast.py). The guard only rewrites
-# GROUP-level COLOR_FOREGROUND; a variant-level pin would structurally exempt
-# the glyph from retargeting, which is the opposite of what a bar icon needs.
-# This is the same rule the `system-battery-*` variants invert, and the reason
-# the panel's `bluetooth`/`bluetooth-off` variants in `settings-panel` (which
-# DO pin their tint) cannot be reused here.
+# The glyph floats over the wallpaper, so the surface and the ink are declared
+# once at group level (`wallpaper` -> `on_backdrop`). No variant pins the ink:
+# a variant pin is a tint, and this indicator has none.
 bluetooth:
   surface: wallpaper
   color_mappings:
@@ -510,30 +546,37 @@ settings-panel:
   surface: dark-glass
   color_mappings:
     COLOR_FOREGROUND: on_surface
+    # Signal ladders: all bars/arcs are always drawn; a level dims the outer
+    # ones. The four params default to fully lit and each ladder row overrides
+    # the steps its level de-emphasises (outside-in).
+    OPACITY_BAR_1: "1"
+    OPACITY_BAR_2: "1"
+    OPACITY_BAR_3: "1"
+    OPACITY_BAR_4: "1"
+    OPACITY_ARC_1: "1"
+    OPACITY_ARC_2: "1"
+    OPACITY_ARC_3: "1"
+    OPACITY_ARC_4: "1"
   variants:
+    # The settings gear is one drawing: the bar and the panel re-export the
+    # same template, so the shape cannot drift between them.
     - name: settings
-      template: settings-panel/settings/default/icon.svg
+      template: status-bar/settings/default/icon.svg
       output: settings-panel-settings.svg
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
     # The capability glyphs bake their own on/off tint through ITR (primary
     # when on, panel ink when off) so the panel renders bare glyphs — no CSS
-    # filter, no background box. Variant-level mappings win over the group ink.
+    # filter, no background box. A variant pin is the on-state tint; the off
+    # variant inherits the group ink (on some wallpapers the accent and the
+    # neutral are near-identical, so hue cannot carry the state and the panel
+    # dims the off glyph via opacity — brightness, not hue, carries "off").
     - name: wifi
       template: settings-panel/wifi/default/icon.svg
       output: settings-panel-wifi.svg
       color_mappings:
         COLOR_FOREGROUND: primary
-    # The off variants use the neutral panel ink (NOT a second palette
-    # hue): on some wallpapers the accent and the neutral are near-identical,
-    # so hue cannot carry the state. The panel dims the off glyph via opacity,
-    # matching the GUI family's disabled treatment — brightness, not hue,
-    # carries "off".
     - name: wifi-off
       template: settings-panel/wifi/default/icon.svg
       output: settings-panel-wifi-off.svg
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
     - name: bluetooth
       template: settings-panel/bluetooth/default/icon.svg
       output: settings-panel-bluetooth.svg
@@ -542,97 +585,106 @@ settings-panel:
     - name: bluetooth-off
       template: settings-panel/bluetooth/default/icon.svg
       output: settings-panel-bluetooth-off.svg
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
     # Hyprmod is a stateless action, so it inherits the group ink.
     - name: hyprmod
       template: settings-panel/hyprmod/default/icon.svg
       output: settings-panel-hyprmod.svg
-    # Signal-strength glyphs for the Bluetooth row (guard-exempt group).
+    # Signal-strength glyphs for the Bluetooth row.
     - name: signal-low
-      template: settings-panel/signal/low/default/icon.svg
+      template: settings-panel/signal/default/icon.svg
       output: settings-panel-signal-low.svg
+      color_mappings:
+        OPACITY_BAR_1: "0.5"
+        OPACITY_BAR_2: "0.5"
+        OPACITY_BAR_3: "0.5"
     - name: signal-medium
-      template: settings-panel/signal/medium/default/icon.svg
+      template: settings-panel/signal/default/icon.svg
       output: settings-panel-signal-medium.svg
+      color_mappings:
+        OPACITY_BAR_1: "0.5"
+        OPACITY_BAR_2: "0.5"
     - name: signal-good
-      template: settings-panel/signal/good/default/icon.svg
+      template: settings-panel/signal/default/icon.svg
       output: settings-panel-signal-good.svg
+      color_mappings:
+        OPACITY_BAR_1: "0.5"
     - name: signal-high
-      template: settings-panel/signal/high/default/icon.svg
+      template: settings-panel/signal/default/icon.svg
       output: settings-panel-signal-high.svg
     # Bluetooth signal-strength glyphs WITH the circle badge, so the row leads
-    # with the same circle-badged mark the Wi-Fi network rows use. Art and tint
-    # contract are identical to the wifi-signal-* family below: the badge takes
-    # COLOR_BACKGROUND, the bars take COLOR_FOREGROUND, and the four steps are
-    # a progressive fill-opacity ladder (full → good → medium → low, one more
-    # bar dimmed per step).
+    # with the same circle-badged mark the Wi-Fi network rows use. The badge
+    # takes COLOR_BACKGROUND, the bars take COLOR_FOREGROUND, and the four
+    # steps are a progressive opacity ladder (full -> good -> medium -> low,
+    # one more bar dimmed per step). All four share one drawing.
     #
     # These REPLACE the bare `signal-*` family above for the row's leading slot:
     # a bare bar glyph next to a circle-badged Wi-Fi row read as two dialects of
-    # the same control. The bare `signal-*` variants are kept in the manifest —
-    # they are still resolved by BluetoothContent.tsx today, and removing them
-    # would be a behaviour change outside this icon addition.
+    # the same control. The bare `signal-*` variants are kept — they are still
+    # resolved by BluetoothContent.tsx today.
     - name: bluetooth-signal-full
-      template: settings-panel/bluetooth-signal-full/default/icon.svg
+      template: settings-panel/bluetooth-signal/default/icon.svg
       output: settings-panel-bluetooth-signal-full.svg
       color_mappings:
         COLOR_BACKGROUND: primary_container
         COLOR_FOREGROUND: on_primary_container
     - name: bluetooth-signal-good
-      template: settings-panel/bluetooth-signal-good/default/icon.svg
+      template: settings-panel/bluetooth-signal/default/icon.svg
       output: settings-panel-bluetooth-signal-good.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
+        OPACITY_BAR_1: "0.5"
     - name: bluetooth-signal-medium
-      template: settings-panel/bluetooth-signal-medium/default/icon.svg
+      template: settings-panel/bluetooth-signal/default/icon.svg
       output: settings-panel-bluetooth-signal-medium.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
+        OPACITY_BAR_1: "0.5"
+        OPACITY_BAR_2: "0.5"
     - name: bluetooth-signal-low
-      template: settings-panel/bluetooth-signal-low/default/icon.svg
+      template: settings-panel/bluetooth-signal/default/icon.svg
       output: settings-panel-bluetooth-signal-low.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
-    # WiFi signal-strength glyphs with circle badge for network rows
-    # (settings-panel group, guard-exempt, no bar_mappings — system icons).
+        OPACITY_BAR_1: "0.5"
+        OPACITY_BAR_2: "0.5"
+        OPACITY_BAR_3: "0.5"
+    # WiFi signal-strength glyphs with circle badge for network rows.
     - name: wifi-signal-full
-      template: settings-panel/wifi-signal-full/default/icon.svg
+      template: settings-panel/wifi-signal/default/icon.svg
       output: settings-panel-wifi-signal-full.svg
       color_mappings:
         COLOR_BACKGROUND: primary_container
         COLOR_FOREGROUND: on_primary_container
     - name: wifi-signal-good
-      template: settings-panel/wifi-signal-good/default/icon.svg
+      template: settings-panel/wifi-signal/default/icon.svg
       output: settings-panel-wifi-signal-good.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
+        OPACITY_ARC_1: "0.5"
     - name: wifi-signal-medium
-      template: settings-panel/wifi-signal-medium/default/icon.svg
+      template: settings-panel/wifi-signal/default/icon.svg
       output: settings-panel-wifi-signal-medium.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
     - name: wifi-signal-low
-      template: settings-panel/wifi-signal-low/default/icon.svg
+      template: settings-panel/wifi-signal/default/icon.svg
       output: settings-panel-wifi-signal-low.svg
       color_mappings:
         COLOR_BACKGROUND: surface_container_high
-        COLOR_FOREGROUND: on_surface
-    # Info glyph re-export for the Wi-Fi weak-security row (guard-exempt
-    # group, no bar_mappings — system icon). Caution tint follows the
-    # warning-caution precedent.
+        OPACITY_ARC_1: "0.5"
+        OPACITY_ARC_2: "0.5"
+        OPACITY_ARC_3: "0.5"
+    # Info glyph re-export for the Wi-Fi weak-security row (system icon).
+    # Caution tint follows the warning-caution precedent.
     - name: info-caution
       template: capture-tool/default/info.svg
       output: settings-panel-info-caution.svg
       color_mappings:
         COLOR_FOREGROUND: tertiary
     # Password visibility eye icons for the Wi-Fi prompt (owner-supplied art,
-    # group ink — no bar_mappings, system icons).
+    # group ink — system icons).
     - name: password-show
       template: settings-panel/password-show/default/icon.svg
       output: settings-panel-password-show.svg
@@ -651,8 +703,17 @@ brightness:
 
 volume:
   surface: wallpaper
+  # One row serves the bar (wallpaper ink) and the volume panel (dark-glass
+  # ink); the five `system-*` copies are gone with the surface dimension.
+  serves:
+    - wallpaper
+    - dark-glass
   color_mappings:
     COLOR_FOREGROUND: on_backdrop
+    # The outer arc is the volume level: medium dims it, max leaves it lit.
+    # muted/lowest/low differ in geometry (the speaker shifts) and keep their
+    # own art.
+    OPACITY_ARC_1: "1"
   variants:
     - name: muted
       template: volume/muted/default/icon.svg
@@ -664,49 +725,18 @@ volume:
       template: volume/low/default/icon.svg
       output: volume-low.svg
     - name: medium
-      template: volume/medium/default/icon.svg
+      template: volume/default/icon.svg
       output: volume-medium.svg
+      color_mappings:
+        OPACITY_ARC_1: "0.5"
     - name: max
-      template: volume/max/default/icon.svg
+      template: volume/default/icon.svg
       output: volume-max.svg
-    # System-surface copies: same art as bar variants; variant-level pin exempts
-    # them from the bar contrast guard.
-    - name: system-muted
-      template: volume/muted/default/icon.svg
-      output: volume-system-muted.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-lowest
-      template: volume/lowest/default/icon.svg
-      output: volume-system-lowest.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-low
-      template: volume/low/default/icon.svg
-      output: volume-system-low.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-medium
-      template: volume/medium/default/icon.svg
-      output: volume-system-medium.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-max
-      template: volume/max/default/icon.svg
-      output: volume-system-max.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
 
   # The uniform icon contract (AD-7): code emits a STATE KEY (`volume-medium`),
   # this table maps key -> variant, and the registry maps variant -> art. The
   # keys are `<group>-<qualifier>` so a key never collides with another group's
-  # variant name. The `system-*` variants above are NOT keyed: they belong to the
-  # dark-glass panel surface, not the bar state vocabulary.
+  # variant name.
   bar_mappings:
     widget: volume
     icon_size: 24
@@ -718,11 +748,15 @@ volume:
       volume-max: max
 
 # Bar-facing microphone indicator. Kept separate from the capture-tool group
-# because the bar-icon contrast guard retargets group-level COLOR_FOREGROUND of
-# bar groups only; capture-tool renders on its own dark panel and must stay
-# byte-identical. Two states: `mic-on` (idle/active) and `mic-off` (muted).
+# because the two sit on different surfaces: the bar glyph floats over the
+# wallpaper (`on_backdrop`) while capture-tool renders on its own dark panel.
+# Two states: `mic-on` (idle/active) and `mic-off` (muted); the shape carries
+# the state. One row serves the bar and the dark-glass panel.
 microphone:
   surface: wallpaper
+  serves:
+    - wallpaper
+    - dark-glass
   color_mappings:
     COLOR_FOREGROUND: on_backdrop
   variants:
@@ -732,24 +766,10 @@ microphone:
     - name: mic-off
       template: microphone/default/mic-off.svg
       output: microphone-mic-off.svg
-    # System-surface copies: same art as bar variants; variant-level pin exempts
-    # them from the bar contrast guard.
-    - name: system-mic-on
-      template: microphone/default/mic-on.svg
-      output: microphone-system-mic-on.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
-    - name: system-mic-off
-      template: microphone/default/mic-off.svg
-      output: microphone-system-mic-off.svg
-      surface: dark-glass
-      color_mappings:
-        COLOR_FOREGROUND: on_surface
 
   # The uniform icon contract (AD-7): the bar emits `microphone-mic-on` /
   # `microphone-mic-off`; this table maps those state keys to the group's two
-  # variants. The `system-*` variants are panel-surface copies and are not keyed.
+  # variants.
   bar_mappings:
     widget: microphone
     icon_size: 24
@@ -757,12 +777,12 @@ microphone:
       microphone-mic-on: mic-on
       microphone-mic-off: mic-off
 
-# Per-application brand icons for the audio popup's stream rows. Groups a
-# LITERAL-COLOR exception: the variants ship their own fills (brand marks must
-# stay recognisable on any wallpaper), so `color_mappings` is empty and the
-# bar-icon contrast guard never retargets them. Variant names are the PipeWire
-# `application.icon-name` values (`google-chrome`, `tidal-hifi`, …); the audio
-# state module falls back to `generic` then to the device glyph.
+# Per-application brand icons for the audio popup's stream rows. A LITERAL-COLOR
+# exception: the variants ship their own fills (brand marks must stay
+# recognisable on any wallpaper), so `color_mappings` is empty and no surface
+# ink is applied. Variant names are the PipeWire `application.icon-name` values
+# (`google-chrome`, `tidal-hifi`, …); the audio state module falls back to
+# `generic` then to the device glyph.
 media-controls:
   surface: dark-glass
   color_mappings:

@@ -1,5 +1,14 @@
 # Icons manifest — semantic role migration (REQ-008)
 
+> **schema_major 2 note (REQ-149).** This document remains the reviewed record for
+> the role and surface decision of every *name* in `icons.yaml`; `make validate-icons`
+> still requires every live group and variant name to appear here. It is a historical
+> approval record, so the 12 `system-*` rows it describes are **retired** in
+> `schema_major 2`: the group-level `serves` surface dimension replaces them, and the
+> surface class of a row is now `surface` + `serves` on its group instead of a
+> duplicate row. The role names and the surface classes below are unchanged; the
+> row-level tables keep the BEFORE picture they were approved against.
+
 **Status: APPROVED and APPLIED in Phase B (2026-10-30).** The user approved all ten
 judgment calls and every table row exactly as proposed; `icons.yaml` and
 `defaults.yaml` now carry the roles below, every group/variant declares a surface,
